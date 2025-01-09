@@ -5,11 +5,7 @@
 To run the Docker container with the current directory volume mounted, use the following command:
 
 ```sh
-docker build . -t dice && docker run --rm -p 3000:3000 -it -v $(pwd -W):/app dice bash
-```
-
-```sh
-docker run -it --rm -v ${PWD -W}:/usr/src/app -p 3000:3000 node:22
+docker build . -t dice && docker run --rm -p 8080:8080 -it -v $(pwd -W):/app dice bash
 ```
 
 This command does the following:
