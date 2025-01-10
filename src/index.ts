@@ -1,3 +1,4 @@
+import './styles.css';
 import * as THREE from 'three';
 
 window.addEventListener('DOMContentLoaded', () => {
