@@ -1,17 +1,21 @@
 # Dice Game Design Document
 
 ## Overview
+
 This game is a dice-based strategy game where players roll dice to achieve specific outcomes, strategically take opponents' dice, and manage risk. The core mechanics involve collecting and managing a pool of dice with unique properties, using them to influence results in creative ways, and balancing risk versus reward.
 
 ## Core Mechanics
 
 ### Dice Rolling
+
 - Players roll a set of dice, starting with a basic pool of two dice.
 - Additional dice can be added to the roll, but each die introduces additional risk.
   - Risk increases linearly: Each additional die adds a predictable increase in difficulty or consequences.
 
 ### Dice Properties
+
 Dice come in various colors, shapes, and styles, representing different properties and effects. Examples include:
+
 - **Colors**:
   - **Red**: Special rules such as "treat one die as a 4-sided die."
   - **Green**: Effects like "double the result of a dice roll."
@@ -24,6 +28,7 @@ Dice come in various colors, shapes, and styles, representing different properti
 - Each type of die has its own potential outcomes, influencing the effects available to the player.
 
 ### Risk and Reward
+
 - Rolling more dice increases the probability of unwanted outcomes (e.g., "snake eyes").
 - Players must carefully consider:
   - The number of dice to roll.
@@ -33,6 +38,7 @@ Dice come in various colors, shapes, and styles, representing different properti
 ## Secondary Mechanics
 
 ### Deckbuilding
+
 - Players collect new dice through gameplay (e.g., winning hands, completing challenges).
 - Dice can be swapped into the active "deck" for use in rolls.
 - Rare or powerful dice add unique effects but may increase risk or complexity.
@@ -41,6 +47,7 @@ Dice come in various colors, shapes, and styles, representing different properti
   - How to balance risk versus potential rewards.
 
 ### Combat Mechanics
+
 - Players select up to 7 dice from their "dice bag" to roll each round. The minimum and default is 2. If no dice are available, players use plain, undecorated dice.
 - Players roll their selected dice, and all results are visible to every player.
 - During the second half of the turn, players choose what to do with each of their dice:
@@ -55,6 +62,7 @@ Dice come in various colors, shapes, and styles, representing different properti
 - The player with the highest cumulative score across all three rounds is declared the victor.
 
 ## Visual and Thematic Elements
+
 - Dice are designed with intricate, eye-catching aesthetics to emphasize their properties:
   - Semi-transparent red dice with golden pips for fire-like effects.
   - Opaque green dice with dark, organic patterns for unique rules.
@@ -64,16 +72,12 @@ Dice come in various colors, shapes, and styles, representing different properti
   - A duel between players using dice as tools of strategy and power.
 
 ## Progression System
+
 - Players build their dice bag by winning dice from opponents and acquiring new ones through challenges.
 - The game focuses on competitive play, with no narrative campaign for now.
 - The core loop revolves around enhancing and customizing the dice bag, creating a unique playstyle for each player.
 
-## Potential Variants
-- **Multiplayer Mode**: Players compete in head-to-head battles, using dice to outmaneuver their opponents.
-- **Team Mode**: Players form teams to combine dice strategies and take on other teams.
-- **Ranked Mode**: Competitive ranking system where players progress based on wins and strategic plays.
-
-## Technical Considerations
+## Technical Design
 
 ### Technologies
 - **Languages and Frameworks**:
@@ -96,31 +100,50 @@ Dice come in various colors, shapes, and styles, representing different properti
   - Reducing draw calls by batching similar objects.
   - Lowering resolution or effects dynamically based on hardware capabilities.
 
-### Using AI to Scaffold Development
-AI will play a key role in scaffolding the initial project structure and boilerplate code. For example, GitHub Copilot or similar AI tools will assist in:
-- Generating TypeScript boilerplate for game mechanics.
-- Setting up Webpack configurations for development.
-- Creating basic Three.js scenes and rendering systems.
-- Implementing prototypes for dice physics and interactivity.
+### User Interface
 
-### Prompt for CodePilot
-The following prompt will be used to generate the initial file set for the project:
+- **Touch-Friendly Design**:
+  - The UI will be optimized for both desktop and mobile platforms.
+- **Menu System**:
+  - Helper classes for defining menus in code.
+  - Predefined menus include:
+    - **Main Menu**
+    - **Game Settings**: Contains tabs for:
+      - **Controls**
+      - **Audio**
+      - **Video**
+    - **Help Menu**: Sections to describe game mechanics and rules.
 
-```
-Create a TypeScript project for a browser-based dice game. Use the following technologies:
-- Webpack for bundling and serving the game during development.
-- Three.js for rendering dice in a 3D environment.
-- Yarn as the package manager.
+### Using AI for Development
 
-The project should:
-- Initialize a basic Webpack configuration, including TypeScript and Three.js support.
-- Include a simple Three.js scene with a spinning 3D cube as a placeholder for dice rendering.
-- Provide boilerplate TypeScript files for core game mechanics, such as:
-  - Dice rolling logic.
-  - A basic player turn system.
-  - Stubs for future features like dice properties and actions.
-- Optimize for smooth performance on lower-tier hardware.
+AI tools will be utilized to scaffold and accelerate development, providing a foundation for iterative refinement. Below is the prompt designed for generating the project structure using CodePilot:
 
-Generate the folder structure and necessary files to scaffold the project, ensuring the code is clean and modular.
-```
+#### CodePilot Prompt
+
+"""
+You are tasked with scaffolding a TypeScript-based browser game using Webpack, Yarn, and Three.js. The game is a dice-based strategy game featuring the following requirements:
+
+1. **Core Systems**:
+
+   - Object-oriented structure with classes for "Dice" and "Abilities".
+   - Abilities are dynamically loaded from JSON files, using a generic interface to allow future data source changes.
+
+2. **Testing**:
+
+   - Test-driven development setup using Jest, with mocks to isolate individual classes during tests.
+
+3. **Persistence**:
+
+   - A system to save player data, supporting file system API, browser storage, and a default discard behavior.
+
+4. **UI**:
+
+   - Touch-friendly menus for "Main Menu," "Game Settings" (with Controls, Audio, Video tabs), and "Help Menu."
+
+5. **Performance**:
+
+   - Emphasis on smooth performance, optimized for low-tier hardware and mobile devices.
+
+Generate the full project structure, including sample code for the above systems and configurations for Webpack and Jest.
+"""
 
