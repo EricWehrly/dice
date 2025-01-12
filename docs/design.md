@@ -40,18 +40,19 @@ Dice come in various colors, shapes, and styles, representing different properti
   - Which dice to include in the active pool.
   - How to balance risk versus potential rewards.
 
-### Opening Gambit
-- At the beginning of the game, each player rolls 2 plain dice.
-- Players must assign one die to "Best Of" and one die to "Turn Order":
-  - **Turn Order**: Higher numbers go first, lower numbers go last. Ties are resolved with a random plain dice roll.
-  - **Best Of**: Tracks the hand count. Players aim to win a "best of 3" or similar setup. The average of all players' "Best Of" dice is rounded up to determine the target number of hands to win (e.g., if the dice values are 2, 4, 1, and 2, the average is 4.5, rounded to 5).
-
 ### Combat Mechanics
 - Players select up to 7 dice from their "dice bag" to roll each round. The minimum and default is 2. If no dice are available, players use plain, undecorated dice.
-- The goal of each hand is to achieve the highest score while strategically managing risk and rewards.
-- A key mechanic is the ability to take opponents' dice:
-  - Players can remove their own dice from play during a round to take an opponent's die.
-  - This adds a layer of strategy as players balance winning the hand with weakening their opponents' dice pool.
+- Players roll their selected dice, and all results are visible to every player.
+- During the second half of the turn, players choose what to do with each of their dice:
+  - Dice can be used to capture enemy dice, apply special effects, or contribute to scoring.
+  - Each die performs its action even if captured by another player, unless a specific ability prevents the action.
+- After the action phase, scores are derived from the dice that remain in play.
+- The player with the best score at the end of the round wins.
+
+### Scoring and Victory Conditions
+- The player with the best score at the end of the round selects one die from all dice stolen during that round to add to their dice bag.
+- The game proceeds for three rounds.
+- The player with the highest cumulative score across all three rounds is declared the victor.
 
 ## Visual and Thematic Elements
 - Dice are designed with intricate, eye-catching aesthetics to emphasize their properties:
@@ -72,10 +73,54 @@ Dice come in various colors, shapes, and styles, representing different properti
 - **Team Mode**: Players form teams to combine dice strategies and take on other teams.
 - **Ranked Mode**: Competitive ranking system where players progress based on wins and strategic plays.
 
-## Next Steps
-- Prototype the core mechanics:
-  - Basic dice rolling with risk/reward dynamics.
-  - Strategic dice-taking system.
-- Develop a visual style for the dice and game components.
-- Playtest to refine balance and identify opportunities for deeper mechanics or additional layers of strategy.
+## Technical Considerations
+
+### Technologies
+- **Languages and Frameworks**:
+  - The game will be built using **TypeScript** for type-safe development.
+  - **Webpack** will be used for bundling and serving the game during development.
+  - **Three.js** will provide the rendering engine for visualizing the dice and game world.
+  - **Yarn** will be used as the package manager for dependency management.
+
+- **Backend**:
+  - There will be no backend initially; the entire game will run in the client browser.
+  - Webpack will serve the game during development to simplify iteration and testing.
+
+### Performance
+- Performance optimization will prioritize:
+  - **Smoothness over peak FPS**, ensuring consistent performance rather than brief performance spikes.
+  - Running smoothly on lower-tier hardware, including older phones and laptops.
+  - Minimizing battery usage on mobile devices, leveraging ARM-optimized techniques where applicable.
+- Simple performance tricks will be employed where effort and risk are low, such as:
+  - Optimizing Three.js scenes with object pooling and frustum culling.
+  - Reducing draw calls by batching similar objects.
+  - Lowering resolution or effects dynamically based on hardware capabilities.
+
+### Using AI to Scaffold Development
+AI will play a key role in scaffolding the initial project structure and boilerplate code. For example, GitHub Copilot or similar AI tools will assist in:
+- Generating TypeScript boilerplate for game mechanics.
+- Setting up Webpack configurations for development.
+- Creating basic Three.js scenes and rendering systems.
+- Implementing prototypes for dice physics and interactivity.
+
+### Prompt for CodePilot
+The following prompt will be used to generate the initial file set for the project:
+
+```
+Create a TypeScript project for a browser-based dice game. Use the following technologies:
+- Webpack for bundling and serving the game during development.
+- Three.js for rendering dice in a 3D environment.
+- Yarn as the package manager.
+
+The project should:
+- Initialize a basic Webpack configuration, including TypeScript and Three.js support.
+- Include a simple Three.js scene with a spinning 3D cube as a placeholder for dice rendering.
+- Provide boilerplate TypeScript files for core game mechanics, such as:
+  - Dice rolling logic.
+  - A basic player turn system.
+  - Stubs for future features like dice properties and actions.
+- Optimize for smooth performance on lower-tier hardware.
+
+Generate the folder structure and necessary files to scaffold the project, ensuring the code is clean and modular.
+```
 
