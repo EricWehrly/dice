@@ -8,6 +8,9 @@ To run the Docker container with the current directory volume mounted, use the f
 docker build . -t dice && docker run --rm -p 8080:8080 -it -v $(pwd -W):/app dice bash
 ```
 
+jfc
+$ docker run --rm -p 8080:8080 -it -v $(pwd -W):/app node:22-slim bash
+
 This command does the following:
 - `-it`: Runs the container in interactive mode with a terminal.
 - `--rm`: Automatically removes the container when it exits.
