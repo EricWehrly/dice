@@ -1,5 +1,13 @@
 ### Layered CodePilot Prompts for Scaffolding the Game
 
+These prompts are designed to guide the incremental development of the game by breaking the project into manageable layers. Each layer represents a distinct step in the development process, focusing on foundational systems first and progressively adding complexity. The intent is to scaffold the game while adhering to best practices in software development. The prompts are structured to:
+
+1. Clearly define the scope and goals of each layer.
+2. Emphasize modularity, scalability, and maintainability in the codebase.
+3. Enable seamless integration of additional features in the future.
+
+Follow the prompts in sequence, using each layer as a building block for the next.
+
 #### Layer 1: Webpack Boilerplate
 
 """
@@ -44,7 +52,7 @@ You are tasked with implementing the core systems for the game. The requirements
 
 2. **Abilities Class**:
 
-   - Abilities should be represented as classes and loaded dynamically from JSON files.
+   - Abilities should be represented as classes
    - Use a generic interface to allow future data source changes (e.g., MongoDB or REST API).
 
 3. **Persistence System**:
@@ -53,6 +61,10 @@ You are tasked with implementing the core systems for the game. The requirements
      - File system API for on-disk storage.
      - Browser storage.
      - A default discard behavior ("/dev/null").
+
+4. Data loading system
+
+   1. Default to data stored as JSON objects in bundled script files, for simplicity, to be iterated on later.
 
 Include sample JSON files and placeholder classes to demonstrate these systems in action.
 """
@@ -100,26 +112,106 @@ Ensure the system is modular and easy to extend.
 
 ##### Prompt for Predefined Menus
 
-"""
-Building on the previously generated UI system, implement the following menus:
+Split the implementation of each menu into separate prompts to ensure clarity and focus:
 
 1. **Main Menu**:
 
    - The entry point of the game.
+   - Provide options to start a new game, load a saved game, or access settings.
 
 2. **Game Settings Menu**:
 
-   - Contains three tabs: Controls, Audio, and Video.
+   - Contains three tabs:
+     - Controls: Adjust key bindings and input settings.
+     - Audio: Configure volume levels and sound effects.
+     - Video: Set resolution and graphical quality.
 
 3. **Help Menu**:
 
    - Includes sections describing the game's mechanics and rules.
+   - Each section should be loaded dynamically from JSON files to allow future updates.
 
 4. **Debug Menu**:
 
-   - Includes a menu for adjusting flags, which can be used for debugging, feature flagging, and A/B testing.
+   - Includes options to toggle feature flags, enable debug logs, and run test scenarios.
+   - Should be accessible via a special debug key combination.
 
-Each menu should be implemented using the helper classes and loaded dynamically from JSON files.
+Each menu should be implemented using the helper classes and demonstrate dynamic JSON loading.
+
+---
+
+### Technical Drafts for Additional Systems
+
+#### Data Loading
+
+"""
+You are tasked with implementing a flexible data-loading system for the game. The requirements are:
+
+1. Create a system that loads JSON files dynamically at runtime.
+
+   - These files will define entities such as abilities, dice properties, and menu content.
+
+2. The system should:
+
+   - Provide a clean interface for requesting and parsing data.
+   - Handle errors gracefully, such as missing or malformed JSON files.
+
+3. Include examples for loading:
+
+   - A sample abilities JSON file.
+   - A sample dice properties JSON file.
+"""
+
+#### Persistence
+
+"""
+You are tasked with implementing a flexible persistence system for the game. The requirements are:
+
+1. Create a system to save and load player data with the following options:
+
+   - File system API (for saving to disk).
+   - Browser storage (e.g., localStorage or IndexedDB).
+   - A default "discard" behavior that does not save data anywhere (acts like "/dev/null").
+
+2. The system should:
+
+   - Allow easy switching between storage methods.
+   - Include examples for saving and loading player progress and settings.
+"""
+
+#### Method Performance Monitoring Instrumentation
+
+"""
+You are tasked with adding method performance monitoring to the game project. The requirements are:
+
+1. Implement a lightweight system to track method execution times.
+
+   - Include a utility function for measuring and logging performance.
+   - Example: `logPerformance(methodName, executionTime)`.
+
+2. The system should:
+
+   - Be non-invasive and easy to integrate into existing methods.
+   - Include an option to disable logging for production builds.
+
+3. Provide an example of instrumenting the `rollDice` method in the Dice class.
+"""
+
+#### Method-Level Caching
+
+"""
+You are tasked with implementing method-level caching for the game project. The requirements are:
+
+1. Create a utility to cache method results based on input parameters.
+
+   - Example: `cacheMethodResults(methodName, cacheDuration)`.
+
+2. The system should:
+
+   - Support configurable expiration times for cached results.
+   - Include an option to bypass the cache when necessary.
+
+3. Provide an example of caching the results of an expensive computation, such as calculating possible dice outcomes.
 """
 
 ---
