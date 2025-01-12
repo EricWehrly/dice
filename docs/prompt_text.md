@@ -29,14 +29,23 @@ You are tasked with generating the boilerplate setup for a TypeScript-based brow
 
    - Ignores node\_modules, build artifacts, and other common patterns.
 
-Your task is to:
 
-- Ensure compatibility between Webpack and TypeScript.
-- Avoid generating an initial lock file (e.g., yarn.lock or package-lock.json).
-- Include npm scripts for `start` (local development server) and `build` (production build).
-- Make it as simple and bulletproof as possible.
+Additionally, create a CONTRIBUTING.md file that includes:
 
-Do not include any application logic yet.
+    Guidelines for adding new features:
+        All new features must be accompanied by corresponding tests.
+        Follow the project's object-oriented structure, ensuring modularity.
+        Keep code performance-friendly for lower-tier hardware.
+
+    Notes for refactoring or updates:
+        Ensure existing tests pass before submitting changes.
+        For major updates, explain the rationale and impact in the pull request.
+
+    Guidance for AI tools:
+        Follow the layered prompts defined in the project documentation.
+        When generating new code, adhere to the existing architectural and naming conventions.
+
+Do not include any application logic yet. Ensure compatibility between Webpack and TypeScript. Avoid generating an initial lock file (e.g., yarn.lock or package-lock.json). Include npm scripts for start (local development server) and build (production build). Make it as simple and bulletproof as possible. 
 """
 
 ---
