@@ -4,8 +4,14 @@ node_modules/
 # Production build
 dist/
 
+# VSCode settings - include specific files only
+!.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
 # IDE files
-.vscode/
 .idea/
 
 # Logs
