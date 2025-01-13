@@ -63,15 +63,55 @@ Dice come in various colors, shapes, and styles, representing different properti
 - The round winner selects one stolen die from that round to add to their dice bag.
 - The game proceeds through three rounds, and the player with the best cumulative score is declared the victor.
 
+## Abilities
+
+Abilities represent special powers that players can use during the game. They can be individual or belong to a set or category. Abilities are tagged to denote their type, allowing for strategic combinations and unique interactions.
+
+### Ability Ideas
+
+- **Acid**:
+  - Burns away pips from dice.
+- **Ice**:
+  - Freezes dice, rendering their result unable to be changed (and rendering them immune to effects of other abilities, including theft).
+- **Temporal**:
+  - Alters turn order (needs further expansion).
+- **Fortune (Luck)**:
+  - Alters probabilities for players, abilities, or dice (including non-player dice that may belong to the dealer or other such "defaults").
+- **Jester**:
+  - Can invert abilities, targeting a player or particular die (including one's own).
+  - Can direct (blanket) beneficial or negative effects towards or away from a particular player.
+  - (Will have other "meddling" powers, TBD.)
+- **Mult**:
+  - Score multiplier per bounce and for "noteworthy" dice rolls.
+
+## Noteworthy Rolls
+
+Some rolls are considered "noteworthy" and may trigger special scoring or abilities. Examples include:
+
+- **Highest Roll**:
+  - The highest (two pair) on the board of all players (includes dealer dice if applicable).
+- **Combo & Sequence**:
+  - Any pair is a basic combo.
+  - Dice coerced to roll in a pattern such as 1-2-3-4-5 (including using other players' dice, so long as they're in play) will provide the highest combo, similar to flushes and straights in poker.
+
 ## Visual and Thematic Elements
 
 - Dice are designed with intricate, eye-catching aesthetics to emphasize their properties:
   - Semi-transparent red dice with golden pips for fire-like effects.
   - Opaque green dice with dark, organic patterns for unique rules.
   - Luminescent blue dice with glowing symbols for utility effects.
-- Themes and settings may include:
-  - A mystical world where dice represent elemental forces.
-  - A duel between players using dice as tools of strategy and power.
+- Players are incentivized to collect dice based on aesthetic
+  - having coordination between dice will result in greater eye candy
+    - player entrance effects
+    - dice roll effects
+    - dice ability effects
+    - player victory effects
+    - "combo" spell effects
+  - This can consider the appearance of which dice:
+    - Are being rolled
+    - Are currently chosen to be "in play" (after rolling)
+    - are contrastingly not in play (to those that are)
+    - Other players' dice for the above
 
 ## Progression System
 
