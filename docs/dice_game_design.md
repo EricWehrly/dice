@@ -69,6 +69,7 @@ Abilities represent special powers that players can use during the game. They ca
 
 ### Ability Ideas
 
+- Default ability is just "re-roll" the dice
 - **Acid**:
   - Burns away pips from dice.
 - **Ice**:
