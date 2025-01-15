@@ -19,3 +19,11 @@ This command does the following:
 - `node:22`: Uses the Node.js 22 image.
 
 Make sure to run this command from the root of your project directory.
+
+## Removing Local Branches
+
+To remove all branches in the local repository that begin with "copilot-", use the following command:
+
+```sh
+git branch | grep "copilot-" | xargs git branch -D
+```
