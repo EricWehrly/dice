@@ -8,49 +8,67 @@ These prompts are designed to guide the incremental development of the game by b
 
 Follow the prompts in sequence, using each layer as a building block for the next.
 
-#### Layer 1: Webpack Boilerplate
+#### Layer 1: Copilot Contribution Guidelines
 
 """
-You are tasked with generating the boilerplate setup for a TypeScript-based browser game using Webpack and Yarn. Your output must include the following files:
+Generate a `.github/copilot-instructions.md` file to serve as a guide for GitHub Copilot's contributions to this project. The file should:
 
-1. **package.json**:
+1. Include instructions to:
 
-   - Contains dependencies and scripts for development and building the project.
+   - Avoid generating code that duplicates existing functions or classes.
+   - Prioritize modularity and maintainability in all contributions.
+   - Follow established conventions in the codebase, such as naming patterns and file organization.
 
-2. **webpack.config.js**:
+2. Encourage:
 
-   - A minimal Webpack configuration to bundle TypeScript files and serve them locally.
+   - Writing accompanying tests for new features.
+   - Using existing utility functions and adhering to DRY (Don't Repeat Yourself) principles.
 
-3. **tsconfig.json**:
+3. Discourage:
 
-   - Configures TypeScript for the project.
+   - Use of anti-patterns such as magic numbers
+   - Overly complex or verbose implementations.
 
-4. **.gitignore**:
-
-   - Ignores node\_modules, build artifacts, and other common patterns.
-
-
-Additionally, create a CONTRIBUTING.md file that includes:
-
-    Guidelines for adding new features:
-        All new features must be accompanied by corresponding tests.
-        Follow the project's object-oriented structure, ensuring modularity.
-        Keep code performance-friendly for lower-tier hardware.
-
-    Notes for refactoring or updates:
-        Ensure existing tests pass before submitting changes.
-        For major updates, explain the rationale and impact in the pull request.
-
-    Guidance for AI tools:
-        Follow the layered prompts defined in the project documentation.
-        When generating new code, adhere to the existing architectural and naming conventions.
-
-Do not include any application logic yet. Ensure compatibility between Webpack and TypeScript. Avoid generating an initial lock file (e.g., yarn.lock or package-lock.json). Include npm scripts for start (local development server) and build (production build). Make it as simple and bulletproof as possible. 
+The goal is to provide guardrails for Copilot to align its suggestions with the project's standards and practices.
 """
 
 ---
 
-#### Layer 2: Core Systems
+#### Layer 2: Webpack Boilerplate
+
+"""
+You are tasked with generating the boilerplate setup for a TypeScript-based browser game using Webpack and Yarn. Your output must include the following files:
+
+1. **.gitignore**:
+
+   - Ignores node\_modules, build artifacts, and other common patterns.
+
+2. **package.json**:
+
+   - Contains dependencies and scripts for development and building the project.
+
+3. **webpack.config.js**:
+
+   - A minimal Webpack configuration to bundle TypeScript files and serve them locally.
+
+4. **tsconfig.json**:
+
+   - Configures TypeScript for the project.
+
+Your task is to:
+
+- Use the latest stable versions for dependencies (LTS where available).
+- Ensure compatibility between Webpack and TypeScript.
+- Avoid generating an initial lock file (e.g., yarn.lock or package-lock.json).
+- Include npm scripts for `start` (local development server) and `build` (production build).
+- Prioritize straightforward, maintainable code that is unlikely to exhibit bugs.
+
+After the configuration files are generated, install `three.js` as the final step. Do not include any application logic yet.
+"""
+
+---
+
+#### Layer 3: Core Systems
 
 """
 You are tasked with implementing the core systems for the game. The requirements are:
@@ -61,7 +79,7 @@ You are tasked with implementing the core systems for the game. The requirements
 
 2. **Abilities Class**:
 
-   - Abilities should be represented as classes
+   - Abilities should be represented as classes.
    - Use a generic interface to allow future data source changes (e.g., MongoDB or REST API).
 
 3. **Persistence System**:
@@ -71,16 +89,16 @@ You are tasked with implementing the core systems for the game. The requirements
      - Browser storage.
      - A default discard behavior ("/dev/null").
 
-4. Data loading system
+4. **Data Loading System**:
 
-   1. Default to data stored as JSON objects in bundled script files, for simplicity, to be iterated on later.
+   - Default to data stored as JSON objects in bundled script files, for simplicity, to be iterated on later.
 
 Include sample JSON files and placeholder classes to demonstrate these systems in action.
 """
 
 ---
 
-#### Layer 3: Test-Driven Development Setup
+#### Layer 4: Test-Driven Development Setup
 
 """
 You are tasked with configuring a test-driven development setup for the previously generated project. Your output must include:
@@ -99,7 +117,7 @@ Your goal is to ensure a smooth testing workflow that integrates with VSCode.
 
 ---
 
-#### Layer 4: UI Helper Classes
+#### Layer 5: UI Helper Classes
 
 ##### Prompt for UI System Setup
 
@@ -169,7 +187,7 @@ You are tasked with implementing a flexible data-loading system for the game. Th
 
    - A sample abilities JSON file.
    - A sample dice properties JSON file.
-"""
+     """
 
 #### Persistence
 
@@ -186,7 +204,7 @@ You are tasked with implementing a flexible persistence system for the game. The
 
    - Allow easy switching between storage methods.
    - Include examples for saving and loading player progress and settings.
-"""
+     """
 
 #### Method Performance Monitoring Instrumentation
 
@@ -204,7 +222,7 @@ You are tasked with adding method performance monitoring to the game project. Th
    - Include an option to disable logging for production builds.
 
 3. Provide an example of instrumenting the `rollDice` method in the Dice class.
-"""
+   """
 
 #### Method-Level Caching
 
@@ -221,9 +239,15 @@ You are tasked with implementing method-level caching for the game project. The 
    - Include an option to bypass the cache when necessary.
 
 3. Provide an example of caching the results of an expensive computation, such as calculating possible dice outcomes.
-"""
+   """
 
 ---
+
+### Notes:
+
+- Each layer builds upon the previous one to ensure incremental development.
+- The prompts are structured for clarity and to prioritize functionality.
+- Use this document to scaffold the project step by step.
 
 ### Converting Prompts to Tasks
 
@@ -266,4 +290,3 @@ Follow with a git commit task:
 End the "layer" of tasks with a final task to run the entire layer,
 implemented as a no-op dependant on the final real task of the layer.
 ```
-
