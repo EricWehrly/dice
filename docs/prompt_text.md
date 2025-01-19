@@ -10,283 +10,189 @@ Follow the prompts in sequence, using each layer as a building block for the nex
 
 #### Layer 1: Copilot Contribution Guidelines
 
-"""
-Generate a `.github/copilot-instructions.md` file to serve as a guide for GitHub Copilot's contributions to this project. The file should:
+```
+Generate a `.github/copilot-instructions.md` file. This file should:
 
-1. Include instructions to:
-
-   - Avoid generating code that duplicates existing functions or classes.
-   - Prioritize modularity and maintainability in all contributions.
-   - Follow established conventions in the codebase, such as naming patterns and file organization.
+1. Include clear rules for Copilot's contributions:
+   - Avoid generating code that duplicates existing functionality.
+   - Prioritize modularity, maintainability, and adherence to project conventions (naming patterns, file organization).
 
 2. Encourage:
-
-   - Writing accompanying tests for new features.
-   - Using existing utility functions and adhering to DRY (Don't Repeat Yourself) principles.
+   - Writing tests for new features.
+   - Using existing utility functions (DRY principle).
 
 3. Discourage:
-
-   - Use of anti-patterns such as magic numbers
+   - Magic numbers and anti-patterns.
    - Overly complex or verbose implementations.
 
-The goal is to provide guardrails for Copilot to align its suggestions with the project's standards and practices.
-"""
+Focus on ensuring Copilot aligns with project standards and best practices.
+```
 
 ---
 
 #### Layer 2: Webpack Boilerplate
 
-"""
-You are tasked with generating the boilerplate setup for a TypeScript-based browser game using Webpack and Yarn. Your output must include the following files:
+```
+Generate the boilerplate setup for a TypeScript-based browser game using Webpack and Yarn. Your output must include:
 
 1. **.gitignore**:
-
-   - Ignores node\_modules, build artifacts, and other common patterns.
+   - Exclude `node_modules`, build artifacts, and other common files.
 
 2. **package.json**:
-
-   - Contains dependencies and scripts for development and building the project.
+   - Define dependencies and scripts for development and production builds.
 
 3. **webpack.config.js**:
-
-   - A minimal Webpack configuration to bundle TypeScript files and serve them locally.
+   - Configure TypeScript bundling and a development server.
 
 4. **tsconfig.json**:
-
-   - Configures TypeScript for the project.
+   - Configure TypeScript settings for this project.
 
 Your task is to:
 
-- Use the latest stable versions for dependencies (LTS where available).
+- Use the latest stable versions for dependencies (LTS where applicable).
 - Ensure compatibility between Webpack and TypeScript.
-- Avoid generating an initial lock file (e.g., yarn.lock or package-lock.json).
-- Include npm scripts for `start` (local development server) and `build` (production build).
-- Prioritize straightforward, maintainable code that is unlikely to exhibit bugs.
+- Exclude the generation of lock files (e.g., `yarn.lock`, `package-lock.json`).
+- Include npm scripts for `start` (development server) and `build` (production build).
 
-After the configuration files are generated, install `three.js` as the final step. Do not include any application logic yet.
-"""
-
----
-
-#### Layer 3: Core Systems
-
-"""
-You are tasked with implementing the core systems for the game. The requirements are:
-
-1. **Dice Class**:
-
-   - Each die should be an instance of a class with properties such as color, pip style, and special rules.
-
-2. **Abilities Class**:
-
-   - Abilities should be represented as classes.
-   - Use a generic interface to allow future data source changes (e.g., MongoDB or REST API).
-
-3. **Persistence System**:
-
-   - A flexible system to save player data, supporting:
-     - File system API for on-disk storage.
-     - Browser storage.
-     - A default discard behavior ("/dev/null").
-
-4. **Data Loading System**:
-
-   - Default to data stored as JSON objects in bundled script files, for simplicity, to be iterated on later.
-
-Include sample JSON files and placeholder classes to demonstrate these systems in action.
-"""
+After completing the setup, install `three.js` as the final step.
+```
 
 ---
 
-#### Layer 4: Test-Driven Development Setup
+#### Layer 3: Test-Driven Development Setup
 
-"""
-You are tasked with configuring a test-driven development setup for the previously generated project. Your output must include:
+```
+Configure a test-driven development setup for the project. Your output must include:
 
 1. **Jest Configuration**:
-
-   - Configure Jest to work with TypeScript.
-   - Include TypeScript support and set up Jest mocks for isolating individual classes under test.
+   - Enable TypeScript support and configure Jest mocks for isolating classes under test.
 
 2. **Sample Test**:
-
    - Provide an example test for a placeholder class (e.g., `ExampleClass`) to demonstrate TDD principles.
 
-Your goal is to ensure a smooth testing workflow that integrates with VSCode.
-"""
+Ensure the testing workflow integrates seamlessly with VSCode.
+```
 
 ---
 
-#### Layer 5: UI Helper Classes
+#### Layer 4: Data Handling Systems
+
+##### Data Loading System
+
+```
+Load JSON files dynamically at runtime for entities like abilities and dice properties.
+- Provide a clean interface for requesting and parsing data.
+- Handle errors gracefully, such as missing or malformed files.
+
+Include example JSON files for abilities and dice properties.
+```
+
+##### Persistence System
+
+```
+Create a flexible system to save and load player data:
+- Support file system API (for saving to disk).
+- Browser storage (e.g., localStorage or IndexedDB).
+- A default "discard" behavior (acts like "/dev/null").
+
+Provide examples for saving and loading player progress and settings.
+```
+
+---
+
+#### Layer 5: Game Logic
+
+##### Dice System
+
+```
+Define a `Dice` class with configurable properties, such as:
+- Color.
+- Pip style.
+- Special rules (e.g., weighted dice).
+```
+
+##### Abilities System
+
+```
+Define an `Ability` class with a generic interface that supports future data source changes (e.g., APIs, databases). Include example abilities, such as:
+- Acid: Burns away pips from dice.
+- Ice: Freezes dice, rendering their result immutable and immune to other effects.
+```
+
+---
+
+#### Layer 6: UI Helper Classes
 
 ##### Prompt for UI System Setup
 
-"""
-You are tasked with designing a touch-friendly user interface system for the game project. Your output must:
+```
+Design a touch-friendly user interface system for the game. Your output must include:
 
-1. Include helper classes to:
-
+1. Helper classes to:
    - Define menus in script.
    - Load menu content dynamically from JSON files.
 
-2. Implement a basic example menu titled "Credits" that:
-
+2. A basic example menu titled "Credits" that:
    - Reads its content from a JSON file.
-   - Demonstrates the use of the helper classes.
+   - Demonstrates the use of helper classes.
 
-Ensure the system is modular and easy to extend.
-"""
+Ensure the system is modular and extensible.
+```
 
 ##### Prompt for Predefined Menus
 
-Split the implementation of each menu into separate prompts to ensure clarity and focus:
+```
+Implement predefined menus as separate tasks for clarity and focus:
 
 1. **Main Menu**:
-
-   - The entry point of the game.
    - Provide options to start a new game, load a saved game, or access settings.
 
 2. **Game Settings Menu**:
-
-   - Contains three tabs:
+   - Include tabs for:
      - Controls: Adjust key bindings and input settings.
      - Audio: Configure volume levels and sound effects.
      - Video: Set resolution and graphical quality.
 
 3. **Help Menu**:
-
-   - Includes sections describing the game's mechanics and rules.
-   - Each section should be loaded dynamically from JSON files to allow future updates.
+   - Include sections describing the game's mechanics and rules.
+   - Load sections dynamically from JSON files.
 
 4. **Debug Menu**:
+   - Provide options to toggle feature flags, enable debug logs, and run test scenarios.
+   - Access via a special debug key combination.
 
-   - Includes options to toggle feature flags, enable debug logs, and run test scenarios.
-   - Should be accessible via a special debug key combination.
-
-Each menu should be implemented using the helper classes and demonstrate dynamic JSON loading.
+Use the helper classes to implement these menus and demonstrate dynamic JSON loading.
+```
 
 ---
 
 ### Technical Drafts for Additional Systems
 
-#### Data Loading
-
-"""
-You are tasked with implementing a flexible data-loading system for the game. The requirements are:
-
-1. Create a system that loads JSON files dynamically at runtime.
-
-   - These files will define entities such as abilities, dice properties, and menu content.
-
-2. The system should:
-
-   - Provide a clean interface for requesting and parsing data.
-   - Handle errors gracefully, such as missing or malformed JSON files.
-
-3. Include examples for loading:
-
-   - A sample abilities JSON file.
-   - A sample dice properties JSON file.
-     """
-
-#### Persistence
-
-"""
-You are tasked with implementing a flexible persistence system for the game. The requirements are:
-
-1. Create a system to save and load player data with the following options:
-
-   - File system API (for saving to disk).
-   - Browser storage (e.g., localStorage or IndexedDB).
-   - A default "discard" behavior that does not save data anywhere (acts like "/dev/null").
-
-2. The system should:
-
-   - Allow easy switching between storage methods.
-   - Include examples for saving and loading player progress and settings.
-     """
-
 #### Method Performance Monitoring Instrumentation
 
-"""
-You are tasked with adding method performance monitoring to the game project. The requirements are:
+```
+Add performance monitoring to the game. Your output must:
 
-1. Implement a lightweight system to track method execution times.
-
-   - Include a utility function for measuring and logging performance.
-   - Example: `logPerformance(methodName, executionTime)`.
-
-2. The system should:
-
-   - Be non-invasive and easy to integrate into existing methods.
-   - Include an option to disable logging for production builds.
-
+1. Include a utility function for measuring method execution times (e.g., `logPerformance(methodName, executionTime)`).
+2. Ensure the system is non-invasive and easy to integrate.
 3. Provide an example of instrumenting the `rollDice` method in the Dice class.
-   """
+```
 
 #### Method-Level Caching
 
-"""
-You are tasked with implementing method-level caching for the game project. The requirements are:
+```
+Implement method-level caching for the game. Your output must:
 
-1. Create a utility to cache method results based on input parameters.
-
-   - Example: `cacheMethodResults(methodName, cacheDuration)`.
-
-2. The system should:
-
-   - Support configurable expiration times for cached results.
-   - Include an option to bypass the cache when necessary.
-
-3. Provide an example of caching the results of an expensive computation, such as calculating possible dice outcomes.
-   """
+1. Create a utility to cache method results based on input parameters (e.g., `cacheMethodResults(methodName, cacheDuration)`).
+2. Support configurable expiration times for cached results.
+3. Include an example of caching results for an expensive computation, such as calculating dice outcomes.
+```
 
 ---
 
 ### Notes:
 
-- Each layer builds upon the previous one to ensure incremental development.
-- The prompts are structured for clarity and to prioritize functionality.
+- Each layer builds incrementally upon the previous one.
+- Prompts are designed for clarity and to prioritize functionality.
 - Use this document to scaffold the project step by step.
 
-### Converting Prompts to Tasks
-
-When implementing these prompts as VS Code tasks:
-
-1. Each layer should be converted into a series of sequential tasks
-2. Tasks should follow this pattern for each prompt:
-   - Create a branch
-   - Generate the requested file/code
-   - Commit the changes
-3. Use GitHub Copilot Shell (ghcs) commands where possible
-4. Format task arguments to be specific and focused
-5. Include git commits after each generated file
-
-Example tasks.json format for a prompt:
-```json
-{
-    "label": "L<layer>.<step>: <action>",
-    "type": "shell",
-    "command": "ghcs",
-    "args": [
-        "--target=shell",
-        "--format=plain",
-        "<prompt text>"
-    ],
-    "group": "layer<number>"
-}
-```
-
-Follow with a git commit task:
-```json
-{
-    "label": "L<layer>.<step>-git",
-    "type": "shell",
-    "command": "git add . && git commit -m \"generated by copilot\"",
-    "dependsOn": "L<layer>.<step>: <action>",
-    "group": "layer<number>"
-}
-
-End the "layer" of tasks with a final task to run the entire layer,
-implemented as a no-op dependant on the final real task of the layer.
-```
