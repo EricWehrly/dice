@@ -3,6 +3,7 @@ node_modules/
 
 # Production build
 dist/
+build/
 
 # VSCode settings - include specific files only
 !.vscode/
@@ -28,3 +29,6 @@ yarn-error.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Lock files
+*.lock
