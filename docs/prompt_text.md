@@ -43,9 +43,18 @@ Generate the boilerplate setup for a TypeScript-based browser game using Webpack
 
 3. **webpack.config.js**:
    - Configure TypeScript bundling and a development server.
+   - Ensure that changes are "hot reloaded," meaning Webpack will update the running server when a relevant file change is saved.
+   - Avoid incorrectly using deprecated `devServer.contentBase` rather than `devServer.static`.
 
 4. **tsconfig.json**:
    - Configure TypeScript settings for this project.
+   - Target `es2022`.
+
+5. **Install and configure dependencies**:
+   - Include `three.js` and related `@types` for working in TypeScript. Use a version no older than `0.172.0`.
+   - Include `html-webpack-plugin` and create an `index.html` file.
+   - Style the HTML file to hide scrollbars, margin, and padding (on the body).
+   - Install TypeScript `@type` packages for any installed libraries when available.
 
 Your task is to:
 
@@ -53,8 +62,7 @@ Your task is to:
 - Ensure compatibility between Webpack and TypeScript.
 - Exclude the generation of lock files (e.g., `yarn.lock`, `package-lock.json`).
 - Include npm scripts for `start` (development server) and `build` (production build).
-
-After completing the setup, install `three.js` as the final step.
+- Avoid adding unused, excessive, or unnecessarily complex configuration for TypeScript and Webpack.
 ```
 
 ---
@@ -66,16 +74,35 @@ Configure a test-driven development setup for the project. Your output must incl
 
 1. **Jest Configuration**:
    - Enable TypeScript support and configure Jest mocks for isolating classes under test.
-
-2. **Sample Test**:
-   - Provide an example test for a placeholder class (e.g., `ExampleClass`) to demonstrate TDD principles.
+   - Add a `test` script to `package.json` for running tests.
 
 Ensure the testing workflow integrates seamlessly with VSCode.
 ```
 
 ---
 
-#### Layer 4: Data Handling Systems
+#### Layer 4: Core Systems
+
+##### Event Manager and Game Loop
+
+```
+Implement two core systems: an Event Manager and a Game Loop.
+
+1. **Event Manager**:
+   - Expose methods for Publishing and Subscribing to game events.
+   - Declare at least three event types: `ScriptsLoaded`, `DataLoaded`, and `GameStart`. The `GameStart` event should be called from the game's entrypoint script.
+
+2. **Game Loop**:
+   - Expose methods to:
+     - Register methods for execution in the game loop.
+     - Defer a call (acts as a drop-in replacement for `setTimeout`, but tracked against game time).
+     - Pause and resume the game loop.
+   - Provide callbacks with the number of milliseconds elapsed since the last execution.
+   - Separate concerns into:
+     - Methods that need to be run as frequently as possible.
+     - Methods that can be run less frequently.
+   - Default `RegisterMethod` to the less frequent execution unless explicitly specified.
+```
 
 ##### Data Loading System
 
@@ -195,4 +222,3 @@ Implement method-level caching for the game. Your output must:
 - Each layer builds incrementally upon the previous one.
 - Prompts are designed for clarity and to prioritize functionality.
 - Use this document to scaffold the project step by step.
-
