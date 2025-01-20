@@ -5,7 +5,7 @@ const FOV = 90;
 const ASPECT_RATIO = window.innerWidth / window.innerHeight;
 const NEAR_CLIP = 0.1;
 const FAR_CLIP = 1000;
-const ANIMATION_TIMES = [0, 1]; // Animation start and end times
+const ANIMATION_TIMES = [0, 0.5, 1]; // Animation start, mid, and end times
 
 const DISTANCE_BEHIND = 10;
 const PARABOLIC_PEAK_OFFSET = 5; // Offset for the peak of the parabolic arc
@@ -43,7 +43,7 @@ export function init() {
 
     const track = new THREE.VectorKeyframeTrack('.position', ANIMATION_TIMES, [
       cube.position.x, cube.position.y, cube.position.z,
-      // cube.position.x, midY, midZ,
+      cube.position.x, midY, cube.position.z + (pos.z - cube.position.z) / 2,
       pos.x, pos.y, pos.z
     ]);
 
@@ -60,7 +60,6 @@ export function init() {
       renderer.render(scene, camera);
     }
 
-    console.log('ok, we got to animate');
     animate();
   }
 
@@ -85,7 +84,7 @@ export function init() {
 
   window.addEventListener('mouseup', (event) => {
     if (event.button === 0) {
-      console.log('mouse click registered');
+      console.trace('mouse click registered');
       createCubeAtCursor(event);
     }
   });
