@@ -1,14 +1,18 @@
 import * as THREE from 'three';
 import chroma from 'chroma-js';
 
+// camera settings
 const FOV = 90;
 const ASPECT_RATIO = window.innerWidth / window.innerHeight;
 const NEAR_CLIP = 0.1;
 const FAR_CLIP = 1000;
-const ANIMATION_TIMES = [0, 0.5, 1]; // Animation start, mid, and end times
 
-const DISTANCE_BEHIND = 10;
+const ANIMATION_TIMES = [0, 0.5, 1]; // Animation start, mid, and end times
+const DISTANCE_BEHIND_CAMERA = 8;
 const PARABOLIC_PEAK_OFFSET = 5; // Offset for the peak of the parabolic arc
+
+const SLIDE_AMOUNT = 0.5; // Amount of slide when the cube lands
+const RATTLE_AMOUNT = 0.2; // Amount of rattle when the cube lands
 
 export function init() {
 
@@ -32,22 +36,32 @@ export function init() {
     const cube = new THREE.Mesh(geometry, material);
 
     // Spawn the cube behind and above the camera
-    cube.position.set(camera.position.x, camera.position.y + 5, camera.position.z + DISTANCE_BEHIND);
+    cube.position.set(camera.position.x, camera.position.y + 5, camera.position.z + DISTANCE_BEHIND_CAMERA);
     scene.add(cube);
 
-    const pos = calculatePosition(event, camera);
+    const cubeDestinationPosition = calculatePosition(event, camera);
 
     // Calculate the parabolic trajectory
-    const midY = (cube.position.y + pos.y) / 2 + PARABOLIC_PEAK_OFFSET; // Peak of the parabola
-    const midZ = (cube.position.z + pos.z) / 2 + PARABOLIC_PEAK_OFFSET; // Peak of the parabola
+    const midY = (cube.position.y + cubeDestinationPosition.y) / 2 + PARABOLIC_PEAK_OFFSET; // Peak of the parabola
+    const midZ = (cube.position.z + cubeDestinationPosition.z) / 2 + PARABOLIC_PEAK_OFFSET; // Peak of the parabola
 
-    const track = new THREE.VectorKeyframeTrack('.position', ANIMATION_TIMES, [
+    const parabolicTrack = new THREE.VectorKeyframeTrack('.position', ANIMATION_TIMES, [
       cube.position.x, cube.position.y, cube.position.z,
-      cube.position.x, midY, cube.position.z + (pos.z - cube.position.z) / 2,
-      pos.x, pos.y, pos.z
+      cube.position.x, midY, cube.position.z + (cubeDestinationPosition.z - cube.position.z) / 2,
+      cubeDestinationPosition.x, cubeDestinationPosition.y, cubeDestinationPosition.z
     ]);
 
-    const clip = new THREE.AnimationClip('move', 1, [track]);
+    const slideTrack = new THREE.VectorKeyframeTrack('.position', [1, 1.5], [
+      cubeDestinationPosition.x, cubeDestinationPosition.y, cubeDestinationPosition.z,
+      cubeDestinationPosition.x + SLIDE_AMOUNT, cubeDestinationPosition.y, cubeDestinationPosition.z + SLIDE_AMOUNT
+    ]);
+
+    const rattleTrack = new THREE.VectorKeyframeTrack('.position', [1.5, 2], [
+      cubeDestinationPosition.x + SLIDE_AMOUNT, cubeDestinationPosition.y, cubeDestinationPosition.z + SLIDE_AMOUNT,
+      cubeDestinationPosition.x + SLIDE_AMOUNT + RATTLE_AMOUNT, cubeDestinationPosition.y, cubeDestinationPosition.z + SLIDE_AMOUNT - RATTLE_AMOUNT
+    ]);
+
+    const clip = new THREE.AnimationClip('move', 2, [parabolicTrack, slideTrack, rattleTrack]);
     const mixer = new THREE.AnimationMixer(cube);
     const action = mixer.clipAction(clip);
     action.setLoop(THREE.LoopOnce, 1); // Play the animation one time
