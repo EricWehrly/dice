@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import chroma from 'chroma-js';
+import { Colors } from '../utils/colors';
 import { createCubeAtCursor } from './animation';
 
 // camera settings
@@ -16,7 +16,7 @@ export function init() {
   const renderer = new THREE.WebGLRenderer();
 
   renderer.setSize(window.innerWidth, window.innerHeight);
-  const vscodeGray = chroma('dimgray').hex();
+  const vscodeGray = Colors.dimgray;
   renderer.setClearColor(vscodeGray);
   document.body.appendChild(renderer.domElement);
 
