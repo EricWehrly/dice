@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import chroma from 'chroma-js';
+import { Colors } from '../utils/colors';
 // The following import was incorrect and has been removed: import { animateCube } from './animation';
 
 const ANIMATION_TIMES = [0, 0.5, 1]; // Animation start, mid, and end times
@@ -10,7 +10,7 @@ const RATTLE_AMOUNT = 0.2; // Amount of rattle when the cube lands
 
 export function createCubeAtCursor(event: MouseEvent, camera: THREE.PerspectiveCamera, scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
   const geometry = new THREE.BoxGeometry();
-  const vscodeBlue = chroma('dodgerblue').hex();
+  const vscodeBlue = Colors.dodgerblue;
   const material = new THREE.MeshBasicMaterial({ color: vscodeBlue, wireframe: true });
   const cube = new THREE.Mesh(geometry, material);
 
