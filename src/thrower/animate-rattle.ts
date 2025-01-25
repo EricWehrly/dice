@@ -1,10 +1,21 @@
 import * as THREE from 'three';
 
-const RATTLE_TIMES = [1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
 const RATTLE_AMPLITUDE = 0.2;
 const ROTATION_AMPLITUDE = 0.1;
 
+/**
+ * Generates an array of rattle times based on the given parameters.
+ * @param start - The start time of the rattle.
+ * @param increment - The increment between each rattle time.
+ * @param count - The number of rattle times to generate.
+ * @returns An array of rattle times.
+ */
+function incrementingAnimationTimes(start: number, increment: number, count: number): number[] {
+  return Array.from({ length: count }, (_, i) => start + i * increment);
+}
+
 export function createRattleTracks(destination: THREE.Vector3) {
+  const RATTLE_TIMES = incrementingAnimationTimes(1.5, 0.1, 6); // Adjust parameters as needed
   const rattlePositions = [];
   const rattleRotations = [];
 
