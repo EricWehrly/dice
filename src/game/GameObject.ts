@@ -1,14 +1,33 @@
+interface GameObjectOptions {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  name: string;
+}
+
+const defaultGameObjectOptions: GameObjectOptions = {
+  x: 0,
+  y: 0,
+  width: 100,
+  height: 100,
+  name: "GameObject"
+};
+
 abstract class GameObject {
   protected x: number;
   protected y: number;
   protected width: number;
   protected height: number;
+  protected name: string;
 
-  constructor(x: number, y: number, width: number, height: number) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
+  constructor(options: GameObjectOptions) {
+    const mergedOptions = { ...defaultGameObjectOptions, ...options };
+    this.x = mergedOptions.x;
+    this.y = mergedOptions.y;
+    this.width = mergedOptions.width;
+    this.height = mergedOptions.height;
+    this.name = mergedOptions.name;
   }
 
   public abstract update(): void;
