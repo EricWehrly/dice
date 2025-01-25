@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Colors } from '../utils/colors';
-import { createCubeAtCursor } from './animation';
+import { createCubeAtCursor } from './input';
 
 // camera settings
 const FOV = 90;
@@ -22,15 +22,27 @@ export function init() {
 
   camera.position.z = 5;
 
+  let mixers: THREE.AnimationMixer[] = [];
+
   window.addEventListener('mouseup', (event) => {
     if (event.button === 0) {
       console.trace('mouse click registered');
-      createCubeAtCursor(event, camera, scene, renderer);
+      const mixer = createCubeAtCursor(event, camera, scene);
+      if (mixer) mixers.push(mixer);
     }
   });
 
+  let previousTime = performance.now();
+
   function animate() {
     requestAnimationFrame(animate);
+
+    const currentTime = performance.now();
+    const deltaTime = (currentTime - previousTime) / 1000; // convert to seconds
+    previousTime = currentTime;
+
+    mixers.forEach(mixer => mixer.update(deltaTime));
+
     renderer.render(scene, camera);
   }
 
