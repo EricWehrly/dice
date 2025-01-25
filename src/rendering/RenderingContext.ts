@@ -15,33 +15,38 @@ const defaultOptions: Partial<RenderingContextOptions> = {
 }
 
 export abstract class RenderingContext {
-    private static firstContext: RenderingContext | null = null;
-    private static contextsByName: { [key: string]: RenderingContext } = {};
+    private static _firstContext: RenderingContext | null = null;
+    private static _contextsByName: { [key: string]: RenderingContext } = {};
 
-    static get FirstOrDefault() { return RenderingContext.firstContext; }
-    static ByName(name: string) { return RenderingContext.contextsByName[name]; }
+    static get FirstOrDefault() { return RenderingContext._firstContext; }
+    static get ByName() { return (name: string) => RenderingContext._contextsByName[name]; }
 
-    name: string;
-    scene: THREE.Scene;
-    renderer: THREE.WebGLRenderer;
-    camera: THREE.Camera;
+    private _name: string;
+    private _scene: THREE.Scene;
+    private _renderer: THREE.WebGLRenderer;
+    private _camera: THREE.Camera;
+
+    get name() { return this._name; }
+    get scene() { return this._scene; }
+    get renderer() { return this._renderer; }
+    get camera() { return this._camera; }
 
     constructor(options: RenderingContextOptions) {
-        if(RenderingContext.contextsByName[options.name]) { 
+        if(RenderingContext._contextsByName[options.name]) { 
             throw new Error(`RenderingContext with name ${options.name} already exists`);
         }
 
         const mergedOptions = { ...defaultOptions, ...options };
 
         console.log('creating rendering context', mergedOptions.name);
-        this.name = mergedOptions.name;
-        this.scene = mergedOptions.scene!;
-        this.renderer = mergedOptions.renderer!;
-        this.camera = mergedOptions.camera!;
+        this._name = mergedOptions.name;
+        this._scene = mergedOptions.scene!;
+        this._renderer = mergedOptions.renderer!;
+        this._camera = mergedOptions.camera!;
 
-        if (!RenderingContext.firstContext) {
-            RenderingContext.firstContext = this;
+        if (!RenderingContext._firstContext) {
+            RenderingContext._firstContext = this;
         }
-        RenderingContext.contextsByName[this.name] = this;
+        RenderingContext._contextsByName[this._name] = this;
     }
 }
