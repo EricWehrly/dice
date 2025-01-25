@@ -45,8 +45,8 @@ function animateCube(cube: THREE.Mesh, cubeDestinationPosition: THREE.Vector3) {
 
   const clip = new THREE.AnimationClip('diceToss', 2, [
     parabolicTrack,
-    // rattlePositionTrack,
-    // rattleRotationTrack
+    rattlePositionTrack,
+    rattleRotationTrack
   ]);
 
   console.log('playing animation, returning mixer');
