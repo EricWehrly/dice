@@ -5,8 +5,8 @@ const ROTATION_AMPLITUDE = Math.PI / 32; // Convert to radians
 const EULER_ORDER = 'XYZ'; // Explicitly set rotation order
 
 export function createRattleTracks(destination: THREE.Vector3) {
-  // Use consistent timing with parabolic animation
-  const RATTLE_TIMES = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0];
+  // Use normalized times (0-1), will be scaled by AnimationSequencer
+  const RATTLE_TIMES = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
   const rattlePositions = [];
   const rattleRotations = [];
 

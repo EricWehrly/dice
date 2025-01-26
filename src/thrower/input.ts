@@ -4,6 +4,7 @@ import { createParabolicTrack } from './animate-parabolic';
 import { createRattleTracks } from './animate-rattle';
 import { RenderingContextManager } from '../rendering/RenderingContext';
 import { Dice } from '../game/Dice';
+import { AnimationSequencer } from '../utils/AnimationSequencer';
 
 const DISTANCE_BEHIND_CAMERA = 8;
 
@@ -44,20 +45,26 @@ function calculatePosition(event: MouseEvent, camera: THREE.PerspectiveCamera): 
 }
 
 function animateCube(cube: THREE.Mesh, cubeDestinationPosition: THREE.Vector3) {
+  const sequencer = new AnimationSequencer(cube);
+
   const parabolicTrack = createParabolicTrack(cube.position, cubeDestinationPosition);
+  sequencer.addTrack(parabolicTrack, {
+    startTime: 0,
+    duration: 1.0
+  });
+
   const { rattlePositionTrack, rattleRotationTrack } = createRattleTracks(cubeDestinationPosition);
+  sequencer.addTrack(rattlePositionTrack, {
+    startTime: 0.8, // Start rattle before parabolic ends
+    duration: 1.2,
+    blendDuration: 0.2
+  });
+  
+  sequencer.addTrack(rattleRotationTrack, {
+    startTime: 0.8,
+    duration: 1.2,
+    blendDuration: 0.2
+  });
 
-  const clip = new THREE.AnimationClip('diceToss', 2, [
-    parabolicTrack,
-    rattlePositionTrack,
-    rattleRotationTrack
-  ]);
-
-  console.log('playing animation, returning mixer');
-  const mixer = new THREE.AnimationMixer(cube);
-  const action = mixer.clipAction(clip);
-  action.play();
-  action.setLoop(THREE.LoopOnce, 1); // Play the animation one time
-  action.clampWhenFinished = true; // Keep the last frame when finished
-  return mixer;
+  return sequencer.play();
 }
