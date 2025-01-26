@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const ANIMATION_TIMES = [0, 0.5, 1];
+const ANIMATION_TIMES = [0, 0.5, 1]; // Now represents normalized time points
 const PARABOLIC_PEAK_OFFSET_Y = 5;
 const PARABOLIC_PEAK_OFFSET_Z = 2;
 
