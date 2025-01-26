@@ -46,6 +46,9 @@ export function init() {
       console.log('Hit:', intersects[0].object);
 
       // retrieve the gameobject
+      const hitObject = intersects[0].object;
+      const gameObject = renderContext.getGameObject(hitObject);
+      console.log('Game object:', gameObject);
 
       // open a new RotationViewer to inspect the object.
       // the viewer should appear where the curosr is
