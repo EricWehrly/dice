@@ -2,18 +2,22 @@ import * as THREE from 'three';
 import { Colors } from '../utils/colors';
 import { createParabolicTrack } from './animate-parabolic';
 import { createRattleTracks } from './animate-rattle';
+import { RenderingContextManager } from '../rendering/RenderingContext';
+import { Dice } from '../game/Dice';
 
 const DISTANCE_BEHIND_CAMERA = 8;
 
-export function createCubeAtCursor(event: MouseEvent, camera: THREE.PerspectiveCamera, scene: THREE.Scene) {
+export function createCubeAtCursor(event: MouseEvent, camera: THREE.PerspectiveCamera, renderContext: RenderingContextManager) {
   const geometry = new THREE.BoxGeometry();
   const vscodeBlue = Colors.dodgerblue;
   const material = new THREE.MeshBasicMaterial({ color: vscodeBlue, wireframe: true });
   const cube = new THREE.Mesh(geometry, material);
 
+  const gameObject = new Dice({});
+
   // Spawn the cube behind and above the camera
   cube.position.set(camera.position.x, camera.position.y + 5, camera.position.z + DISTANCE_BEHIND_CAMERA);
-  scene.add(cube);
+  renderContext.addToScene(gameObject, cube);
 
   const cubeDestinationPosition = calculatePosition(event, camera);
 

@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { Colors } from '../utils/colors';
 import { createCubeAtCursor } from './input';
-import { RenderingContext } from '../rendering/RenderingContext';
+import { RenderingContextManager } from '../rendering/RenderingContext';
+import { getIntersects } from '../utils/intersects';
 
 // camera settings
 const FOV = 90;
@@ -9,7 +10,7 @@ const ASPECT_RATIO = window.innerWidth / window.innerHeight;
 const NEAR_CLIP = 0.1;
 const FAR_CLIP = 1000;
 
-class ThrowRenderer extends RenderingContext { }
+class ThrowRenderer extends RenderingContextManager { }
 
 export function init() {
   console.log('game start!');
@@ -28,13 +29,29 @@ export function init() {
 
   camera.position.z = 5;
 
-  let mixers: THREE.AnimationMixer[] = [];
+  const mixers: THREE.AnimationMixer[] = [];
 
   window.addEventListener('mouseup', (event) => {
     if (event.button === 0) {
       console.trace('mouse click registered');
-      const mixer = createCubeAtCursor(event, camera, renderContext.scene);
+      const mixer = createCubeAtCursor(event, camera, renderContext);
       if (mixer) mixers.push(mixer);
+    }
+  });
+
+  window.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    const intersects = getIntersects(event, camera, renderContext.scene);
+    if (intersects.length > 0) {
+      console.log('Hit:', intersects[0].object);
+
+      // retrieve the gameobject
+
+      // open a new RotationViewer to inspect the object.
+      // the viewer should appear where the curosr is
+      // and be 300x300 pixels
+    } else {
+      console.log('No hits');
     }
   });
 

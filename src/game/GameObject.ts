@@ -1,4 +1,4 @@
-interface GameObjectOptions {
+export interface GameObjectOptions {
   x: number;
   y: number;
   width: number;
@@ -14,14 +14,14 @@ const defaultGameObjectOptions: GameObjectOptions = {
   name: "GameObject"
 };
 
-abstract class GameObject {
+export default abstract class GameObject {
   protected x: number;
   protected y: number;
   protected width: number;
   protected height: number;
   protected name: string;
 
-  constructor(options: GameObjectOptions) {
+  constructor(options: Partial<GameObjectOptions>) {
     const mergedOptions = { ...defaultGameObjectOptions, ...options };
     this.x = mergedOptions.x;
     this.y = mergedOptions.y;
