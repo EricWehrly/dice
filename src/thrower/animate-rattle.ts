@@ -1,21 +1,12 @@
 import * as THREE from 'three';
 
 const RATTLE_AMPLITUDE = 0.2;
-const ROTATION_AMPLITUDE = 0.1;
-
-/**
- * Generates an array of rattle times based on the given parameters.
- * @param start - The start time of the rattle.
- * @param increment - The increment between each rattle time.
- * @param count - The number of rattle times to generate.
- * @returns An array of rattle times.
- */
-function incrementingAnimationTimes(start: number, increment: number, count: number): number[] {
-  return Array.from({ length: count }, (_, i) => start + i * increment);
-}
+const ROTATION_AMPLITUDE = Math.PI / 32; // Convert to radians
+const EULER_ORDER = 'XYZ'; // Explicitly set rotation order
 
 export function createRattleTracks(destination: THREE.Vector3) {
-  const RATTLE_TIMES = incrementingAnimationTimes(1.5, 0.1, 6); // Adjust parameters as needed
+  // Use consistent timing with parabolic animation
+  const RATTLE_TIMES = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0];
   const rattlePositions = [];
   const rattleRotations = [];
 
@@ -25,16 +16,20 @@ export function createRattleTracks(destination: THREE.Vector3) {
     const rotOffset = ROTATION_AMPLITUDE * diminishFactor;
 
     rattlePositions.push(
-      destination.x + (i % 2 ? posOffset : -posOffset),
+      destination.x + (Math.random() * 2 - 1) * posOffset,
       destination.y,
-      destination.z + (i % 2 ? posOffset : -posOffset)
+      destination.z + (Math.random() * 2 - 1) * posOffset
     );
 
-    rattleRotations.push(
-      (i % 2 ? rotOffset : -rotOffset),
-      (i % 3 ? rotOffset/2 : -rotOffset/2),
-      (i % 2 ? -rotOffset : rotOffset)
+    // Create proper Euler rotation
+    const rotation = new THREE.Euler(
+      rotOffset * (Math.random() * 2 - 1),
+      rotOffset * (Math.random() * 2 - 1), 
+      rotOffset * (Math.random() * 2 - 1),
+      EULER_ORDER
     );
+
+    rattleRotations.push(rotation.x, rotation.y, rotation.z);
   }
 
   const rattlePositionTrack = new THREE.VectorKeyframeTrack(
@@ -44,7 +39,7 @@ export function createRattleTracks(destination: THREE.Vector3) {
   );
 
   const rattleRotationTrack = new THREE.VectorKeyframeTrack(
-    '.rotation',
+    '.rotation[.]',
     RATTLE_TIMES,
     rattleRotations
   );
