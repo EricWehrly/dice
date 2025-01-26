@@ -19,9 +19,8 @@ export abstract class RenderingContextManager {
     private static _firstContext: RenderingContextManager | null = null;
     private static _contextsByName: { [key: string]: RenderingContextManager } = {};
 
-    // Add maps for tracking relationships
-    private _gameObjectToObject3D: Map<GameObject, THREE.Object3D> = new Map();
-    private _object3DToGameObject: Map<THREE.Object3D, GameObject> = new Map();
+    // Map of scene object UUIDs to game objects
+    private _sceneObjectMapping: Map<string, GameObject> = new Map();
 
     static get FirstOrDefault() { return RenderingContextManager._firstContext; }
     static get ByName() { return (name: string) => RenderingContextManager._contextsByName[name]; }
@@ -56,25 +55,16 @@ export abstract class RenderingContextManager {
     }
 
     addToScene(gameObject: GameObject, object3d: THREE.Object3D) {
-        this._gameObjectToObject3D.set(gameObject, object3d);
-        this._object3DToGameObject.set(object3d, gameObject);
+        this._sceneObjectMapping.set(object3d.uuid, gameObject);
         this._scene.add(object3d);
     }
 
-    removeFromScene(gameObject: GameObject) {
-        const object3d = this._gameObjectToObject3D.get(gameObject);
-        if (object3d) {
-            this._scene.remove(object3d);
-            this._gameObjectToObject3D.delete(gameObject);
-            this._object3DToGameObject.delete(object3d);
-        }
-    }
-
-    getObject3D(gameObject: GameObject): THREE.Object3D | undefined {
-        return this._gameObjectToObject3D.get(gameObject);
+    removeFromScene(object3d: THREE.Object3D) {
+        this._scene.remove(object3d);
+        this._sceneObjectMapping.delete(object3d.uuid);
     }
 
     getGameObject(object3d: THREE.Object3D): GameObject | undefined {
-        return this._object3DToGameObject.get(object3d);
+        return this._sceneObjectMapping.get(object3d.uuid);
     }
 }
