@@ -3,12 +3,15 @@ import { Colors } from '../utils/colors';
 import { createCubeAtCursor } from './input';
 import { RenderingContextManager } from '../rendering/RenderingContext';
 import { getIntersects } from '../utils/intersects';
+import { RotationViewer } from '../rendering/RotationViewer';
 
 // camera settings
 const FOV = 90;
 const ASPECT_RATIO = window.innerWidth / window.innerHeight;
 const NEAR_CLIP = 0.1;
 const FAR_CLIP = 1000;
+const VIEWER_WIDTH = 300;
+const VIEWER_HEIGHT = 300;
 
 class ThrowRenderer extends RenderingContextManager { }
 
@@ -50,9 +53,18 @@ export function init() {
       const gameObject = renderContext.getGameObject(hitObject);
       console.log('Game object:', gameObject);
 
-      // open a new RotationViewer to inspect the object.
-      // the viewer should appear where the curosr is
-      // and be 300x300 pixels
+      // Create new rotation viewer
+      const viewer = new RotationViewer({
+        name: `rotation-viewer-${Date.now()}`,
+        width: VIEWER_WIDTH,
+        height: VIEWER_HEIGHT
+      });
+      
+      // Position the viewer at the cursor
+      viewer.setPosition(event.clientX, event.clientY);
+      
+      // Start the animation
+      viewer.start();
     } else {
       console.log('No hits');
     }
