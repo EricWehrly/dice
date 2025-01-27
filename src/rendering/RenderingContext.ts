@@ -7,13 +7,18 @@ export type RenderingContextOptions = {
     scene?: THREE.Scene;
     renderer?: THREE.WebGLRenderer;
     camera?: THREE.Camera;
+    width?: number;
+    height?: number;
 }
 
-const defaultOptions: Partial<RenderingContextOptions> = {
+const createDefaultOptions = (): RenderingContextOptions => ({
+    name: 'default',
     scene: new THREE.Scene(),
     renderer: new THREE.WebGLRenderer(),
-    camera: CameraFactory.createCamera()
-}
+    camera: CameraFactory.createCamera(),
+    width: window.innerWidth,
+    height: window.innerHeight
+});
 
 export abstract class RenderingContextManager {
     private static _firstContext: RenderingContextManager | null = null;
@@ -29,29 +34,54 @@ export abstract class RenderingContextManager {
     private _scene: THREE.Scene;
     private _renderer: THREE.WebGLRenderer;
     private _camera: THREE.Camera;
+    private _width: number;
+    private _height: number;
 
     get name() { return this._name; }
     get scene() { return this._scene; }
     get renderer() { return this._renderer; }
     get camera() { return this._camera; }
+    get width() { return this._width; }
+    get height() { return this._height; }
+
+    set width(value: number) {
+        this._width = value;
+        this.updateAspectRatio();
+    }
+
+    set height(value: number) {
+        this._height = value;
+        this.updateAspectRatio();
+    }
 
     constructor(options: RenderingContextOptions) {
         if(RenderingContextManager._contextsByName[options.name]) { 
             throw new Error(`RenderingContext with name ${options.name} already exists`);
         }
 
-        const mergedOptions = { ...defaultOptions, ...options };
+        const defaults = createDefaultOptions();
+        const mergedOptions = { ...defaults, ...options } as Required<RenderingContextOptions>;
 
         console.log('creating rendering context', mergedOptions.name);
         this._name = mergedOptions.name;
-        this._scene = mergedOptions.scene!;
-        this._renderer = mergedOptions.renderer!;
-        this._camera = mergedOptions.camera!;
+        this._scene = mergedOptions.scene;
+        this._renderer = mergedOptions.renderer;
+        this._camera = mergedOptions.camera;
+        this._width = mergedOptions.width;
+        this._height = mergedOptions.height;
+        this.updateAspectRatio();
 
         if (!RenderingContextManager._firstContext) {
             RenderingContextManager._firstContext = this;
         }
         RenderingContextManager._contextsByName[this._name] = this;
+    }
+
+    private updateAspectRatio(): void {
+        if (this._camera instanceof THREE.PerspectiveCamera) {
+            this._camera.aspect = this._width / this._height;
+            this._camera.updateProjectionMatrix();
+        }
     }
 
     addToScene(gameObject: GameObject, object3d: THREE.Object3D) {

@@ -5,14 +5,30 @@ const CAMERA_POSITION_Z = 5;
 const ROTATION_INCREMENT = 0.01;
 
 export class RotationViewer extends RenderingContextManager {
+    private container: HTMLDivElement;
 
     constructor(options: RenderingContextOptions) {
         super(options);
 
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(this.renderer.domElement);
+        // Create container div for the viewer
+        this.container = document.createElement('div');
+        this.container.style.position = 'absolute';
+        this.container.style.zIndex = '1000';
+        this.container.style.background = '#2d2d2d';
+        this.container.style.padding = '10px';
+        this.container.style.borderRadius = '5px';
+        this.container.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+
+        this.renderer.setSize(this.width, this.height);
+        this.container.appendChild(this.renderer.domElement);
+        document.body.appendChild(this.container);
         
         this.camera.position.z = CAMERA_POSITION_Z;
+    }
+
+    public setPosition(x: number, y: number): void {
+        this.container.style.left = `${x}px`;
+        this.container.style.top = `${y}px`;
     }
 
     public start(): void {
