@@ -16,8 +16,8 @@ const createDefaultOptions = (): RenderingContextOptions => ({
     scene: new THREE.Scene(),
     renderer: new THREE.WebGLRenderer(),
     camera: CameraFactory.createCamera(),
-    width: window.innerWidth,
-    height: window.innerHeight
+    width: typeof window !== 'undefined' ? window.innerWidth : 800,
+    height: typeof window !== 'undefined' ? window.innerHeight : 600
 });
 
 export abstract class RenderingContextManager {
