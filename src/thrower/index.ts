@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Colors } from '../utils/colors';
 import { createCubeAtCursor } from './input';
-import { RenderingContextManager } from '../rendering/RenderingContext';
+import { RenderingContextManager } from '../rendering/RenderingContextManager';
 import { getIntersects } from '../utils/intersects';
 import { RotationViewer } from '../rendering/RotationViewer';
 

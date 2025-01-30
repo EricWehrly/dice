@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { RenderingContextManager, RenderingContextOptions } from './RenderingContext';
+import { RenderingContextManager, RenderingContextOptions } from './RenderingContextManager';
 
 const CAMERA_POSITION_Z = 5;
 const ROTATION_INCREMENT = 0.01;
