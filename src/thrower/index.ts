@@ -46,14 +46,11 @@ export function init() {
     event.preventDefault();
     const intersects = getIntersects(event, camera, renderContext.scene);
     if (intersects.length > 0) {
-      console.log('Hit:', intersects[0].object);
 
-      // retrieve the gameobject
       const hitObject = intersects[0].object;
       const gameObject = renderContext.getGameObject(hitObject);
-      console.log('Game object:', gameObject);
+      // console.log('Game object:', gameObject);
 
-      // Create new rotation viewer
       const viewer = new RotationViewer({
         name: `rotation-viewer-${Date.now()}`,
         width: VIEWER_WIDTH,
@@ -63,10 +60,7 @@ export function init() {
       // Position the viewer at the cursor
       viewer.setPosition(event.clientX, event.clientY);
       
-      // Start the animation
       viewer.start();
-    } else {
-      console.log('No hits');
     }
   });
 
