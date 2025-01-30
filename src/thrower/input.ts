@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Colors } from '../utils/colors';
 import { createParabolicTrack } from './animate-parabolic';
 import { createRattleTracks } from './animate-rattle';
-import { RenderingContextManager } from '../rendering/RenderingContext';
+import { RenderingContextManager } from '../rendering/RenderingContextManager';
 import { Dice, DiceOptions } from '../game/Dice';
 import { AnimationSequencer } from '../utils/AnimationSequencer';
 import { DiceCube, DiceRenderer } from '../rendering/Dice.renderer';
