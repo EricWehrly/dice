@@ -2,17 +2,13 @@ import * as THREE from 'three';
 import { Colors } from '../utils/colors';
 import { createCubeAtCursor } from './input';
 import { RenderingContextManager } from '../rendering/RenderingContextManager';
-import { getIntersects } from '../utils/intersects';
-import { RotationViewer } from '../rendering/RotationViewer';
-import { DiceRenderer } from '../rendering/Dice.renderer';
+import { attachContextMenuListener } from '../ui/GameObjectInspector';
 
 // camera settings
 const FOV = 90;
 const ASPECT_RATIO = window.innerWidth / window.innerHeight;
 const NEAR_CLIP = 0.1;
 const FAR_CLIP = 1000;
-const VIEWER_WIDTH = 300;
-const VIEWER_HEIGHT = 300;
 
 class ThrowRenderer extends RenderingContextManager { }
 
@@ -43,34 +39,7 @@ export function init() {
     }
   });
 
-  window.addEventListener('contextmenu', (event) => {
-    event.preventDefault();
-    const intersects = getIntersects(event, camera, renderContext.scene);
-    if (intersects.length > 0) {
-
-      const hitObject = intersects[0].object;
-      const gameObject = renderContext.getGameObject(hitObject);
-      const renderer = hitObject as unknown as DiceRenderer;
-      if(!gameObject || !renderer) {
-        console.error('Could not find game object or renderer for hit object');
-        return;
-      }
-      // const cube = new DiceRenderer();
-      // console.log('Game object:', gameObject);
-
-      const viewer = new RotationViewer({
-        name: `rotation-viewer-${Date.now()}`,
-        width: VIEWER_WIDTH,
-        height: VIEWER_HEIGHT
-      });
-      viewer.addToScene(gameObject);
-      
-      // Position the viewer at the cursor
-      viewer.setPosition(event.clientX, event.clientY);
-      
-      viewer.start();
-    }
-  });
+  attachContextMenuListener(camera, renderContext);
 
   let previousTime = performance.now();
 
