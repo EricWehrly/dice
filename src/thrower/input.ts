@@ -5,7 +5,6 @@ import { createRattleTracks } from './animate-rattle';
 import { RenderingContextManager } from '../rendering/RenderingContextManager';
 import { Dice, DiceOptions } from '../game/Dice';
 import { AnimationSequencer } from '../utils/AnimationSequencer';
-import { DiceCube, DiceRenderer } from '../rendering/Dice.renderer';
 
 const DISTANCE_BEHIND_CAMERA = 8;
 
@@ -20,11 +19,11 @@ export function createCubeAtCursor(event: MouseEvent, camera: THREE.PerspectiveC
     backColor: Colors.antiquewhite
   };
   const gameObject = new Dice(diceOptions);
-  const cube = new DiceCube(gameObject);
+  // const cube = new DiceCube(gameObject);
 
   // Spawn the cube behind and above the camera
+  const cube = renderContext.addToScene(gameObject);
   cube.position.set(camera.position.x, camera.position.y + 5, camera.position.z + DISTANCE_BEHIND_CAMERA);
-  renderContext.addToScene(gameObject, cube);
 
   const cubeDestinationPosition = calculatePosition(event, camera);
 

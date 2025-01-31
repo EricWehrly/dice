@@ -4,6 +4,7 @@ import { createCubeAtCursor } from './input';
 import { RenderingContextManager } from '../rendering/RenderingContextManager';
 import { getIntersects } from '../utils/intersects';
 import { RotationViewer } from '../rendering/RotationViewer';
+import { DiceRenderer } from '../rendering/Dice.renderer';
 
 // camera settings
 const FOV = 90;
@@ -49,6 +50,12 @@ export function init() {
 
       const hitObject = intersects[0].object;
       const gameObject = renderContext.getGameObject(hitObject);
+      const renderer = hitObject as unknown as DiceRenderer;
+      if(!gameObject || !renderer) {
+        console.error('Could not find game object or renderer for hit object');
+        return;
+      }
+      // const cube = new DiceRenderer();
       // console.log('Game object:', gameObject);
 
       const viewer = new RotationViewer({
@@ -56,6 +63,7 @@ export function init() {
         width: VIEWER_WIDTH,
         height: VIEWER_HEIGHT
       });
+      viewer.addToScene(gameObject);
       
       // Position the viewer at the cursor
       viewer.setPosition(event.clientX, event.clientY);
