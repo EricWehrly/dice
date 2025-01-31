@@ -11,6 +11,7 @@ const THREE = {
         setSize: jest.fn(),
         render: jest.fn(),
     })),
+    Mesh: jest.fn().mockImplementation(() => new Mesh()),
     // Add other necessary mocks here
 };
 

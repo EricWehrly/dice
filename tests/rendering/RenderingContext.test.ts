@@ -1,5 +1,5 @@
 jest.mock('three');
-import { RenderingContextManager, RenderingContextOptions } from '../../src/rendering/RenderingContext';
+import { RenderingContextManager, RenderingContextOptions } from '../../src/rendering/RenderingContextManager';
 
 // Concrete implementation for testing
 class TestRenderingContext extends RenderingContextManager {

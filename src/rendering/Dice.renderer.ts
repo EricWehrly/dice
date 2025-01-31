@@ -1,15 +1,18 @@
 import * as THREE from 'three';
-import GameObject from '../game/GameObject';
 import { Dice } from '../game/Dice';
+import { BaseRenderer, RendererOptions } from './BaseRenderer';
 
-export type DiceRendererOptions = {
-    gameObject: GameObject;
-}
+export type DiceRendererOptions = RendererOptions & {
+    faceCount?: number;
+    foreColor?: string;
+    backColor?: string;
+};
 
-export class DiceRenderer  {
+export class DiceRenderer extends BaseRenderer {
     constructor(options: DiceRendererOptions) {
-        // super(options.gameObject);
-
+        super(options);
+        this.geometry = new THREE.BoxGeometry();
+        this.material = new THREE.MeshBasicMaterial({ color: options.backColor });
     }
 
     public render(context: CanvasRenderingContext2D): void {
@@ -18,20 +21,4 @@ export class DiceRenderer  {
     }
 }
 
-// TODO: Defaults
-export type DiceCubeOptions = {
-    faceCount: number;
-    // TODO: assert this is one of "Colors." (with a mask enum?)
-    foreColor: string;
-    backColor: string;
-}
-
-export class DiceCube extends THREE.Mesh {
-    constructor(gameObject: Dice) {
-
-        super();
-
-        this.geometry = new THREE.BoxGeometry();
-        this.material = new THREE.MeshBasicMaterial({ color: gameObject.backColor });
-    }
-}
+BaseRenderer.registerRenderer(Dice.name, DiceRenderer);

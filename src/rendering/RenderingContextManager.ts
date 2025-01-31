@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CameraFactory } from './CameraFactory';
 import GameObject from '../game/GameObject';
-
+import { BaseRenderer } from './BaseRenderer';
 export type RenderingContextOptions = {
     name: string;
     scene?: THREE.Scene;
@@ -20,11 +20,10 @@ const createDefaultOptions = (): RenderingContextOptions => ({
     height: typeof window !== 'undefined' ? window.innerHeight : 600
 });
 
-export abstract class RenderingContextManager {
+export class RenderingContextManager {
     private static _firstContext: RenderingContextManager | null = null;
     private static _contextsByName: { [key: string]: RenderingContextManager } = {};
 
-    // Map of scene object UUIDs to game objects
     private _sceneObjectMapping: Map<string, GameObject> = new Map();
 
     static get FirstOrDefault() { return RenderingContextManager._firstContext; }
@@ -62,7 +61,6 @@ export abstract class RenderingContextManager {
         const defaults = createDefaultOptions();
         const mergedOptions = { ...defaults, ...options } as Required<RenderingContextOptions>;
 
-        console.log('creating rendering context', mergedOptions.name);
         this._name = mergedOptions.name;
         this._scene = mergedOptions.scene;
         this._renderer = mergedOptions.renderer;
@@ -84,9 +82,17 @@ export abstract class RenderingContextManager {
         }
     }
 
-    addToScene(gameObject: GameObject, object3d: THREE.Object3D) {
+    addToScene(gameObject: GameObject) {
+        const rendererConstructor = BaseRenderer.getRenderer(gameObject.constructor.name);
+        if (!rendererConstructor) {
+            throw new Error(`No renderer registered for game object type: ${gameObject.constructor.name}`);
+        }
+
+        const object3d = new rendererConstructor({ gameObject });
         this._sceneObjectMapping.set(object3d.uuid, gameObject);
         this._scene.add(object3d);
+
+        return object3d;
     }
 
     removeFromScene(object3d: THREE.Object3D) {

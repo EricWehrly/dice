@@ -1,8 +1,14 @@
 import * as THREE from 'three';
 import { RenderingContextManager, RenderingContextOptions } from './RenderingContextManager';
+import GameObject from '../game/GameObject';
 
 const CAMERA_POSITION_Z = 5;
 const ROTATION_INCREMENT = 0.01;
+
+export type RotationViewerOptions = RenderingContextOptions & {
+    gameObject: GameObject;
+    renderer: THREE.Object3D;   // maybe just for now
+};
 
 export class RotationViewer extends RenderingContextManager {
     private container: HTMLDivElement;
