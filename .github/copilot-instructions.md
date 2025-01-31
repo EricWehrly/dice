@@ -69,3 +69,34 @@ function roll(n) {
     return r;
 }
 ```
+
+### Class Pattern with Default Options
+
+When building classes that require default options, follow this pattern:
+
+1. **Define the Options Type**: Create a type that includes all possible options, marking optional and required fields appropriately.
+2. **Create a Defaults Class**: Implement a class that provides default values for the optional fields.
+3. **Constructor Implementation**: In the constructor, merge the provided options with the default options and pass them to the superclass.
+
+Example:
+
+```typescript
+import GameObject, { GameObjectOptions } from './GameObject';
+
+export type DiceOptions = GameObjectOptions & {
+    faceCount?: number;
+    foreColor: string;
+};
+
+export class DiceOptionsDefaults implements Partial<DiceOptions> {
+    faceCount = 6;
+}
+
+export class Dice extends GameObject {
+    constructor(options: DiceOptions) {
+        const defaultOptions = new DiceOptionsDefaults();
+        const diceOptions = ({ ...defaultOptions, ...options } as Required<DiceOptions>);
+        super(diceOptions);
+    }
+}
+```
