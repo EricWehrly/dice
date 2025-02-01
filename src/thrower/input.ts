@@ -9,43 +9,42 @@ import { AnimationSequencer } from '../utils/AnimationSequencer';
 const DISTANCE_BEHIND_CAMERA = 8;
 
 export function createCubeAtCursor(event: MouseEvent, camera: THREE.PerspectiveCamera, renderContext: RenderingContextManager) {
-  // const geometry = new THREE.BoxGeometry();
-  // const vscodeBlue = Colors.dodgerblue;
-  // const material = new THREE.MeshBasicMaterial({ color: vscodeBlue, wireframe: true });
-  // const cube = new THREE.Mesh(geometry, material);
-
   const diceOptions: DiceOptions = {
-    foreColor: Colors.black,
+    foreColor: Colors.dodgerblue,
     backColor: Colors.antiquewhite
   };
   const gameObject = new Dice(diceOptions);
-  // const cube = new DiceCube(gameObject);
 
-  // Spawn the cube behind and above the camera
   const cube = renderContext.addToScene(gameObject);
+  // Spawn the cube behind and above the camera
   cube.position.set(camera.position.x, camera.position.y + 5, camera.position.z + DISTANCE_BEHIND_CAMERA);
+
+  // Apply a random rotation to the dice
+  applyRandomRotation(cube, gameObject.faceCount);
 
   const cubeDestinationPosition = calculatePosition(event, camera);
 
   return animateCube(cube, cubeDestinationPosition);
 }
 
+function applyRandomRotation(dice: THREE.Object3D, faceCount: number) {
+  const randomFace = Math.floor(Math.random() * faceCount);
+  const angle = (2 * Math.PI) / faceCount;
+  dice.rotation.x = randomFace * angle;
+  dice.rotation.y = randomFace * angle;
+  dice.rotation.z = randomFace * angle;
+}
+
 function calculatePosition(event: MouseEvent, camera: THREE.PerspectiveCamera): THREE.Vector3 {
-  // Create a vector from the mouse event coordinates
   const vector = new THREE.Vector3(
     (event.clientX / window.innerWidth) * 2 - 1,
     -(event.clientY / window.innerHeight) * 2 + 1,
     0.5
   );
 
-  // Unproject the vector to get the direction
   vector.unproject(camera);
   const dir = vector.sub(camera.position).normalize();
-
-  // Calculate the distance from the camera to the point in the direction
   const distance = -camera.position.z / dir.z;
-
-  // Calculate the final position by adding the direction vector scaled by the distance to the camera position
   return camera.position.clone().add(dir.multiplyScalar(distance));
 }
 
