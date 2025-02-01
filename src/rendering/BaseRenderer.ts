@@ -15,8 +15,6 @@ export abstract class BaseRenderer extends THREE.Mesh {
         this.gameObject = options.gameObject;
     }
 
-    abstract render(context: CanvasRenderingContext2D): void;
-
     static registerRenderer(gameObjectType: string, renderer: RendererConstructor) {
         if (!BaseRenderer.registry) {
             BaseRenderer.registry = new Map();
