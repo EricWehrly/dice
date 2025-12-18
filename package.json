@@ -11,13 +11,13 @@
   },
   "dependencies": {
     "chroma-js": "^3.1.2",
-    "three": "^0.172.0"
+    "three": "^0.177.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@types/chroma-js": "^3.1.0",
     "@types/jest": "^29.5.14",
-    "@types/three": "^0.172.0",
+    "@types/three": "^0.178.0",
     "eslint": "^9.18.0",
     "globals": "^15.14.0",
     "html-webpack-plugin": "^5.0.0",
