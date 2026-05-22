@@ -1,40 +1,41 @@
 import * as THREE from 'three';
 import { getIntersects } from '../utils/intersects';
-import { RotationViewer } from '../rendering/RotationViewer';
-import { RenderingContextManager } from '../rendering/RenderingContextManager';
+import { getEntityForMesh, getEntityIdForMesh } from '../rendering/EntityMeshRegistry';
 
-const VIEWER_WIDTH = 300;
-const VIEWER_HEIGHT = 300;
-
-export function handleContextMenu(event: MouseEvent, camera: THREE.Camera, renderContext: RenderingContextManager) {
-  debugger;
+export function handleContextMenu(event: MouseEvent, camera: THREE.Camera, scene: THREE.Scene) {
   event.preventDefault();
-  const intersects = getIntersects(event, camera, renderContext.scene);
+
+  const intersects = getIntersects(event, camera, scene);
+
   if (intersects.length > 0) {
-    const hitObject = intersects[0].object;
-    const gameObject = renderContext.getGameObject(hitObject);
-    if(!gameObject) return;
-    // if (!gameObject || !renderer) {
-    //   console.error('Could not find game object or renderer for hit object');
-    //   return;
-    // }
-
-    const viewer = new RotationViewer({
-      name: `rotation-viewer-${Date.now()}`,
-      width: VIEWER_WIDTH,
-      height: VIEWER_HEIGHT
+    const hit = intersects[0].object;
+    const mappedEntityId = getEntityIdForMesh(hit);
+    console.info('Inspector raycast hit:', {
+      objectUuid: hit.uuid,
+      objectType: hit.type,
+      mappedEntityId
     });
-    viewer.addToScene(gameObject);
-
-    // Position the viewer at the cursor
-    viewer.setPosition(event.clientX, event.clientY);
-
-    viewer.start();
+  } else {
+    console.info('Inspector raycast miss');
   }
-}
 
-export function attachContextMenuListener(camera: THREE.Camera, renderContext: RenderingContextManager) {
-  window.addEventListener('contextmenu', (event) => {
-    handleContextMenu(event, camera, renderContext);
+  if (intersects.length === 0) return;
+
+  const entity = getEntityForMesh(intersects[0].object);
+  if (!entity) return;
+
+  // Inspector UI is deferred pending engine-level modal/scene capabilities.
+  // For now, keep entity selection plumbing in place for future implementation.
+  (window as any).__lastInspectedEntity = entity;
+  console.info('Inspector deferred: entity selected for future inspector flow.', {
+    name: (entity as any).name,
+    id: (entity as any).id
   });
 }
+
+export function attachContextMenuListener(camera: THREE.Camera, scene: THREE.Scene) {
+  window.addEventListener('contextmenu', (event) => {
+    handleContextMenu(event, camera, scene);
+  });
+}
+

@@ -1,15 +1,7 @@
 import * as THREE from 'three';
-import { Colors } from '../utils/colors';
 import { createCubeAtCursor } from './input';
-import { RenderingContextManager } from '../rendering/RenderingContextManager';
 import { attachContextMenuListener } from '../ui/GameObjectInspector';
-import ThreeJSRenderContext from '@/engine/js/rendering/contexts/ThreeJS.RenderContext';
-
-// camera settings
-const FOV = 90;
-const ASPECT_RATIO = window.innerWidth / window.innerHeight;
-const NEAR_CLIP = 0.1;
-const FAR_CLIP = 1000;
+import ThreeJSRenderContext from '../../engine/js/rendering/contexts/ThreeJS.RenderContext';
 
 export function init() {
   console.log('game start!');
@@ -42,7 +34,7 @@ export function init() {
     }
   });
 
-  attachContextMenuListener(camera, renderContext as unknown as any);
+  attachContextMenuListener(camera, renderContext.scene as unknown as THREE.Scene);
 
   // Register render method with engine's ThreeJSRenderContext system
   let previousTime = performance.now();

@@ -10,6 +10,7 @@ import Vector3D from '../engine/js/baseTypes/Vector3D';
 // Import dice configuration and graphics
 import { DiceConfig } from './game/Dice';
 import { DiceGraphic } from './rendering/DiceGraphic';
+import { init as initThrower } from './thrower';
 
 // Import entity builder
 import { createEntity } from '../engine/js/entities/character/EntityBuilder';
@@ -125,6 +126,7 @@ function createDiceEntities() {
 // Initialize scene when game starts
 Events.Subscribe(Events.List.GameStart, setupDiceScene);
 Events.Subscribe(Events.List.GameStart, createDiceEntities);
+Events.Subscribe(Events.List.GameStart, initThrower);
 
 function startGame() {
     console.log('Starting dice game...');

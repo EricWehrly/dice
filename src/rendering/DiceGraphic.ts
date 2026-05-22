@@ -3,6 +3,7 @@ import { EntityGraphicThree } from '../../engine/js/rendering/entities/EntityGra
 import Entity from '../../engine/js/entities/character/Entity';
 import { getDiceConfig, DiceConfig } from '../game/Dice';
 import { PipUtils } from './util/PipUtils';
+import { registerEntityMesh } from './EntityMeshRegistry';
 
 /**
  * 3D graphics handler for Dice entities
@@ -46,6 +47,9 @@ export class DiceGraphic extends EntityGraphicThree {
 
         this.mesh = new THREE.Mesh(geometry, material);
         console.log('Created dice mesh:', this.mesh);
+
+        // Register mesh in the UUID → Entity registry for raycasting lookup
+        registerEntityMesh(this.mesh, this.entity);
 
         // Add pips asynchronously (PipUtils is synchronous in current implementation)
         this.addPips(this.mesh, faceCount, cfg.foreColor);

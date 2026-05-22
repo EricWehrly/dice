@@ -28,6 +28,13 @@
 5. **Cooldown System**: Not implemented for left-click dice throwing
 6. **Scene Mode**: No concept of "detail mode" vs "throw mode"
 
+### Current Decision (May 2026)
+- Defer full inspector modal implementation on dice side until engine provides reusable modal/screen capabilities.
+- Keep incremental groundwork in dice:
+    - Entity mesh lookup registry (`src/rendering/EntityMeshRegistry.ts`)
+    - Right-click entity resolution in `src/ui/GameObjectInspector.ts`
+- Prioritize lower-effort migration increments (throw input, cooldown UI, throw reset behavior) before revisiting full inspector UI.
+
 ---
 
 ## Goal: Two Scene System
@@ -81,6 +88,8 @@
 ### Phase 2: Implement Inspector System
 **Goal**: Working right-click inspector with orbit controls
 
+> Status update: **Partially deferred**. Task 2.1 groundwork is in place; Tasks 2.2+2.3 are blocked by engine-level UI/screen capability requirements.
+
 #### Task 2.1: Fix GameObjectInspector
 - [ ] Create proper dice-to-mesh mapping system
 - [ ] Store dice entities in a registry with their mesh UUIDs
@@ -108,6 +117,16 @@
 
 **Files to modify**:
 - `src/ui/GameObjectInspector.ts`
+
+#### Task 2.4: Engine Capability Requirements (New)
+- [ ] Define engine modal lifecycle API (open/close hooks, focus, escape handling)
+- [ ] Define render suspension policy for main scene during modal/screen transitions
+- [ ] Define secondary scene/screen pattern for detail views (inspectors, menus, dialogs)
+- [ ] Add minimal example in engine docs demonstrating scene/screen switching
+
+**Ownership split**:
+- Engine repo roadmap: capability definition and reusable implementation
+- Dice repo roadmap: integrate inspector once engine capabilities exist
 
 ---
 
@@ -292,9 +311,21 @@ this.container.appendChild(closeButton);
 
 ## Questions to Resolve
 1. Should we keep `GameObject` base class or migrate fully to Engine's Entity?
+strongly prefer to migrate to entity
 2. Do we want dice to persist after throwing or fade out?
+persist, but reset (snap visibility change is fine for now) on new throw.
 3. Should inspector have additional UI (stats, properties)?
+Yeah. 
+In an ideal scenario:
+- the inspector is a modal
+- pauses rendering of the scene below
+- takes up most of the screen, but has a dedicated 'dismiss' button (x) like a modal, maybe also a border/frame
+- the inspector is maybe subdivided into the dice preview area, and this stats section (ideally like 80:20 display share)
+- ideally responsive (stats cuts into whichever there's more of: width or height)
 4. Visual indicator for cooldown timer?
+a circle / very simple sweeping clock type visual
+circle with solid color background, very low opacity
+overlay circle with slight edge (like an hour hand on a clock) shows "progress" has much higher opacity of same color, fills clockwise to animate progress
 
 ---
 

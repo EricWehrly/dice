@@ -2,14 +2,11 @@ import * as THREE from 'three';
 import { Colors } from '../utils/colors';
 import { createParabolicTrack } from './animate-parabolic';
 import { createRattleTracks } from './animate-rattle';
-import { RenderingContextManager } from '../rendering/RenderingContextManager';
 import { AnimationSequencer } from '../utils/AnimationSequencer';
-import { DiceConfig } from '../game/Dice';
 import { DiceGraphic } from '../rendering/DiceGraphic';
 import { createEntity } from '../../engine/js/entities/character/EntityBuilder';
 import Entity from '../../engine/js/entities/character/Entity';
 import { GetEntity3DGraphic } from '../../engine/js/rendering/entities/entity-3d-graphics';
-import ThreeJSRenderContext from '../../engine/js/rendering/contexts/ThreeJS.RenderContext';
 
 const DISTANCE_BEHIND_CAMERA = 8;
 
@@ -35,13 +32,6 @@ export async function createCubeAtCursor(event: MouseEvent, camera: THREE.Perspe
     .build();
 
   // Configure 3D graphics
-  (diceEntity as any).entity3DConfig = {
-    graphicClass: DiceGraphic,
-    visible: true,
-    offset: { x: 0, y: 0, z: 0 }
-  };
-
-  // Configure 3D graphics and let the engine create the graphic during the render loop
   (diceEntity as any).entity3DConfig = {
     graphicClass: DiceGraphic,
     visible: true,
