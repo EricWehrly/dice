@@ -1,32 +1,44 @@
+// Minimal mock helpers compatible with Vitest's `vi.fn()`
+const makeFn = () => {
+  function fn(...args) {
+    fn.mock.calls.push(args);
+    return (fn._impl) ? fn._impl(...args) : undefined;
+  }
+  fn.mock = { calls: [] };
+  fn.mockImplementation = (impl) => { fn._impl = impl; return fn; };
+  fn.mockReset = () => { fn._impl = undefined; fn.mock.calls = []; return fn; };
+  return fn;
+};
+
 const THREE = {
-    Scene: jest.fn().mockImplementation(() => ({
-        add: jest.fn(),
-        remove: jest.fn(),
+    Scene: makeFn().mockImplementation(() => ({
+        add: makeFn(),
+        remove: makeFn(),
     })),
-    PerspectiveCamera: jest.fn().mockImplementation(() => ({
-        position: { set: jest.fn() },
-        lookAt: jest.fn(),
+    PerspectiveCamera: makeFn().mockImplementation(() => ({
+        position: { set: makeFn() },
+        lookAt: makeFn(),
     })),
-    WebGLRenderer: jest.fn().mockImplementation(() => ({
-        setSize: jest.fn(),
-        render: jest.fn(),
+    WebGLRenderer: makeFn().mockImplementation(() => ({
+        setSize: makeFn(),
+        render: makeFn(),
     })),
-    Mesh: jest.fn().mockImplementation(() => ({
+    Mesh: makeFn().mockImplementation(() => ({
         geometry: {},
         children: [],
-        position: { x: 0, y: 0, z: 0, set: jest.fn() },
+        position: { x: 0, y: 0, z: 0, set: makeFn() },
         rotation: { x: 0, y: 0, z: 0 },
-        add: jest.fn(),
+        add: makeFn(),
     })),
-    BoxGeometry: jest.fn().mockImplementation(() => ({})),
-    TetrahedronGeometry: jest.fn().mockImplementation(() => ({})),
-    OctahedronGeometry: jest.fn().mockImplementation(() => ({})),
-    DodecahedronGeometry: jest.fn().mockImplementation(() => ({})),
-    IcosahedronGeometry: jest.fn().mockImplementation(() => ({})),
-    MeshStandardMaterial: jest.fn().mockImplementation(() => ({})),
-    MeshBasicMaterial: jest.fn().mockImplementation(() => ({})),
-    SphereGeometry: jest.fn().mockImplementation(() => ({})),
-    Group: jest.fn().mockImplementation(() => ({ add: jest.fn(), children: [], position: { set: jest.fn() } })),
+    BoxGeometry: makeFn().mockImplementation(() => ({})),
+    TetrahedronGeometry: makeFn().mockImplementation(() => ({})),
+    OctahedronGeometry: makeFn().mockImplementation(() => ({})),
+    DodecahedronGeometry: makeFn().mockImplementation(() => ({})),
+    IcosahedronGeometry: makeFn().mockImplementation(() => ({})),
+    MeshStandardMaterial: makeFn().mockImplementation(() => ({})),
+    MeshBasicMaterial: makeFn().mockImplementation(() => ({})),
+    SphereGeometry: makeFn().mockImplementation(() => ({})),
+    Group: makeFn().mockImplementation(() => ({ add: makeFn(), children: [], position: { set: makeFn() } })),
     // Add other necessary mocks here
 };
 

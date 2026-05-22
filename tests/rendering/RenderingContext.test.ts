@@ -1,4 +1,4 @@
-jest.mock('three');
+vi.mock('three');
 import { RenderingContextManager, RenderingContextOptions } from '../../src/rendering/RenderingContextManager';
 
 // Concrete implementation for testing
