@@ -50,7 +50,7 @@ export class AnimationSequencer {
   private adjustTrackTiming(config: ITrackConfig): THREE.KeyframeTrack {
     const { track, startTime, duration } = config;
     const times = Array.from(track.times).map(time => 
-      (time * duration / track.times[track.times.length - 1]) + startTime
+       (time as number * duration / track.times[track.times.length - 1]) + startTime
     );
     
     return new (track.constructor as any)(
