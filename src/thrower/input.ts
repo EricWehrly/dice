@@ -3,28 +3,63 @@ import { Colors } from '../utils/colors';
 import { createParabolicTrack } from './animate-parabolic';
 import { createRattleTracks } from './animate-rattle';
 import { RenderingContextManager } from '../rendering/RenderingContextManager';
-import { Dice, DiceOptions } from '../game/Dice';
 import { AnimationSequencer } from '../utils/AnimationSequencer';
+import { DiceConfig } from '../game/Dice';
+import { DiceGraphic } from '../rendering/DiceGraphic';
+import { createEntity } from '../../engine/js/entities/character/EntityBuilder';
+import ThreeJSRenderContext from '../../engine/js/rendering/contexts/ThreeJS.RenderContext';
 
 const DISTANCE_BEHIND_CAMERA = 8;
 
 export function createCubeAtCursor(event: MouseEvent, camera: THREE.PerspectiveCamera, renderContext: RenderingContextManager) {
-  const diceOptions: DiceOptions = {
-    foreColor: Colors.dodgerblue,
-    backColor: Colors.antiquewhite
+  const faceCount = 6;
+
+  // Calculate spawn position behind camera
+  const spawnPosition = {
+    x: camera.position.x,
+    y: camera.position.y + 5,
+    z: camera.position.z + DISTANCE_BEHIND_CAMERA
   };
-  const gameObject = new Dice(diceOptions);
 
-  const cube = renderContext.addToScene(gameObject);
-  // Spawn the cube behind and above the camera
-  cube.position.set(camera.position.x, camera.position.y + 5, camera.position.z + DISTANCE_BEHIND_CAMERA);
+  // Create a dice entity
+  const diceEntity = createEntity()
+    .withOptions({
+      name: 'Thrown Dice',
+      position: spawnPosition,
+      faceCount: 6,
+      foreColor: Colors.dodgerblue,
+      backColor: Colors.antiquewhite
+    })
+    .build();
 
+  // Configure 3D graphics
+  (diceEntity as any).entity3DConfig = {
+    graphicClass: DiceGraphic,
+    visible: true,
+    offset: { x: 0, y: 0, z: 0 }
+  };
+
+  // Create the graphic directly and get the mesh
+  const diceGraphic = new DiceGraphic(diceEntity);
+  const cube = diceGraphic.getGraphic() as THREE.Mesh;
+  
+  // Add to scene
+  const context = ThreeJSRenderContext.Instance;
+  (context.scene as unknown as THREE.Scene).add(cube);
+  
+  // Set the spawn position
+  cube.position.set(spawnPosition.x, spawnPosition.y, spawnPosition.z);
+  
   // Apply a random rotation to the dice
-  applyRandomRotation(cube, gameObject.faceCount);
+  applyRandomRotation(cube, faceCount);
 
   const cubeDestinationPosition = calculatePosition(event, camera);
-
-  return animateCube(cube, cubeDestinationPosition);
+  const mixer = animateCube(cube, cubeDestinationPosition);
+  
+  return {
+    cube,
+    mixer
+  };
 }
 
 function applyRandomRotation(dice: THREE.Object3D, faceCount: number) {

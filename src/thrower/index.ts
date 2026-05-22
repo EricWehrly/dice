@@ -34,7 +34,7 @@ export function init() {
   window.addEventListener('mouseup', (event) => {
     if (event.button === 0) {
       console.trace('mouse click registered');
-      const mixer = createCubeAtCursor(event, camera, renderContext);
+      const {cube, mixer} = createCubeAtCursor(event, camera, renderContext);
       if (mixer) mixers.push(mixer);
     }
   });

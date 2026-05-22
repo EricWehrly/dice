@@ -25,6 +25,10 @@
    - Prefix interfaces with 'I' (e.g., IDice)
    - Suffix test files with '.test.ts'
 
+4. **Flow Control**
+   - Avoid using `return` or exceptions for flow control in methods
+   - Use conditional statements and loops to manage flow control
+
 ### Best Practices
 
 1. **Testing**

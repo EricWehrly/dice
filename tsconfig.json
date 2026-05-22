@@ -1,14 +1,22 @@
-
 {
   "compilerOptions": {
     "target": "es2022",
-    "module": "commonjs",
-    "strict": true,
+    "module": "es2022",
     "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@engine": ["./engine/js"],
+      "@engine/*": ["./engine/js/*"],
+      "three": ["./node_modules/three"],
+      "three/*": ["./node_modules/three/*"]
+    },
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "resolveJsonModule": true
+    // "resolveJsonModule": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

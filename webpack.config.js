@@ -13,7 +13,13 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: ['.ts', '.js']
+    extensions: ['.ts', '.js'],
+    alias: {
+      // Force all three.js imports to use the same instance from root node_modules
+      // 'three': path.resolve(__dirname, 'node_modules/three'),
+      // Also alias @types/three to ensure type compatibility
+      '@types/three': path.resolve(__dirname, 'node_modules/@types/three')
+    }
   },
   output: {
     filename: 'bundle.js',
