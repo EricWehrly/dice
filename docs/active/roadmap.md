@@ -1,66 +1,32 @@
-# Dice Game – Active Roadmap
+# Dice Game - Active Roadmap
 
-**Branch**: `with-engine` | **Goal**: Migrate standalone dice app onto engine runtime with full throw + inspect UX
+Branch: with-engine
+Goal: migrate standalone dice prototype onto engine runtime while preserving incremental playability.
 
-> Detail: [UPGRADE_PLAN_DUAL_SCENE.md](../UPGRADE_PLAN_DUAL_SCENE.md)
+Feature docs: [F02](../features/F02-throw-input-cooldown.md), [F03](../features/F03-inspector-selection.md), [F04](../features/F04-camera-profile.md)
+Migration plan reference: [docs/UPGRADE_PLAN_DUAL_SCENE.md](../UPGRADE_PLAN_DUAL_SCENE.md)
 
----
+## Current Priority Order
 
-## Phase 1: Consolidate Systems ✅
-_Engine integration complete, dice rendering verified in browser._
+1. 🔄 [F02 - Throw Input and Cooldown](../features/F02-throw-input-cooldown.md)
+2. 🚧 [F03 - Inspector Selection and Deferred UI](../features/F03-inspector-selection.md)
+3. 🔮 [F04 - Camera Profile and Scene View Policy](../features/F04-camera-profile.md)
 
-- ✅ 1.1 Refactor Dice.ts to use Engine Entity (not GameObject)
-- ✅ 1.2 Migrate src/index.ts to engine boot + ThreeJSRenderContext
-- ✅ 1.3 DiceGraphic extends EntityGraphicThree, renders BoxGeometry
-- ✅ 1.4 Migrate test runner from Jest to Vitest
-- ✅ 1.5 Add InputManager (cooldown + inspector mode tracking)
-- ✅ 1.6 CreateCubeAtCursor uses engine entities + async graphic resolution
+## Status Summary
 
----
+- ✅ Engine bootstrap and entity rendering foundation are complete.
+- 🔄 Throw flow works through engine path, but thrown dice currently disappear and need persistence/reset behavior fixed plus cooldown HUD.
+- 🚧 Inspector UI is deferred; selection and logging plumbing is kept active.
+- 🔮 Camera defaults need one centralized feature-owned profile.
 
-## Phase 2: Inspector System 🚧 (Deferred)
-_Right-click selection plumbing exists; full inspector UI deferred pending engine capability work._
+## Legacy Cleanup Track
 
-**Design decisions (from plan Q&A):**
-- Modal design, pauses scene below, large screen coverage
-- ~80% preview (OrbitControls dice view) / ~20% stats panel
-- Responsive: stats cuts into whichever dimension has more room (width or height)
-- Dismiss via X button; inspector backed by dedicated render context
-
-- ✅ 2.1 `EntityMeshRegistry`: UUID → Entity map, populated by DiceGraphic.createGraphic()
-- 🔄 2.2 `GameObjectInspector` resolves clicked entity and stores selection (`window.__lastInspectedEntity`)
-- 🚧 2.3 Engine dependency: modal/overlay lifecycle contract in engine UI layer
-- 🚧 2.4 Engine dependency: scene/render suspension policy while inspector is open
-- 🚧 2.5 Engine dependency: secondary scene/screen pattern for detailed inspection
-- 🔮 2.6 Dice-side inspector UI can be reintroduced once engine capabilities land
-
----
-
-## Phase 3: Input Management 🔄 ← **Current**
-_Left-click throw with cooldown indicator; throws clear and reset on each throw._
-
-**Design decisions (from plan Q&A):**
-- Dice persist after throw; reset (visibility snap) when next throw happens
-- Cooldown indicator: low-opacity solid circle, clockwise sweep overlay (high opacity same color)
-
-- ✅ 3.1 Wire left-click → InputManager → createCubeAtCursor via game start init
-- 🔮 3.2 Track thrown dice; reset/snap previous dice on new throw
-- 🔮 3.3 Cooldown HUD: circular sweep clock overlay on canvas
-- 🔮 3.4 Block throws while inspector is open (InputManager.setInspecting)
-
----
-
-## Phase 4: Polish & Testing 🔮
-
-- 🔮 4.1 Remove unused thrower code after full consolidation
-- 🔮 4.2 TypeScript types cleanup (remove `as any` casts)
-- 🔮 4.3 Integration tests for throw → inspect flow
-- 🔮 4.4 Update README with input controls documentation
-
----
-
-## Status Key
-- ✅ Completed  |  🔄 In Progress  |  🔮 Not Started  |  🚧 Blocked
+- `src/rendering/RenderingContextManager.ts` and `src/rendering/RotationViewer.ts` were removed.
+- Any remaining docs/tests referencing those classes should be retired or rewritten against feature docs.
 
 ## Next Action
-**Phase 3, Task 3.2** — Reset/snap previous thrown dice on each new throw, then implement cooldown HUD (Task 3.3).
+
+Implement F02 remaining items in order:
+1) reset/snap previous throw visuals on new throw,
+2) cooldown HUD,
+3) tests for both.

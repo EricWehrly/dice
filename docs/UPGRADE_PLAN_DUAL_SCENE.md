@@ -34,6 +34,10 @@
     - Entity mesh lookup registry (`src/rendering/EntityMeshRegistry.ts`)
     - Right-click entity resolution in `src/ui/GameObjectInspector.ts`
 - Prioritize lower-effort migration increments (throw input, cooldown UI, throw reset behavior) before revisiting full inspector UI.
+- Legacy local-context implementation removed:
+        - `src/rendering/RenderingContextManager.ts` (deleted)
+        - `src/rendering/RotationViewer.ts` (deleted)
+    Any inspector UI details from those files are tracked in feature docs instead of code references.
 
 ---
 
@@ -91,29 +95,24 @@
 > Status update: **Partially deferred**. Task 2.1 groundwork is in place; Tasks 2.2+2.3 are blocked by engine-level UI/screen capability requirements.
 
 #### Task 2.1: Fix GameObjectInspector
-- [ ] Create proper dice-to-mesh mapping system
-- [ ] Store dice entities in a registry with their mesh UUIDs
-- [ ] Update `getIntersects` to work with Entity-backed meshes
-- [ ] Test right-click detection
+- [x] Create proper dice-to-mesh mapping system
+- [x] Store dice entity id in mesh userData for raycast resolution
+- [x] Update `getIntersects` path to resolve Entity from raycast hit
+- [x] Add right-click detection logging for verification
 
 **Files to modify**:
 - `src/ui/GameObjectInspector.ts`
-- `src/rendering/RenderingContextManager.ts` - Add entity mapping
+- `src/rendering/EntityMeshRegistry.ts`
 
 #### Task 2.2: Enhance RotationViewer
-- [ ] Add OrbitControls to RotationViewer camera
-- [ ] Clone dice mesh for isolated display
-- [ ] Add close button UI element
-- [ ] Add ESC key handler to close viewer
-- [ ] Prevent main scene interaction while viewer is open
+- [ ] Deferred: replace with engine-level inspector screen capability track (see feature docs)
 
 **Files to modify**:
-- `src/rendering/RotationViewer.ts`
+- [docs/features/F03-inspector-selection.md](features/F03-inspector-selection.md)
 
 #### Task 2.3: Connect Inspector to Engine System
-- [ ] Update `handleContextMenu` to work with Engine entities
-- [ ] Pass correct entity/mesh to RotationViewer
-- [ ] Ensure proper cleanup when viewer closes
+- [x] Update `handleContextMenu` to work with Engine entities
+- [ ] Deferred: full inspector scene/screen wiring after engine capability definition
 
 **Files to modify**:
 - `src/ui/GameObjectInspector.ts`
@@ -227,17 +226,8 @@ export class InputManager {
 ### Mapping Strategy
 The key issue is tracking which THREE.Mesh belongs to which Entity. Options:
 
-**Option A: UUID Mapping in RenderingContextManager** (Recommended)
-- Store `Map<string, Entity>` where key is mesh.uuid
-- Update when adding dice to scene
-- Query when raycasting hits a mesh
-
-**Option B: Custom userData**
-- Set `mesh.userData.entity = entity` when creating graphic
-- Read from intersection results
-- Simpler but less type-safe
-
-**Recommendation**: Use Option A for better control and type safety.
+Current implementation uses userData-based entity id tagging and resolves typed Entity in registry helpers.
+Reference: [docs/features/F03-inspector-selection.md](features/F03-inspector-selection.md)
 
 ### OrbitControls Integration
 ```typescript

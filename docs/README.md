@@ -1,5 +1,14 @@
 # Dice Project
 
+## Documentation Layout
+
+- Active roadmap: [active/roadmap.md](active/roadmap.md)
+- Feature tracking:
+	- [features/F02-throw-input-cooldown.md](features/F02-throw-input-cooldown.md)
+	- [features/F03-inspector-selection.md](features/F03-inspector-selection.md)
+	- [features/F04-camera-profile.md](features/F04-camera-profile.md)
+- Migration plan detail: [UPGRADE_PLAN_DUAL_SCENE.md](UPGRADE_PLAN_DUAL_SCENE.md)
+
 ## Running the Docker Container
 
 To run the Docker container with the current directory volume mounted, use the following command:
