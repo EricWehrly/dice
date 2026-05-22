@@ -3,9 +3,8 @@
     "target": "es2022",
     "module": "es2022",
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
       "@engine": ["./engine/js"],
@@ -16,6 +15,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
+    "types": ["vitest/globals", "node"]
     // "resolveJsonModule": true
   },
   "include": ["src/**/*"],
