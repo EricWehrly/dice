@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createCubeAtCursor } from './input';
+import { initThrowPathFollower } from './ThrowPathFollower';
 import { attachContextMenuListener } from '../ui/GameObjectInspector';
 import ThreeJSRenderContext from '../../engine/js/rendering/contexts/ThreeJS.RenderContext';
 
@@ -8,8 +9,7 @@ export function init() {
 
   const renderContext = ThreeJSRenderContext.Instance;
   const camera = renderContext.camera as THREE.PerspectiveCamera;
-
-  const mixers: THREE.AnimationMixer[] = [];
+  initThrowPathFollower();
 
   // Handle left-click throws with cooldown
   window.addEventListener('mouseup', (event) => {
@@ -25,24 +25,15 @@ export function init() {
       }
       inputMgr.recordThrow();
 
-      // createCubeAtCursor now returns a promise that resolves when the mesh exists
-      createCubeAtCursor(event, camera).then(({ cube, mixer }) => {
-        if (mixer) mixers.push(mixer);
-      }).catch(err => {
+      try {
+        createCubeAtCursor(event, camera);
+      } catch (err) {
         console.error('Failed to create thrown cube:', err);
-      });
+      }
     }
   });
 
   attachContextMenuListener(camera, renderContext.scene as unknown as THREE.Scene);
 
-  // Register render method with engine's ThreeJSRenderContext system
-  let previousTime = performance.now();
-  ThreeJSRenderContext.RegisterRenderMethod(100, (context: any) => {
-    const currentTime = performance.now();
-    const deltaTime = (currentTime - previousTime) / 1000;
-    previousTime = currentTime;
-
-    mixers.forEach(mixer => mixer.update(deltaTime));
-  });
+  // Throw path follower updates entity positions through the engine render loop.
 }
