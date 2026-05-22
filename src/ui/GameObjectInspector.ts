@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { getIntersects } from '../utils/intersects';
-import { getEntityForMesh, getEntityIdForMesh } from '../rendering/EntityMeshRegistry';
+import { getEntityForMesh } from '../rendering/EntityMeshRegistry';
 
 export function handleContextMenu(event: MouseEvent, camera: THREE.Camera, scene: THREE.Scene) {
   event.preventDefault();
@@ -9,11 +9,11 @@ export function handleContextMenu(event: MouseEvent, camera: THREE.Camera, scene
 
   if (intersects.length > 0) {
     const hit = intersects[0].object;
-    const mappedEntityId = getEntityIdForMesh(hit);
+    const mappedEntity = getEntityForMesh(hit);
     console.info('Inspector raycast hit:', {
       objectUuid: hit.uuid,
       objectType: hit.type,
-      mappedEntityId
+      mappedEntityId: mappedEntity?.id
     });
   } else {
     console.info('Inspector raycast miss');

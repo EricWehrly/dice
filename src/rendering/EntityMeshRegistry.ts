@@ -1,20 +1,32 @@
 import * as THREE from 'three';
 import Entity from '../../engine/js/entities/character/Entity';
 
+type EntityId = Entity['id'];
+
+type EntityUserData = {
+    entityId?: EntityId;
+};
+
 /**
  * Registry mapping Three.js mesh UUIDs to Engine entities.
  * Populated when DiceGraphic (or any EntityGraphicThree subclass) creates its mesh.
  * Queried by GameObjectInspector raycasting to resolve hit objects back to entities.
  */
-function setEntityIdOnUserData(object3d: THREE.Object3D, entityId: string): void {
+function setEntityIdOnUserData(object3d: THREE.Object3D, entityId: EntityId): void {
     (object3d as any).userData = (object3d as any).userData ?? {};
-    (object3d as any).userData.entityId = entityId;
+    ((object3d as any).userData as EntityUserData).entityId = entityId;
 }
 
 function clearEntityIdOnUserData(object3d: THREE.Object3D): void {
-    if ((object3d as any).userData?.entityId !== undefined) {
-        delete (object3d as any).userData.entityId;
+    const userData = (object3d as any).userData as EntityUserData | undefined;
+    if (userData?.entityId !== undefined) {
+        delete userData.entityId;
     }
+}
+
+function getEntityIdFromUserData(object3d: THREE.Object3D): EntityId | undefined {
+    const userData = (object3d as any).userData as EntityUserData | undefined;
+    return userData?.entityId;
 }
 
 export function registerEntityMesh(object3d: THREE.Object3D, entity: Entity): void {
@@ -27,12 +39,8 @@ export function registerEntityMesh(object3d: THREE.Object3D, entity: Entity): vo
     });
 }
 
-export function getEntityIdForMesh(object3d: THREE.Object3D): string | undefined {
-    return (object3d as any).userData?.entityId as string | undefined;
-}
-
 export function getEntityForMesh(object3d: THREE.Object3D): Entity | undefined {
-    const entityId = getEntityIdForMesh(object3d);
+    const entityId = getEntityIdFromUserData(object3d);
     if (!entityId) return undefined;
     return Entity.List.find(entity => entity.id === entityId);
 }
