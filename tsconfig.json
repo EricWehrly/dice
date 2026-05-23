@@ -8,14 +8,12 @@
     "paths": {
       "@/*": ["./*"],
       "@engine": ["./engine/js"],
-      "@engine/*": ["./engine/js/*"],
-      "three": ["./node_modules/three"],
-      "three/*": ["./node_modules/three/*"]
+      "@engine/*": ["./engine/js/*"]
     },
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node", "three"]
     // "resolveJsonModule": true
   },
   "include": ["src/**/*"],

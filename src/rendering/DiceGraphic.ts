@@ -48,7 +48,6 @@ export class DiceGraphic extends EntityGraphicThree {
         this.mesh = new THREE.Mesh(geometry, material);
         console.log('Created dice mesh:', this.mesh);
 
-        // Register mesh in the UUID → Entity registry for raycasting lookup
         registerEntityMesh(this.mesh, this.entity);
 
         // Add pips asynchronously (PipUtils is synchronous in current implementation)

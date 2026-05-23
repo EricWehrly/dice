@@ -32,7 +32,7 @@ function getEntityIdFromUserData(object3d: THREE.Object3D): EntityId | undefined
 export function registerEntityMesh(object3d: THREE.Object3D, entity: Entity): void {
     setEntityIdOnUserData(object3d, entity.id);
     // Also register all child meshes so raycasting against groups/pip children works
-    object3d.traverse(child => {
+    object3d.traverse((child: THREE.Object3D) => {
         if (child !== object3d) {
             setEntityIdOnUserData(child, entity.id);
         }
@@ -47,7 +47,7 @@ export function getEntityForMesh(object3d: THREE.Object3D): Entity | undefined {
 
 export function unregisterEntityMesh(object3d: THREE.Object3D): void {
     clearEntityIdOnUserData(object3d);
-    object3d.traverse(child => {
+    object3d.traverse((child: THREE.Object3D) => {
         if (child !== object3d) {
             clearEntityIdOnUserData(child);
         }
