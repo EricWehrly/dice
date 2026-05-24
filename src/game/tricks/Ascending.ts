@@ -47,3 +47,5 @@ export class Ascending extends Trick {
     return maxRun;
   }
 }
+
+export const ascendingTrick = new Ascending();

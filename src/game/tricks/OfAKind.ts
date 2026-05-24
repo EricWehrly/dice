@@ -23,3 +23,5 @@ export class OfAKind extends Trick {
     };
   }
 }
+
+export const ofAKindTrick = new OfAKind();

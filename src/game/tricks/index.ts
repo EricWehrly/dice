@@ -2,6 +2,8 @@
  * Trick system: contract, constants, and all trick implementations.
  */
 export { Trick, type TrickResult } from './Trick';
-export { OfAKind } from './OfAKind';
-export { Ascending } from './Ascending';
-export { Primes } from './Primes';
+
+// Side-effect imports ensure tricks self-register when this barrel is loaded.
+import './OfAKind';
+import './Ascending';
+import './Primes';

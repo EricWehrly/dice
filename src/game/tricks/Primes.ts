@@ -33,3 +33,5 @@ export class Primes extends Trick {
     return faces.every((f) => this.primes.has(f));
   }
 }
+
+export const primesTrick = new Primes();
