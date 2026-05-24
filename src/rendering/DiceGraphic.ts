@@ -13,7 +13,7 @@ export class DiceGraphic extends EntityGraphicThree {
     private static readonly ALLOWED_FACE_COUNTS = [4, 6, 8, 12, 20];
     
     private diceConfig: DiceConfig;
-    private mesh: THREE.Mesh;
+    private mesh!: THREE.Mesh;
     
     constructor(entity: Entity) {
         super(entity);
@@ -79,10 +79,17 @@ export class DiceGraphic extends EntityGraphicThree {
     }
 
     update(deltaTime: number): void {
-        // Add idle rotation or animation here if desired
-        // For now, just keep it static
-        
-        // Example idle rotation:
+        const entity3DConfig = (this.entity as {
+            entity3DConfig?: { offset?: { x: number, y: number, z: number } };
+        }).entity3DConfig;
+        const offset = entity3DConfig?.offset ?? { x: 0, y: 0, z: 0 };
+
+        this.graphic.position.x = this.entity.position.x + offset.x;
+        this.graphic.position.y = (this.entity.position.y || 0) + offset.y;
+        this.graphic.position.z = (this.entity.position.z || 0) + offset.z;
+
+        // Add idle rotation or animation here if desired.
         // this.mesh.rotation.y += 0.001 * deltaTime;
+        void deltaTime;
     }
 }
