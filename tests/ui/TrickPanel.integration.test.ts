@@ -26,5 +26,6 @@ describe('TrickPanel integration', () => {
     expect(itemTitles).toContain('Primes');
     expect(itemTitles.length).toBe(listedTricks.length);
     expect(metaValues.some((value) => value?.includes('hit'))).toBe(true);
+    expect(metaValues.some((value) => value?.includes('HS 3'))).toBe(true);
   });
 });

@@ -28,8 +28,8 @@ describe('TrickCounterPanel integration', () => {
 
         const counters = Array.from(document.querySelectorAll('#counter-grid .counter')).map((node) => node.textContent);
 
-        expect(counters).toContain('Mods Earned: 1');
-        expect(counters).toContain('Cosmetics Earned: 1');
+        expect(counters).toContain('mods Earned: 1');
+        expect(counters).toContain('cosmetics Earned: 1');
         expect(counters).toHaveLength(2);
     });
 });

@@ -31,8 +31,12 @@ export class TrickEvaluator {
 
     constructor(tricks: Trick[] = Trick.GetAll<Trick>()) {
         this.tricks = tricks;
-        new Resource({name: 'mods', value: 0});
-        new Resource({name: 'cosmetics', value: 0});
+        if (!Resource.Get('mods')) {
+            new Resource({ name: 'mods', value: 0 });
+        }
+        if (!Resource.Get('cosmetics')) {
+            new Resource({ name: 'cosmetics', value: 0 });
+        }
 
         Events.Subscribe<BagRolledEvent>(
             TrickEvents.BAG_ROLLED,
@@ -53,13 +57,15 @@ export class TrickEvaluator {
         faces: number[]
     ): EvaluationResult {
         const { success, score } = trick.evaluate(faces);
-        const previousBest = trick.highScore;
 
         const isFirstCompletion = success && !trick.achieved;
-        const isNewHighScore = success && trick.achieved && (previousBest === null || score > previousBest);
+        const isNewHighScore = trick.achieved && (trick.highScore === null || score > trick.highScore);
 
         if (success) {
             trick.achieved = true;
+            if (trick.highScore === null || score > trick.highScore) {
+                trick.highScore = score;
+            }
 
             if (isFirstCompletion) {
                 Resource.Get('mods')!.value += 1;

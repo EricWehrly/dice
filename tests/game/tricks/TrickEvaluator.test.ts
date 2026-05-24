@@ -34,13 +34,20 @@ describe('TrickEvaluator', () => {
         const evaluator = new TrickEvaluator(tricks);
         const callback = vi.fn();
         const subscriptionId = Events.Subscribe(TrickEvents.TRICK_HIGH_SCORE, callback);
+        const ofAKind = tricks.find((trick) => trick.id === 'of-a-kind');
+        if (!ofAKind) {
+            throw new Error('Expected of-a-kind trick to exist');
+        }
 
         // First completion of OfAKind with score 3
         evaluator.evaluateRoll([2, 2, 2]);
+        expect(ofAKind.highScore).toBe(3);
+
         // Second completion with higher score 5 (should earn cosmetic)
         evaluator.evaluateRoll([2, 2, 2, 2, 2]);
 
         expect(callback).toHaveBeenCalledTimes(1);
+        expect(ofAKind.highScore).toBe(5);
         if (subscriptionId) {
             Events.Unsubscribe(subscriptionId);
         }
