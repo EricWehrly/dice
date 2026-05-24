@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "module": "es2022",
+    "module": "ESNext",
     "esModuleInterop": true,
     "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "noEmit": true,
     "resolveJsonModule": true,
     "paths": {
       "@/*": ["./*"],
@@ -12,10 +14,9 @@
     },
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
-    "types": ["vitest/globals", "node", "three"]
+    "types": ["vitest/globals", "node", "three", "vite/client"]
     // "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tests/**/*", "vite.config.ts"],
   "exclude": ["node_modules"]
 }
