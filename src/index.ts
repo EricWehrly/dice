@@ -1,6 +1,7 @@
 import { Bag } from './game/Bag';
 import { TrickEvaluator } from './game/tricks/TrickEvaluator';
 import { DiceCanvasRenderer } from './rendering/2d/DiceCanvasRenderer';
+import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
 
 // TODO: handle in managed UI instead
@@ -21,5 +22,9 @@ wireRollButton(bag);
 new DiceCanvasRenderer(bag);
 
 new TrickEvaluator();
+
+const trickCounterPanel = new TrickCounterPanel();
+trickCounterPanel.render();
+
 const trickPanel = new TrickPanel();
 trickPanel.render();

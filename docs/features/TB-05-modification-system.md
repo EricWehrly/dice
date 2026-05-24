@@ -7,7 +7,7 @@
 
 ## Goal
 
-Players can freely apply modifications to individual dice, changing their roll probabilities and statistics. No token enforcement yet — spending is free. Track earned/spent counters for both mods and cosmetics for future economy design.
+Players can apply modifications to individual dice, changing their roll probabilities and statistics. Spending is tracked through reversible reservations (`reserve`/`unReserve`) so refund behavior can be added cleanly. Track earned/spent counters for both mods and cosmetics for future economy design.
 
 ---
 
@@ -137,22 +137,61 @@ Keep this scoped to infrastructure only in current roadmap:
 
 ### M5.6 — Mod Tracking
 
-**File**: `src/game/ProgressTracker.ts` (or add to GameLoop state)
+**Prerequisite research** (completed 2026-05-24):
+
+`Resource` (engine) has `value`, `reserved`, `available`, `pay()`, `reserve()` — no `maxValue` field exists. The current `TrickCounterTracker` uses two `Resource` objects (`mods`, `cosmetics`) and only ever increments `value`.
+
+**Chosen approach — no engine change required**:
+
+Earning continues to increment `resource.value` (already works). Spending uses `resource.reserve(amount, spendBucket)` so we can later support explicit refunds with `unReserve`. Earned total is derived by tracking the running sum separately in `TrickCounterTracker` as a plain number alongside the Resource. `spent = resource.reserved` and `balance = resource.available`.
+
+This avoids a `maxValue` engine addition and keeps the engine untouched for TB-05.
+
+> **Alternative considered**: add a `maxValue` high-watermark to `Resource` whose setter auto-updates `if (newValue > this.#maxValue) this.#maxValue = newValue`. That would let any consumer derive earned from a single Resource object. Fine to revisit if a third spend-tracking use case emerges.
+
+**Changes to `TrickCounterTracker`**:
 
 ```typescript
-interface ModCounters {
-  modsEarned: number;       // +1 on first completion of each trick
-  modsSpent: number;        // +1 per mod application, no balance checks
-  cosmeticsEarned: number;  // +1 on post-unlock high-score improvements for tracked tricks
-  cosmeticsSpent: number;   // +1 per cosmetic spend, no balance checks
+// earned totals (never decrease)
+const _earned: Record<EconomyResourceKey, number> = { mods: 0, cosmetics: 0 };
+
+export function getEconomyEarned(key: EconomyResourceKey): number {
+    return _earned[key];
+}
+
+export function getEconomySpent(key: EconomyResourceKey): number {
+  return getEconomyResource(key).reserved;
+}
+
+export function getEconomyBalance(key: EconomyResourceKey): number {
+  return getEconomyResource(key).available;
+}
+
+export function incrementEconomyEarned(key: EconomyResourceKey, amount = 1): void {
+    _earned[key] += amount;
+    getEconomyResource(key).value += amount;
+}
+
+const spendBuckets: Record<EconomyResourceKey, object> = {
+  mods: {},
+  cosmetics: {},
+};
+
+export function reserveEconomySpend(key: EconomyResourceKey, amount = 1): boolean {
+  return getEconomyResource(key).reserve(amount, spendBuckets[key]);
+}
+
+export function refundEconomySpend(key: EconomyResourceKey, amount = 1): void {
+  getEconomyResource(key).unReserve(amount, spendBuckets[key]);
 }
 ```
 
-- `modsEarned` increments once on first completion of each trick.
-- `cosmeticsEarned` increments only when an already-achieved trick improves a tracked high score.
-- Tricks with `tracksHighScore=false` never contribute to `cosmeticsEarned`.
-- These counters are display-only for now. No enforcement, no affordability checks.
-- Show these counters in a global UI strip visible during normal play.
+- `modsEarned` (`_earned.mods`) increments once on first completion of each trick.
+- `cosmeticsEarned` (`_earned.cosmetics`) increments only when an already-achieved trick improves a tracked high score.
+- Tricks with `tracksHighScore=false` never contribute to cosmetics earned.
+- `reserveEconomySpend` uses `reserve()`; this gives us a reversible spend path now and clean refund support later.
+- For TB-05, affordability behavior follows `Resource.reserve()` (`available` must cover amount). Any relaxed/negative-balance policy can be layered later without changing the counter model.
+- Show earned / balance / spent counters in a global UI strip visible during normal play.
 
 ---
 
@@ -178,9 +217,12 @@ Die selection: clicking a die tile fires a `'die:selected'` event with the die's
 - `ProbabilityResolver`: WeightMod on face 0 reduces face 0's normalized weight.
 - Crit: effective value doubles when crit triggers; `faceUp` field unchanged.
 - Face expansion: new faces added; existing mods unaffected.
-- `modsEarned` increments when tricks fire.
-- `modsSpent` and `cosmeticsSpent` increment on respective spend actions even if they exceed earned totals.
+- `getEconomyEarned` returns total earned (never decreases); `getEconomyBalance` returns current spendable balance.
+- `getEconomySpent` maps to `resource.reserved`; `getEconomyBalance` maps to `resource.available`.
+- `reserveEconomySpend` increases reserved and decreases available without changing earned.
+- `refundEconomySpend` decreases reserved and restores available.
 - `cosmeticsEarned` does not increment on first unlock, even if that roll establishes initial high score.
+- Earned counter survives reserve/refund calls and always equals sum of `incrementEconomyEarned` calls.
 
 ---
 
@@ -190,6 +232,6 @@ Die selection: clicking a die tile fires a `'die:selected'` event with the die's
 - [ ] `WeightMod` applies weighted random face selection.
 - [ ] `DieStats` with `crit` and `multiplier` implemented; `RollResult` used by trick evaluators.
 - [ ] Face count expansion works for standard die progressions.
-- [ ] `ModCounters` (`modsEarned`, `modsSpent`, `cosmeticsEarned`, `cosmeticsSpent`) tracked and displayed globally.
+- [ ] `TrickCounterTracker` exposes `getEconomyEarned`, `getEconomyBalance`, `getEconomySpent`, `reserveEconomySpend`, `refundEconomySpend`; earned/spent/balance counters tracked and displayed globally.
 - [ ] `DieModPanel` allows applying mods to a selected die.
 - [ ] Injectable RNG on `Die.roll()` for testability.
