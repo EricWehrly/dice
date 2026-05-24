@@ -4,17 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dice Game</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-  </style>
+  <link rel="stylesheet" href="styles/theme.css">
+  <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-  <!--
-  <script src="bundle.js"></script>
-  -->
+  <div class="app">
+    <section class="panel play">
+      <div class="play-header">
+        <h1>Trick Bag</h1>
+        <button id="roll-btn" type="button">Roll</button>
+      </div>
+      <canvas id="dice-canvas" width="900" height="520"></canvas>
+    </section>
+
+    <aside class="panel management">
+      <h2>Management</h2>
+      <div class="counter-grid">
+        <div class="counter">Mods Earned: 0</div>
+        <div class="counter">Mods Spent: 0</div>
+        <div class="counter">Cosmetics Earned: 0</div>
+        <div class="counter">Cosmetics Spent: 0</div>
+      </div>
+      <h3>Tricks</h3>
+      <p>Placeholder for TB-02 trick list.</p>
+      <h3>Bag</h3>
+      <p>Placeholder for TB-03 bag management.</p>
+    </aside>
+  </div>
+  <script type="module" src="./index.ts"></script>
 </body>
 </html>

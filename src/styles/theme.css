@@ -1,0 +1,23 @@
+:root {
+  --font-ui: "Trebuchet MS", "Segoe UI", sans-serif;
+
+  --color-text-primary: #f0f4f8;
+  --color-page-bg: #0f161f;
+  --color-page-glow: #1f2b3a;
+
+  --color-panel-bg: rgba(9, 16, 24, 0.85);
+  --color-panel-border: rgba(240, 244, 248, 0.12);
+
+  --color-button-text: #071018;
+  --color-button-grad-start: #9ff0ff;
+  --color-button-grad-end: #8de17d;
+
+  --color-counter-bg: rgba(152, 187, 214, 0.09);
+  --color-counter-border: rgba(152, 187, 214, 0.25);
+
+  --color-canvas-bg: #18222d;
+  --color-die-face-bg: #f5f5f5;
+  --color-die-face-border: #2a2a2a;
+  --color-die-face-text: #101010;
+  --color-die-label-text: #4a4a4a;
+}

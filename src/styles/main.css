@@ -1,0 +1,97 @@
+:root {
+  font-family: var(--font-ui);
+  color: var(--color-text-primary);
+  background: var(--color-page-bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 10% 10%, var(--color-page-glow), var(--color-page-bg) 60%);
+  padding: 8px;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 10px;
+}
+
+.panel {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: 12px;
+  padding: 8px;
+  backdrop-filter: blur(2px);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.15;
+}
+
+p {
+  margin: 6px 0;
+}
+
+.play {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.play-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+#roll-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-button-text);
+  background: linear-gradient(135deg, var(--color-button-grad-start), var(--color-button-grad-end));
+  cursor: pointer;
+}
+
+#dice-canvas {
+  width: 100%;
+  height: min(520px, calc(100vh - 96px));
+  border-radius: 10px;
+  border: 1px solid var(--color-panel-border);
+  display: block;
+}
+
+.counter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.counter {
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--color-counter-bg);
+  border: 1px solid var(--color-counter-border);
+  font-size: 13px;
+}
+
+@media (max-width: 1100px), (max-aspect-ratio: 6/5) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  #dice-canvas {
+    height: 420px;
+  }
+}
