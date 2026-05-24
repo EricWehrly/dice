@@ -3,7 +3,8 @@
 **Phase**: 3  
 **Status**: 🔮 Not started  
 **Depends on**: TB-01 (Die, Bag), TB-02 (Trick interface, for wiring Decimal Milestone reward)  
-**Blocks**: TB-04 (roll history needs stable die identity)
+
+**Progress note (2026-05-24)**: Die identity (id, label, active) already exists. Bag UI and selection visuals remain in scope. M3.3 (earning dice from Decimal Milestone) waits on TB-04 M4.3.
 
 ## Goal
 

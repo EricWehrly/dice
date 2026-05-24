@@ -1,9 +1,11 @@
 # TB-02 — Trick System (Core / Stateless)
 
 **Phase**: 2  
-**Status**: 🔮 Not started  
+**Status**: ✅ Complete  
 **Depends on**: TB-01 (Die, Bag, `'bag:rolled'` event)  
 **Blocks**: TB-03 (Decimal Milestone trick), TB-04 (stateful tricks build on this interface)
+
+**Completed 2026-05-24**: All milestones implemented. Stateless tricks (Of a Kind, Ascending, Prime Distinct) are working. TrickEvaluator fires after each roll, tracking first completions and high scores. Economy resource tracking (mods/cosmetics earned) is wired and simplified to direct Resource API usage. Displayed via TrickCounterPanel.
 
 ## Goal
 

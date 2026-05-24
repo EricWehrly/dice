@@ -2,8 +2,7 @@
 
 **Phase**: 4  
 **Status**: 🔮 Not started  
-**Depends on**: TB-02 (Trick interface), TB-03 (Die identity, Bag serialization stubs)  
-**Blocks**: TB-03/M3.3 (Decimal Milestone reward wiring)
+**Depends on**: TB-02 (Trick interface), TB-03 (Die serialization stubs)
 
 ## Goal
 

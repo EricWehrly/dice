@@ -1,9 +1,9 @@
 # TB-05 — Modification System
 
 **Phase**: 5  
-**Status**: 🔮 Not started  
-**Depends on**: TB-03 (Die identity, face count), TB-04 (tricks fire before mods are earned)  
-**Blocks**: TB-06 only loosely (discovery is independent)
+**Status**: 🔮 Queued to start  
+**Depends on**: TB-03 (Die identity, face count) ✅, TB-04 (tricks fire before mods earned) ✅  
+**Blocks**: TB-06 loosely (discovery is independent)
 
 ## Goal
 
