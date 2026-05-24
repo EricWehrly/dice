@@ -6,8 +6,9 @@ import { GLOBAL_MINIMUM_THRESHOLD } from './constants';
  * Score: number of dice if successful.
  */
 export class OfAKind extends Trick {
-  id = 'of-a-kind' as const;
-  name = 'Of a Kind';
+  constructor() {
+    super({ id: 'of-a-kind', name: 'Of a Kind' });
+  }
 
   evaluate(faces: number[]): TrickResult {
     if (faces.length < GLOBAL_MINIMUM_THRESHOLD) {

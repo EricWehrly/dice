@@ -5,8 +5,9 @@ import { Trick, type TrickResult } from './Trick';
  * Score: Number of distinct primes if successful.
  */
 export class Primes extends Trick {
-  id = 'prime-distinct' as const;
-  name = 'Primes';
+  constructor() {
+    super({ id: 'prime-distinct', name: 'Primes' });
+  }
 
   // TODO: support N-sided die, and/or check/warn when die can roll higher than these
   private primes = new Set([1, 2, 3, 5, 7, 11, 13]);

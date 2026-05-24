@@ -7,8 +7,9 @@ import { GLOBAL_MINIMUM_THRESHOLD } from './constants';
  * Score: Length of the run (number of dice).
  */
 export class Ascending extends Trick {
-  id = 'ascending' as const;
-  name = 'Ascending';
+  constructor() {
+    super({ id: 'ascending', name: 'Ascending' });
+  }
 
   evaluate(faces: number[]): TrickResult {
     if (faces.length < GLOBAL_MINIMUM_THRESHOLD) {
