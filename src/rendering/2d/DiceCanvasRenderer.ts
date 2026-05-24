@@ -38,17 +38,19 @@ export class DiceCanvasRenderer {
 
     render(): void {
         const canvasColor = this.getThemeColor('--color-canvas-bg');
+        const feltShadowColor = this.getThemeColor('--color-canvas-felt-shadow');
+        const trimColor = this.getThemeColor('--color-gold-trim-soft');
         const dieFaceColor = this.getThemeColor('--color-die-face-bg');
         const dieStrokeColor = this.getThemeColor('--color-die-face-border');
         const dieTextColor = this.getThemeColor('--color-die-face-text');
         const dieLabelColor = this.getThemeColor('--color-die-label-text');
 
-        if (!canvasColor || !dieFaceColor || !dieStrokeColor || !dieTextColor || !dieLabelColor) {
+        if (!canvasColor || !trimColor || !dieFaceColor || !dieStrokeColor || !dieTextColor || !dieLabelColor) {
             console.warn('Missing theme colors, cannot render dice canvas');
             return;
         }
 
-        this.clear(canvasColor);
+        this.clear(canvasColor, trimColor);
 
         const tileSize = 80;
         const gap = 16;
@@ -62,11 +64,18 @@ export class DiceCanvasRenderer {
             const y = gap + row * (tileSize + gap);
 
             this.context.globalAlpha = die.active ? 1 : 0.4;
+            this.context.shadowColor = 'rgba(14, 8, 24, 0.36)';
+            this.context.shadowBlur = 8;
+            this.context.shadowOffsetY = 3;
             this.context.fillStyle = dieFaceColor;
             this.context.fillRect(x, y, tileSize, tileSize);
             this.context.strokeStyle = dieStrokeColor;
             this.context.lineWidth = 2;
             this.context.strokeRect(x, y, tileSize, tileSize);
+
+            this.context.shadowColor = 'transparent';
+            this.context.shadowBlur = 0;
+            this.context.shadowOffsetY = 0;
 
             this.context.fillStyle = dieTextColor;
             this.context.font = '600 32px "Trebuchet MS", sans-serif';
@@ -91,10 +100,32 @@ export class DiceCanvasRenderer {
         this.context.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    private clear(canvasColor: string): void {
+    private clear(canvasColor: string, trimColor: string): void {
         const width = this.canvas.clientWidth || 900;
         const height = this.canvas.clientHeight || 520;
+
         this.context.fillStyle = canvasColor;
+        this.context.fillRect(0, 0, width, height);
+
+        this.renderEdgeFalloff(width, height);
+
+        this.context.strokeStyle = trimColor;
+        this.context.lineWidth = 2;
+        this.context.strokeRect(1, 1, Math.max(0, width - 2), Math.max(0, height - 2));
+    }
+
+    private renderEdgeFalloff(width: number, height: number): void {
+        const edgeFalloff = this.context.createRadialGradient(
+            width * 0.5,
+            height * 0.5,
+            Math.min(width, height) * 0.5,
+            width * 0.5,
+            height * 0.5,
+            Math.max(width, height) * 0.9,
+        );
+        edgeFalloff.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        edgeFalloff.addColorStop(1, 'rgba(0, 0, 0, 0.08)');
+        this.context.fillStyle = edgeFalloff;
         this.context.fillRect(0, 0, width, height);
     }
 

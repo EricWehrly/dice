@@ -10,8 +10,26 @@
 
 body {
   margin: 0;
-  background: radial-gradient(circle at 10% 10%, var(--color-page-glow), var(--color-page-bg) 60%);
+  background:
+    radial-gradient(circle at 12% 8%, var(--color-page-glow) 0%, transparent 35%),
+    radial-gradient(circle at 88% 16%, color-mix(in srgb, var(--color-page-glow) 78%, black 22%) 0%, transparent 32%),
+    radial-gradient(circle at 50% 115%, var(--color-page-felt-shadow) 0%, transparent 54%),
+    linear-gradient(160deg, var(--color-page-bg), color-mix(in srgb, var(--color-page-bg) 84%, black 16%));
+  background-color: var(--color-page-bg);
+  position: relative;
   padding: 8px;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.018) 0%, transparent 38%, rgba(0, 0, 0, 0.07) 100%),
+    linear-gradient(290deg, rgba(255, 255, 255, 0.012) 0%, transparent 42%, rgba(0, 0, 0, 0.06) 100%);
+  mix-blend-mode: soft-light;
+  opacity: 0.75;
 }
 
 .app {
@@ -25,6 +43,10 @@ body {
   border: 1px solid var(--color-panel-border);
   border-radius: 12px;
   padding: 8px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-gold-trim) 60%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 28px rgba(12, 6, 22, 0.46);
   backdrop-filter: blur(2px);
 }
 
@@ -33,6 +55,8 @@ h2,
 h3 {
   margin: 0;
   line-height: 1.15;
+  color: color-mix(in srgb, var(--color-gold-trim) 62%, white 38%);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 
 p {
@@ -53,21 +77,31 @@ p {
 }
 
 #roll-btn {
-  border: 0;
+  border: 1px solid color-mix(in srgb, var(--color-gold-trim) 72%, black 28%);
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 14px;
   font-weight: 700;
   color: var(--color-button-text);
   background: linear-gradient(135deg, var(--color-button-grad-start), var(--color-button-grad-end));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 4px 14px rgba(20, 10, 31, 0.48);
   cursor: pointer;
+}
+
+#roll-btn:hover {
+  filter: brightness(1.05);
 }
 
 #dice-canvas {
   width: 100%;
   height: min(520px, calc(100vh - 96px));
   border-radius: 10px;
-  border: 1px solid var(--color-panel-border);
+  border: 2px solid var(--color-gold-trim-soft);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 14px 24px rgba(9, 4, 18, 0.48);
   display: block;
 }
 
@@ -84,6 +118,32 @@ p {
   background: var(--color-counter-bg);
   border: 1px solid var(--color-counter-border);
   font-size: 13px;
+}
+
+.trick-list {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.trick-item {
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--color-counter-bg);
+  border: 1px solid var(--color-counter-border);
+}
+
+.trick-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.trick-meta {
+  margin-top: 2px;
+  font-size: 12px;
+  opacity: 0.85;
 }
 
 @media (max-width: 1100px), (max-aspect-ratio: 6/5) {
