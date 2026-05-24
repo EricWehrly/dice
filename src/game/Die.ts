@@ -4,6 +4,7 @@ export interface DieOptions {
     faceCount?: number;
     id?: string;
     label?: string;
+    randomizer?: () => number;
 }
 
 export class Die {
@@ -14,14 +15,14 @@ export class Die {
     active: boolean;
     label: string;
 
-    constructor({ faceCount = 6, id = generateId(), label }: DieOptions = {}) {
+    constructor({ faceCount = 6, id = generateId(), label, randomizer = Math.random }: DieOptions = {}) {
         if (!Number.isInteger(faceCount) || faceCount < 2) {
             throw new Error('faceCount must be an integer >= 2');
         }
 
         this.id = id;
         this.faceCount = faceCount;
-        this.randomizer = Math.random;
+        this.randomizer = randomizer;
         this.faceUp = 1;
         this.active = true;
         this.label = label ?? `d${faceCount}`;
