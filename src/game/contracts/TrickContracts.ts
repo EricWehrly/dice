@@ -4,5 +4,6 @@ export const TrickEvents = {
     ROLL_EVALUATED: 'trick:roll-evaluated',
     TRICK_DISCOVERED: 'trick:discovered',
     TRICK_HIGH_SCORE: 'trick:high-score',
+    SCORE_UPDATED: 'score:updated',
     DIE_SELECTED: 'die:selected',
 } as const;
