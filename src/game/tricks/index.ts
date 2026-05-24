@@ -7,3 +7,4 @@ export { Trick, type TrickResult } from './Trick';
 import './OfAKind';
 import './Ascending';
 import './Primes';
+import './InARow';
