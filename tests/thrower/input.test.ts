@@ -36,23 +36,20 @@ describe('createCubeAtCursor', () => {
 
     // Ensure THREE.Vector3 exists and has the minimal methods used by calculatePosition
     if (typeof (THREE as any).Vector3 !== 'function') {
-      (THREE as any).Vector3 = function (x = 0, y = 0, z = 0) {
+      (THREE as any).Vector3 = function (this: any, x = 0, y = 0, z = 0) {
         this.x = x; this.y = y; this.z = z;
-        this.unproject = function () { return this; };
-        this.sub = function () { return this; };
-        this.normalize = function () { return this; };
-        this.multiplyScalar = function () { return this; };
-        this.clone = function () { return this; };
-        this.add = function () { return this; };
+        this.unproject = function (this: any) { return this; };
+        this.sub = function (this: any) { return this; };
+        this.normalize = function (this: any) { return this; };
+        this.multiplyScalar = function (this: any) { return this; };
+        this.clone = function (this: any) { return this; };
+        this.add = function (this: any) { return this; };
       } as any;
     }
 
     // Import createCubeAtCursor lazily to avoid eager engine initialization before window is mocked
     const inputModule = await import('../../src/thrower/input');
     const { createCubeAtCursor } = inputModule;
-
-    // Stub out animateCube to avoid running the sequencer
-    vi.spyOn(inputModule, 'animateCube').mockImplementation(() => null as any);
 
     const camera = new THREE.PerspectiveCamera(90, 1, 0.1, 1000);
     camera.position.set(0, 0, -10);
@@ -71,11 +68,10 @@ describe('createCubeAtCursor', () => {
     delete (global as any).window.__TEST_DISABLE_CALC;
     delete (global as any).window.__TEST_DISABLE_ANIMATION;
 
-    expect(result.entity).toBeDefined();
-    expect(result.cube).toBe(mesh);
+    expect(result).toBeDefined();
     // entity should have been created with an entity3DConfig for the graphic
-    expect((result.entity as any).entity3DConfig).toBeDefined();
-    expect((result.entity as any).entity3DConfig.graphicClass).toBeDefined();
-    expect((result.entity as any).name).toBe('Thrown Dice');
+    expect((result as any).entity3DConfig).toBeDefined();
+    expect((result as any).entity3DConfig.graphicClass).toBeDefined();
+    expect((result as any).name).toBe('Thrown Dice');
   });
 });
