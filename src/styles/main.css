@@ -66,20 +66,29 @@ p {
 .play {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  padding: 0;
+  overflow: hidden;
 }
 
-.play-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+.play-screen.is-hidden {
+  display: none;
+}
+
+.play-screen {
+  width: 100%;
+  flex: 1;
+  position: relative;
 }
 
 #roll-btn {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
   border: 1px solid color-mix(in srgb, var(--color-gold-trim) 72%, black 28%);
   border-radius: 8px;
-  padding: 10px 14px;
+  padding: 10px 28px;
   font-size: 14px;
   font-weight: 700;
   color: var(--color-button-text);
@@ -94,14 +103,14 @@ p {
   filter: brightness(1.05);
 }
 
+#roll-btn.is-hidden {
+  display: none;
+}
+
 #dice-canvas {
   width: 100%;
   height: min(520px, calc(100vh - 96px));
-  border-radius: 10px;
-  border: 2px solid var(--color-gold-trim-soft);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 14px 24px rgba(9, 4, 18, 0.48);
+  border-radius: 0 0 10px 10px;
   display: block;
 }
 

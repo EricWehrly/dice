@@ -3,8 +3,10 @@ import { ScoreProgressionTracker } from './game/score/ScoreProgressionTracker';
 import { TrickEvaluator } from './game/tricks/TrickEvaluator';
 import { DiceCanvasRenderer } from './rendering/2d/DiceCanvasRenderer';
 import { ScorePanel } from './ui/ScorePanel';
+// import { TB05PrototypePanel } from './ui/TB05PrototypePanel';
 import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
+import { ScreenManager } from './utils/ScreenManager';
 
 // TODO: handle in managed UI instead
 function wireRollButton(bag: Bag) {
@@ -28,6 +30,18 @@ new TrickEvaluator();
 
 const scorePanel = new ScorePanel();
 scorePanel.render();
+
+// Initialize screen manager for play mode toggle
+const screenManager = new ScreenManager();
+screenManager.register('roll',
+    document.getElementById('roll-screen')!,
+    [document.getElementById('roll-mode-btn')!]
+);
+screenManager.register('mod',
+    document.getElementById('tb05-prototype')!,
+    [document.getElementById('mod-mode-btn')!]
+);
+screenManager.switchTo('roll');
 
 const trickCounterPanel = new TrickCounterPanel();
 trickCounterPanel.render();
