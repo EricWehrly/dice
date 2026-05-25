@@ -4,12 +4,10 @@
   "description": "A TypeScript-based browser game using Vite and Yarn",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "vite --config vite.config.ts",
     "start": "vite --config vite.config.ts",
     "build": "vite build --config vite.config.ts",
     "preview": "vite preview --config vite.config.ts",
     "test": "vitest run",
-    "test:all": "vitest run",
     "test:engine": "vitest run \"engine/test/**/*.test.ts\" \"engine/test/**/*.test.js\"",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
