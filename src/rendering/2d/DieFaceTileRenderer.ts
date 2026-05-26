@@ -4,6 +4,8 @@ export interface DieFaceTileColors {
     text: string;
 }
 
+export type PipShape = 'circle' | 'square' | 'diamond' | 'hollow-circle';
+
 export interface DieDuckType {
     faceUp: number;
     active: boolean;
@@ -23,7 +25,7 @@ export interface DieFaceTileRenderInput {
     colors: DieFaceTileColors;
     size?: number; // defaults to DEFAULT_TILE_SIZE (80)
     lineWidth?: number; // defaults to 3 if locked, 2 otherwise
-    font?: string; // defaults to '600 32px "Trebuchet MS", sans-serif'
+    pipShape?: PipShape; // defaults to circle
     shadowOptions?: ShadowOptions; // defaults to standard drop shadow
 }
 
@@ -31,7 +33,8 @@ const DEFAULT_TILE_SIZE = 80;
 const DEFAULT_SHADOW_COLOR = 'rgba(14, 8, 24, 0.36)';
 const DEFAULT_SHADOW_BLUR = 8;
 const DEFAULT_SHADOW_OFFSET_Y = 3;
-const DEFAULT_FONT = '600 32px "Trebuchet MS", sans-serif';
+const DEFAULT_PIP_SHAPE: PipShape = 'circle';
+const MAX_READABLE_PIPS = 9;
 
 /**
  * Shared 2D die face tile drawing for both the roll screen and modification panel.
@@ -42,8 +45,9 @@ export function drawDieFaceTile(context: CanvasRenderingContext2D, input: DieFac
     const { x, y, die, colors } = input;
     const size = input.size ?? DEFAULT_TILE_SIZE;
     const lineWidth = input.lineWidth ?? (die.locked ? 3 : 2);
-    const font = input.font ?? DEFAULT_FONT;
     const alpha = die.active ? 1 : 0.4;
+    const pipShape = input.pipShape ?? DEFAULT_PIP_SHAPE;
+    const pipCount = Math.max(0, Math.floor(die.faceUp));
 
     const shadowColor = input.shadowOptions?.color ?? DEFAULT_SHADOW_COLOR;
     const shadowBlur = input.shadowOptions?.blur ?? DEFAULT_SHADOW_BLUR;
@@ -66,9 +70,144 @@ export function drawDieFaceTile(context: CanvasRenderingContext2D, input: DieFac
     context.shadowOffsetY = 0;
 
     context.fillStyle = colors.text;
-    context.font = font;
+    if (pipCount > MAX_READABLE_PIPS) {
+        drawFaceValueText(context, x, y, size, pipCount);
+    } else {
+        drawPips(context, x, y, size, pipCount, pipShape);
+    }
+    context.restore();
+}
+
+function drawFaceValueText(
+    context: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    value: number,
+): void {
+    const fontSize = Math.max(14, Math.round(size * 0.38));
+    context.font = `700 ${fontSize}px "Trebuchet MS", sans-serif`;
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillText(String(die.faceUp), x + size / 2, y + size / 2);
-    context.restore();
+    context.fillText(String(value), x + size / 2, y + size / 2);
+}
+
+function drawPips(
+    context: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    pipCount: number,
+    pipShape: PipShape,
+): void {
+    if (pipCount <= 0) {
+        return;
+    }
+
+    const inset = Math.max(6, size * 0.12);
+    const drawableSize = size - inset * 2;
+    const canonicalCenters = getCanonicalCenters(x, y, drawableSize, inset, pipCount);
+
+    if (canonicalCenters) {
+        const pipRadius = Math.max(1.8, Math.min(size * 0.1, drawableSize * 0.09));
+        for (const [cx, cy] of canonicalCenters) {
+            drawPipShape(context, cx, cy, pipRadius, pipShape);
+        }
+        return;
+    }
+
+    const columns = Math.ceil(Math.sqrt(pipCount));
+    const rows = Math.ceil(pipCount / columns);
+    const cellWidth = drawableSize / columns;
+    const cellHeight = drawableSize / rows;
+    const baseRadius = Math.min(cellWidth, cellHeight) * 0.22;
+    const pipRadius = Math.max(1.8, Math.min(baseRadius, size * 0.11));
+
+    for (let index = 0; index < pipCount; index += 1) {
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const cx = x + inset + cellWidth * (col + 0.5);
+        const cy = y + inset + cellHeight * (row + 0.5);
+
+        drawPipShape(context, cx, cy, pipRadius, pipShape);
+    }
+}
+
+type PipCenter = [number, number];
+
+function getCanonicalCenters(
+    x: number,
+    y: number,
+    drawableSize: number,
+    inset: number,
+    pipCount: number,
+): PipCenter[] | null {
+    if (pipCount < 1 || pipCount > 6) {
+        return null;
+    }
+
+    const left = x + inset + drawableSize * 0.2;
+    const centerX = x + inset + drawableSize * 0.5;
+    const right = x + inset + drawableSize * 0.8;
+    const top = y + inset + drawableSize * 0.2;
+    const middleY = y + inset + drawableSize * 0.5;
+    const bottom = y + inset + drawableSize * 0.8;
+
+    const topLeft: PipCenter = [left, top];
+    const topRight: PipCenter = [right, top];
+    const center: PipCenter = [centerX, middleY];
+    const bottomLeft: PipCenter = [left, bottom];
+    const bottomRight: PipCenter = [right, bottom];
+    const middleLeft: PipCenter = [left, middleY];
+    const middleRight: PipCenter = [right, middleY];
+
+    const canonicalByCount: Record<number, PipCenter[]> = {
+        1: [center],
+        2: [topLeft, bottomRight],
+        3: [topLeft, center, bottomRight],
+        4: [topLeft, topRight, bottomLeft, bottomRight],
+        5: [topLeft, topRight, center, bottomLeft, bottomRight],
+        6: [topLeft, middleLeft, bottomLeft, topRight, middleRight, bottomRight],
+    };
+
+    return canonicalByCount[pipCount] ?? null;
+}
+
+function drawPipShape(
+    context: CanvasRenderingContext2D,
+    centerX: number,
+    centerY: number,
+    radius: number,
+    shape: PipShape,
+): void {
+    switch (shape) {
+        case 'square': {
+            const side = radius * 2;
+            context.fillRect(centerX - side / 2, centerY - side / 2, side, side);
+            return;
+        }
+        case 'diamond': {
+            context.beginPath();
+            context.moveTo(centerX, centerY - radius);
+            context.lineTo(centerX + radius, centerY);
+            context.lineTo(centerX, centerY + radius);
+            context.lineTo(centerX - radius, centerY);
+            context.closePath();
+            context.fill();
+            return;
+        }
+        case 'hollow-circle': {
+            context.lineWidth = Math.max(1, radius * 0.45);
+            context.beginPath();
+            context.arc(centerX, centerY, Math.max(1, radius * 0.8), 0, Math.PI * 2);
+            context.stroke();
+            return;
+        }
+        case 'circle':
+        default: {
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            context.fill();
+        }
+    }
 }
