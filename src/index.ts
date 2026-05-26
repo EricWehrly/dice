@@ -3,7 +3,7 @@ import { ScoreProgressionTracker } from './game/score/ScoreProgressionTracker';
 import { TrickEvaluator } from './game/tricks/TrickEvaluator';
 import { DiceCanvasRenderer } from './rendering/2d/DiceCanvasRenderer';
 import { ScorePanel } from './ui/ScorePanel';
-// import { TB05PrototypePanel } from './ui/TB05PrototypePanel';
+import { TB05PrototypePanel } from './ui/TB05PrototypePanel';
 import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
 import { ScreenManager } from './utils/ScreenManager';
@@ -31,6 +31,9 @@ new TrickEvaluator();
 const scorePanel = new ScorePanel();
 scorePanel.render();
 
+const tb05PrototypePanel = new TB05PrototypePanel();
+tb05PrototypePanel.render();
+
 // Initialize screen manager for play mode toggle
 const screenManager = new ScreenManager();
 screenManager.register('roll',
@@ -41,7 +44,7 @@ screenManager.register('mod',
     document.getElementById('tb05-prototype')!,
     [document.getElementById('mod-mode-btn')!]
 );
-screenManager.switchTo('roll');
+screenManager.switchTo('mod');
 
 const trickCounterPanel = new TrickCounterPanel();
 trickCounterPanel.render();

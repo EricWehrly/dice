@@ -7,6 +7,7 @@
  */
 export class ScreenManager {
     private screens = new Map<string, HTMLElement>();
+    private buttons = new Map<string, HTMLElement[]>();
     private activeScreen: string | null = null;
 
     /**
@@ -15,13 +16,14 @@ export class ScreenManager {
      */
     register(id: string, screenEl: HTMLElement, buttonEls: HTMLElement[]): void {
         this.screens.set(id, screenEl);
+        this.buttons.set(id, buttonEls);
         buttonEls.forEach(btn => {
             btn.addEventListener('click', () => this.switchTo(id));
         });
     }
 
     /**
-     * Switch to a screen by ID. Hides all other screens.
+     * Switch to a screen by ID. Hides all other screens and updates button active states.
      */
     switchTo(id: string): void {
         if (!this.screens.has(id)) {
@@ -30,6 +32,9 @@ export class ScreenManager {
 
         this.screens.forEach((el, key) => {
             el.classList.toggle('is-hidden', key !== id);
+        });
+        this.buttons.forEach((btns, key) => {
+            btns.forEach(btn => btn.classList.toggle('is-active', key === id));
         });
         this.activeScreen = id;
     }
