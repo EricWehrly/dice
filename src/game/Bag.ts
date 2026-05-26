@@ -16,7 +16,13 @@ export class Bag {
 
     rollAll(): number[] {
         const activeDice = this.getActiveDice();
-        const faces = activeDice.map((die) => die.roll());
+        activeDice
+            .filter((die) => !die.locked)
+            .forEach((die) => {
+                die.roll();
+            });
+
+        const faces = activeDice.map((die) => die.faceUp);
 
         Events.RaiseEvent<BagRolledEvent>(TrickEvents.BAG_ROLLED, {
             faces,
@@ -52,6 +58,16 @@ export class Bag {
         }
 
         die.active = !die.active;
+        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+    }
+
+    toggleLocked(id: string): void {
+        const die = this.dice.find((item) => item.id === id);
+        if (!die) {
+            return;
+        }
+
+        die.locked = !die.locked;
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 }

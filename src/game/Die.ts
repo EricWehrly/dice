@@ -13,6 +13,7 @@ export class Die {
     private readonly randomizer: () => number;
     faceUp: number;
     active: boolean;
+    locked: boolean;
     label: string;
 
     constructor({ faceCount = 6, id = generateId(), label, randomizer = Math.random }: DieOptions = {}) {
@@ -25,6 +26,7 @@ export class Die {
         this.randomizer = randomizer;
         this.faceUp = 1;
         this.active = true;
+        this.locked = false;
         this.label = label ?? `d${faceCount}`;
     }
 

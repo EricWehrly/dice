@@ -3,10 +3,17 @@ import { TrickEvents } from '../../game/contracts/TrickContracts';
 import { Bag } from '../../game/Bag';
 
 export class DiceCanvasRenderer {
+    private static readonly TILE_SIZE = 80;
+    private static readonly GAP = 16;
+    private static readonly LABEL_HEIGHT = 18;
+    private static readonly LOCK_BTN_HEIGHT = 22;
+    private static readonly LOCK_BTN_MARGIN = 4;
+
     private readonly canvas: HTMLCanvasElement;
     private readonly context: CanvasRenderingContext2D;
     private readonly bag: Bag;
     private readonly onResize: () => void;
+    private readonly onCanvasClick: (event: MouseEvent) => void;
 
     constructor(bag: Bag) {
         const canvas = document.getElementById('dice-canvas') as HTMLCanvasElement | null;
@@ -26,9 +33,13 @@ export class DiceCanvasRenderer {
             this.resize();
             this.render();
         };
+        this.onCanvasClick = (event: MouseEvent) => {
+            this.handleCanvasClick(event);
+        };
 
         this.resize();
         window.addEventListener('resize', this.onResize);
+        this.canvas.addEventListener('click', this.onCanvasClick);
 
         Events.Subscribe(TrickEvents.BAG_ROLLED, () => this.render());
         Events.Subscribe(TrickEvents.BAG_CHANGED, () => this.render());
@@ -52,25 +63,25 @@ export class DiceCanvasRenderer {
 
         this.clear(canvasColor, trimColor);
 
-        const tileSize = 80;
-        const gap = 16;
-        const availableWidth = this.canvas.clientWidth || 900;
-        const perRow = Math.max(1, Math.floor((availableWidth - gap) / (tileSize + gap)));
+        const { TILE_SIZE: tileSize, GAP: gap, LABEL_HEIGHT: labelHeight, LOCK_BTN_HEIGHT: btnHeight, LOCK_BTN_MARGIN: btnMargin } = DiceCanvasRenderer;
+        const rowStride = tileSize + labelHeight + btnMargin + btnHeight + gap;
+        const perRow = this.getTilesPerRow();
 
         this.bag.dice.forEach((die, index) => {
             const col = index % perRow;
             const row = Math.floor(index / perRow);
             const x = gap + col * (tileSize + gap);
-            const y = gap + row * (tileSize + gap);
+            const y = gap + row * rowStride;
 
+            // Die tile
             this.context.globalAlpha = die.active ? 1 : 0.4;
             this.context.shadowColor = 'rgba(14, 8, 24, 0.36)';
             this.context.shadowBlur = 8;
             this.context.shadowOffsetY = 3;
             this.context.fillStyle = dieFaceColor;
             this.context.fillRect(x, y, tileSize, tileSize);
-            this.context.strokeStyle = dieStrokeColor;
-            this.context.lineWidth = 2;
+            this.context.strokeStyle = die.locked ? (trimColor ?? dieStrokeColor) : dieStrokeColor;
+            this.context.lineWidth = die.locked ? 3 : 2;
             this.context.strokeRect(x, y, tileSize, tileSize);
 
             this.context.shadowColor = 'transparent';
@@ -83,12 +94,76 @@ export class DiceCanvasRenderer {
             this.context.textBaseline = 'middle';
             this.context.fillText(String(die.faceUp), x + tileSize / 2, y + tileSize / 2);
 
+            // Die label
             this.context.font = '500 12px "Trebuchet MS", sans-serif';
             this.context.fillStyle = dieLabelColor;
-            this.context.fillText(die.label, x + tileSize / 2, y + tileSize + 10);
+            this.context.textBaseline = 'top';
+            this.context.fillText(die.label, x + tileSize / 2, y + tileSize + 4);
+
+            // Lock button
+            const btnY = y + tileSize + labelHeight + btnMargin;
+            if (die.locked) {
+                this.context.fillStyle = trimColor ?? '#c9a94a';
+                this.context.strokeStyle = trimColor ?? '#c9a94a';
+            } else {
+                this.context.fillStyle = 'rgba(255,255,255,0.06)';
+                this.context.strokeStyle = dieStrokeColor;
+            }
+            this.context.lineWidth = 1.5;
+            this.context.beginPath();
+            this.context.roundRect(x + 4, btnY, tileSize - 8, btnHeight, 4);
+            this.context.fill();
+            this.context.stroke();
+
+            this.context.fillStyle = die.locked ? '#1a0d2e' : dieLabelColor;
+            this.context.font = `700 11px "Trebuchet MS", sans-serif`;
+            this.context.textAlign = 'center';
+            this.context.textBaseline = 'middle';
+            this.context.fillText(die.locked ? 'UNLOCK' : 'LOCK', x + tileSize / 2, btnY + btnHeight / 2);
         });
 
         this.context.globalAlpha = 1;
+    }
+
+    private getTilesPerRow(): number {
+        const availableWidth = this.canvas.clientWidth || 900;
+        return Math.max(1, Math.floor((availableWidth - DiceCanvasRenderer.GAP) / (DiceCanvasRenderer.TILE_SIZE + DiceCanvasRenderer.GAP)));
+    }
+
+    private handleCanvasClick(event: MouseEvent): void {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        const die = this.getDieAtPoint(x, y);
+        if (!die) {
+            return;
+        }
+
+        this.bag.toggleLocked(die.id);
+    }
+
+    private getDieAtPoint(x: number, y: number) {
+        const { TILE_SIZE: tileSize, GAP: gap, LABEL_HEIGHT: labelHeight, LOCK_BTN_HEIGHT: btnHeight, LOCK_BTN_MARGIN: btnMargin } = DiceCanvasRenderer;
+        const rowStride = tileSize + labelHeight + btnMargin + btnHeight + gap;
+        const perRow = this.getTilesPerRow();
+
+        for (const [index, die] of this.bag.dice.entries()) {
+            const col = index % perRow;
+            const row = Math.floor(index / perRow);
+            const tileX = gap + col * (tileSize + gap);
+            const tileY = gap + row * rowStride;
+            const btnY = tileY + tileSize + labelHeight + btnMargin;
+
+            const btnLeft = tileX + 4;
+            const btnRight = tileX + tileSize - 4;
+
+            if (x >= btnLeft && x <= btnRight && y >= btnY && y <= btnY + btnHeight) {
+                return die;
+            }
+        }
+
+        return null;
     }
 
     private resize(): void {
