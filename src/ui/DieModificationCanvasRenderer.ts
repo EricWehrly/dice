@@ -50,33 +50,40 @@ export class DieModificationCanvasRenderer {
             const x = padding + displayIndex * columnWidth;
             const tileX = x + (columnWidth - tileSize) / 2;
 
+            // Duck-typed dummy die for rendering purposes
+            const dummyDie = { faceUp: index + 1, active: true, locked: false };
+
             drawDieFaceTile(context, {
                 x: tileX,
                 y: padding,
                 size: tileSize,
-                value: String(index + 1),
+                die: dummyDie,
                 colors: {
                     fill: tileBg,
                     stroke: tileBorder,
                     text: tileText,
                 },
+                shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
             });
         }
 
         const coreX = padding + centerPosition * columnWidth;
         const coreTileX = coreX + (columnWidth - tileSize) / 2;
 
+        // Core slot is not a real face, just a display slot
+        const coreDummyDie = { faceUp: 0, active: true, locked: false };
+
         drawDieFaceTile(context, {
             x: coreTileX,
             y: padding,
+            die: coreDummyDie,
             size: tileSize,
-            value: '',
             colors: {
                 fill: corePanelBg,
                 stroke: coreAccent,
                 text: tileText,
             },
-            alpha: 1,
+            shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
         });
 
         context.save();

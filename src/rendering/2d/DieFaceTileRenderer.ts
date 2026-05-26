@@ -4,37 +4,50 @@ export interface DieFaceTileColors {
     text: string;
 }
 
-export interface DieFaceTileOptions {
+export interface DieDuckType {
+    faceUp: number;
+    active: boolean;
+    locked: boolean;
+}
+
+export interface ShadowOptions {
+    color?: string;
+    blur?: number;
+    offsetY?: number;
+}
+
+export interface DieFaceTileRenderInput {
     x: number;
     y: number;
-    size: number;
-    value: string;
+    die: DieDuckType;
     colors: DieFaceTileColors;
-    lineWidth?: number;
-    font?: string;
-    alpha?: number;
-    shadowColor?: string;
-    shadowBlur?: number;
-    shadowOffsetY?: number;
+    size?: number; // defaults to DEFAULT_TILE_SIZE (80)
+    lineWidth?: number; // defaults to 3 if locked, 2 otherwise
+    font?: string; // defaults to '600 32px "Trebuchet MS", sans-serif'
+    shadowOptions?: ShadowOptions; // defaults to standard drop shadow
 }
+
+const DEFAULT_TILE_SIZE = 80;
+const DEFAULT_SHADOW_COLOR = 'rgba(14, 8, 24, 0.36)';
+const DEFAULT_SHADOW_BLUR = 8;
+const DEFAULT_SHADOW_OFFSET_Y = 3;
+const DEFAULT_FONT = '600 32px "Trebuchet MS", sans-serif';
 
 /**
  * Shared 2D die face tile drawing for both the roll screen and modification panel.
+ * Takes a die object (actual or duck-typed) and manages standard defaults for size,
+ * styling, and appearance based on die state.
  */
-export function drawDieFaceTile(context: CanvasRenderingContext2D, options: DieFaceTileOptions): void {
-    const {
-        x,
-        y,
-        size,
-        value,
-        colors,
-        lineWidth = 2,
-        font = '600 20px "Trebuchet MS", sans-serif',
-        alpha = 1,
-        shadowColor = 'transparent',
-        shadowBlur = 0,
-        shadowOffsetY = 0,
-    } = options;
+export function drawDieFaceTile(context: CanvasRenderingContext2D, input: DieFaceTileRenderInput): void {
+    const { x, y, die, colors } = input;
+    const size = input.size ?? DEFAULT_TILE_SIZE;
+    const lineWidth = input.lineWidth ?? (die.locked ? 3 : 2);
+    const font = input.font ?? DEFAULT_FONT;
+    const alpha = die.active ? 1 : 0.4;
+
+    const shadowColor = input.shadowOptions?.color ?? DEFAULT_SHADOW_COLOR;
+    const shadowBlur = input.shadowOptions?.blur ?? DEFAULT_SHADOW_BLUR;
+    const shadowOffsetY = input.shadowOptions?.offsetY ?? DEFAULT_SHADOW_OFFSET_Y;
 
     context.save();
     context.globalAlpha = alpha;
@@ -56,6 +69,6 @@ export function drawDieFaceTile(context: CanvasRenderingContext2D, options: DieF
     context.font = font;
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillText(value, x + size / 2, y + size / 2);
+    context.fillText(String(die.faceUp), x + size / 2, y + size / 2);
     context.restore();
 }

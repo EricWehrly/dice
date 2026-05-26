@@ -1,6 +1,7 @@
 import Events from '../../../engine/js/events';
 import { TrickEvents } from '../../game/contracts/TrickContracts';
 import { Bag } from '../../game/Bag';
+import { drawDieFaceTile } from './DieFaceTileRenderer';
 
 export class DiceCanvasRenderer {
     private static readonly TILE_SIZE = 80;
@@ -73,32 +74,30 @@ export class DiceCanvasRenderer {
             const x = gap + col * (tileSize + gap);
             const y = gap + row * rowStride;
 
-            // Die tile
-            this.context.globalAlpha = die.active ? 1 : 0.4;
-            this.context.shadowColor = 'rgba(14, 8, 24, 0.36)';
-            this.context.shadowBlur = 8;
-            this.context.shadowOffsetY = 3;
-            this.context.fillStyle = dieFaceColor;
-            this.context.fillRect(x, y, tileSize, tileSize);
-            this.context.strokeStyle = die.locked ? (trimColor ?? dieStrokeColor) : dieStrokeColor;
-            this.context.lineWidth = die.locked ? 3 : 2;
-            this.context.strokeRect(x, y, tileSize, tileSize);
-
-            this.context.shadowColor = 'transparent';
-            this.context.shadowBlur = 0;
-            this.context.shadowOffsetY = 0;
-
-            this.context.fillStyle = dieTextColor;
-            this.context.font = '600 32px "Trebuchet MS", sans-serif';
-            this.context.textAlign = 'center';
-            this.context.textBaseline = 'middle';
-            this.context.fillText(String(die.faceUp), x + tileSize / 2, y + tileSize / 2);
+            // Die tile (using shared renderer)
+            drawDieFaceTile(this.context, {
+                x,
+                y,
+                die,
+                size: tileSize,
+                colors: {
+                    fill: dieFaceColor,
+                    stroke: die.locked ? (trimColor ?? dieStrokeColor) : dieStrokeColor,
+                    text: dieTextColor,
+                },
+            });
 
             // Die label
             this.context.font = '500 12px "Trebuchet MS", sans-serif';
             this.context.fillStyle = dieLabelColor;
             this.context.textBaseline = 'top';
             this.context.fillText(die.label, x + tileSize / 2, y + tileSize + 4);
+
+            // Reset context state after shared tile renderer
+            this.context.globalAlpha = 1;
+            this.context.shadowColor = 'transparent';
+            this.context.shadowBlur = 0;
+            this.context.shadowOffsetY = 0;
 
             // Lock button
             const btnY = y + tileSize + labelHeight + btnMargin;
