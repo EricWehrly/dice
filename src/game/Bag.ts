@@ -10,7 +10,8 @@ export interface BagRolledEvent extends GameEvent {
 export class Bag {
     readonly dice: Die[];
 
-    constructor(initialDice: Die[] = [new Die()]) {
+    constructor(initialDice: Die[] = [new Die(), new Die(), new Die()]) {
+    // constructor(initialDice: Die[] = [new Die()]) {
         this.dice = [...initialDice];
     }
 
