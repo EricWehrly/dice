@@ -7,16 +7,16 @@
 
 import {
     type AvailableModValue,
-    type AvailableBrainModValue,
+    type AvailableCoreModValue,
     AVAILABLE_MODS,
-    AVAILABLE_BRAIN_MODS,
+    AVAILABLE_CORE_MODS,
 } from './DieModificationTypes';
 
 export interface DieModPanelData {
     dice: Array<{ id: string; label: string; faceCount: number }>;
     selectedDieId: string;
     draftFaceMods: AvailableModValue[];
-    draftCenterMod: AvailableBrainModValue;
+    draftCoreMod: AvailableCoreModValue;
     preview: number[];
     deltas: number[];
     current: number[];
@@ -72,10 +72,10 @@ function renderModRow(data: DieModPanelData): string {
                             return `
                                 <label class="die-mod-face-target die-mod-core-slot" title="Die core">
                                     <span class="die-mod-slot-label die-mod-core-slot-label">core</span>
-                                    <select id="die-mod-center-select" class="die-mod-select">
-                                        ${AVAILABLE_BRAIN_MODS.map(
+                                    <select id="die-mod-core-select" class="die-mod-select">
+                                        ${AVAILABLE_CORE_MODS.map(
                                             (mod) =>
-                                                `<option value="${mod.value}" ${mod.value === data.draftCenterMod ? 'selected' : ''}>${mod.label}</option>`
+                                                `<option value="${mod.value}" ${mod.value === data.draftCoreMod ? 'selected' : ''}>${mod.label}</option>`
                                         ).join('')}
                                     </select>
                                 </label>

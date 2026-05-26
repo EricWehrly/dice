@@ -13,41 +13,25 @@ import { DieModificationCanvasRenderer } from './DieModificationCanvasRenderer';
 import {
     AVAILABLE_MODS,
     type AvailableModValue,
-    type AvailableBrainModValue,
+    type AvailableCoreModValue,
 } from './DieModificationTypes';
 import { getFaceChances, getPreviewChances } from '../game/DiceProbability';
-
-type DummyWeightMod = {
-    faceIndex: number;
-    grams: number;
-};
-
-type DummyCenterMod = {
-    id: string;
-};
-
-type DummyDieModel = {
-    id: string;
-    label: string;
-    faceCount: number;
-    mods: DummyWeightMod[];
-    centerMods: DummyCenterMod[];
-};
+import { ModifiedDie } from '../game/ModifiedDie';
 
 export class DieModificationPanel {
     private readonly root: HTMLElement | null;
     private readonly canvasRenderer = new DieModificationCanvasRenderer();
-    private readonly dice: DummyDieModel[];
+    private readonly dice: ModifiedDie[];
     private selectedDieId: string;
     private draftFaceMods: AvailableModValue[] = [];
-    private draftCenterMod: AvailableBrainModValue = 'none';
+    private draftCoreMod: AvailableCoreModValue = 'none';
 
     constructor() {
         this.root = document.getElementById('die-mod-panel');
         this.dice = [
-            { id: 'die-a', label: 'Copper d6', faceCount: 6, mods: [], centerMods: [] },
-            { id: 'die-b', label: 'Silver d6', faceCount: 6, mods: [{ faceIndex: 0, grams: 1 }], centerMods: [] },
-            { id: 'die-c', label: 'Bronze d8', faceCount: 8, mods: [{ faceIndex: 3, grams: 0.5 }], centerMods: [] },
+            new ModifiedDie({ id: 'die-a', label: 'Copper d6', faceCount: 6 }),
+            new ModifiedDie({ id: 'die-b', label: 'Silver d6', faceCount: 6, mods: [{ faceIndex: 0, grams: 1 }] }),
+            new ModifiedDie({ id: 'die-c', label: 'Bronze d8', faceCount: 8, mods: [{ faceIndex: 3, grams: 0.5 }] }),
         ];
         this.selectedDieId = this.dice[0].id;
         this.resetDraftForSelectedDie();
@@ -74,7 +58,7 @@ export class DieModificationPanel {
             dice: this.dice,
             selectedDieId: this.selectedDieId,
             draftFaceMods: this.draftFaceMods,
-            draftCenterMod: this.draftCenterMod,
+            draftCoreMod: this.draftCoreMod,
             preview,
             deltas,
             current,
@@ -82,7 +66,7 @@ export class DieModificationPanel {
             centerPosition,
             hasDraftChanges,
             hasActualDeltas,
-            installedModCount: die.mods.length + die.centerMods.length,
+            installedModCount: die.mods.length + die.coreMods.length,
         };
 
         this.root.innerHTML = renderDieModPanel(templateData);
@@ -121,11 +105,11 @@ export class DieModificationPanel {
                     continue;
                 }
 
-                die.mods.push({ faceIndex: index, grams: mod.grams });
+                die.addWeightMod(index, mod.grams);
             }
 
-            if (this.draftCenterMod !== 'none') {
-                die.centerMods.push({ id: this.draftCenterMod });
+            if (this.draftCoreMod !== 'none') {
+                die.addCoreMod(this.draftCoreMod);
             }
 
             this.resetDraftForSelectedDie();
@@ -144,9 +128,9 @@ export class DieModificationPanel {
             });
         });
 
-        const centerSelect = this.root.querySelector<HTMLSelectElement>('#die-mod-center-select');
-        centerSelect?.addEventListener('change', () => {
-            this.draftCenterMod = (centerSelect.value as AvailableBrainModValue) ?? 'none';
+        const coreSelect = this.root.querySelector<HTMLSelectElement>('#die-mod-core-select');
+        coreSelect?.addEventListener('change', () => {
+            this.draftCoreMod = (coreSelect.value as AvailableCoreModValue) ?? 'none';
             this.render();
         });
     }
@@ -160,7 +144,7 @@ export class DieModificationPanel {
     }
 
     private hasDraftChanges(): boolean {
-        if (this.draftCenterMod !== 'none') {
+        if (this.draftCoreMod !== 'none') {
             return true;
         }
 
@@ -170,10 +154,10 @@ export class DieModificationPanel {
     private resetDraftForSelectedDie(): void {
         const die = this.getSelectedDie();
         this.draftFaceMods = Array.from({ length: die.faceCount }, () => 'none');
-        this.draftCenterMod = 'none';
+        this.draftCoreMod = 'none';
     }
 
-    private getSelectedDie(): DummyDieModel {
+    private getSelectedDie(): ModifiedDie {
         return this.dice.find((die) => die.id === this.selectedDieId) ?? this.dice[0];
     }
 

@@ -13,10 +13,10 @@ export const AVAILABLE_MODS = [
     { value: 'weight-2.5', label: 'Weight 2.5g', grams: 2.5 },
 ] as const;
 
-export const AVAILABLE_BRAIN_MODS = [
+export const AVAILABLE_CORE_MODS = [
     { value: 'none', label: '---', grams: 0 },
-    { value: 'brain', label: 'Brain', grams: 0 },
+    { value: 'core', label: 'Core', grams: 0 },
 ] as const;
 
 export type AvailableModValue = typeof AVAILABLE_MODS[number]['value'];
-export type AvailableBrainModValue = typeof AVAILABLE_BRAIN_MODS[number]['value'];
+export type AvailableCoreModValue = typeof AVAILABLE_CORE_MODS[number]['value'];

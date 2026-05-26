@@ -6,19 +6,27 @@
  */
 
 import { AVAILABLE_MODS, type AvailableModValue } from '../ui/DieModificationTypes';
+import type { DieWeightMod } from './ModifiedDie';
 
 const BASE_FACE_WEIGHT = 1;
 const WEIGHT_FACTOR = 0.12;
 
-export type DiceWeightMod = {
-    faceIndex: number;
-    grams: number;
-};
-
 export type DiceModel = {
     faceCount: number;
-    mods: DiceWeightMod[];
+    mods?: DieWeightMod[];
 };
+
+function getInstalledWeightGrams(die: DiceModel, faceIndex: number): number {
+    const mods = die.mods ?? [];
+    let total = 0;
+    for (const mod of mods) {
+        if (mod.faceIndex === faceIndex) {
+            total += mod.grams;
+        }
+    }
+
+    return Math.max(0, total);
+}
 
 /**
  * Get the weight in grams for a modification value.
@@ -36,12 +44,13 @@ export function getModGrams(modValue: AvailableModValue): number {
  * Calculate face-by-face probability percentages given a die and its actual mods.
  * Higher probability faces are weighted down by their mods.
  */
-export function getFaceChances(die: DiceModel, extraMods: DiceWeightMod[] = []): number[] {
+export function getFaceChances(die: DiceModel, extraMods: DieWeightMod[] = []): number[] {
     const weights = Array.from({ length: die.faceCount }, () => BASE_FACE_WEIGHT);
 
-    for (const mod of die.mods) {
-        if (mod.faceIndex >= 0 && mod.faceIndex < weights.length) {
-            weights[mod.faceIndex] = Math.max(0.05, weights[mod.faceIndex] - mod.grams * WEIGHT_FACTOR);
+    for (let faceIndex = 0; faceIndex < weights.length; faceIndex += 1) {
+        const installedWeight = getInstalledWeightGrams(die, faceIndex);
+        if (installedWeight > 0) {
+            weights[faceIndex] = Math.max(0.05, weights[faceIndex] - installedWeight * WEIGHT_FACTOR);
         }
     }
 
@@ -60,7 +69,7 @@ export function getFaceChances(die: DiceModel, extraMods: DiceWeightMod[] = []):
  * Used by UI to show live preview of what probabilities would be if draft mods were installed.
  */
 export function getPreviewChances(die: DiceModel, draftFaceMods: AvailableModValue[]): number[] {
-    const previewMods: DiceWeightMod[] = [];
+    const previewMods: DieWeightMod[] = [];
 
     for (let faceIndex = 0; faceIndex < draftFaceMods.length; faceIndex += 1) {
         const modValue = draftFaceMods[faceIndex];
