@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import Events from '../../engine/js/events';
 import { Bag } from '../../src/game/Bag';
 import { TrickEvents } from '../../src/game/contracts/TrickContracts';
-import { Die } from '../../src/game/Die';
+import { ModifiedDie as Die } from '../../src/game/ModifiedDie';
 
 describe('Bag', () => {
     it('rollAll rolls every active die', () => {

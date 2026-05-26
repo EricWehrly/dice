@@ -31,7 +31,7 @@ new TrickEvaluator();
 const scorePanel = new ScorePanel();
 scorePanel.render();
 
-const dieModificationPanel = new DieModificationPanel();
+const dieModificationPanel = new DieModificationPanel(bag.dice);
 dieModificationPanel.render();
 
 // Initialize screen manager for play mode toggle

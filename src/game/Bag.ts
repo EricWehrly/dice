@@ -1,6 +1,7 @@
 import Events, { type GameEvent } from '../../engine/js/events';
 import { TrickEvents } from './contracts/TrickContracts';
 import { Die } from './Die';
+import { ModifiedDie } from './ModifiedDie';
 
 export interface BagRolledEvent extends GameEvent {
     faces: number[];
@@ -8,10 +9,9 @@ export interface BagRolledEvent extends GameEvent {
 }
 
 export class Bag {
-    readonly dice: Die[];
+    readonly dice: ModifiedDie[];
 
-    constructor(initialDice: Die[] = [new Die(), new Die(), new Die()]) {
-    // constructor(initialDice: Die[] = [new Die()]) {
+    constructor(initialDice: ModifiedDie[] = [new ModifiedDie(), new ModifiedDie(), new ModifiedDie()]) {
         this.dice = [...initialDice];
     }
 
@@ -33,7 +33,7 @@ export class Bag {
         return faces;
     }
 
-    addDie(die: Die): void {
+    addDie(die: ModifiedDie): void {
         this.dice.push(die);
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }

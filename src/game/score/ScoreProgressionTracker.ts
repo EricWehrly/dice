@@ -1,7 +1,7 @@
 import Events, { type GameEvent } from '../../../engine/js/events';
 import { Bag, type BagRolledEvent } from '../Bag';
 import { TrickEvents } from '../contracts/TrickContracts';
-import { Die } from '../Die';
+import { ModifiedDie } from '../ModifiedDie';
 
 export interface ScoreUpdatedEvent extends GameEvent {
     rollScore: number;
@@ -49,7 +49,7 @@ export class ScoreProgressionTracker {
 
         const unlockedDice = toMagnitude - fromMagnitude;
         for (let index = 0; index < unlockedDice; index += 1) {
-            this.bag.addDie(new Die());
+            this.bag.addDie(new ModifiedDie());
         }
     }
 
