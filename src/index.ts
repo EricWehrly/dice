@@ -8,6 +8,8 @@ import { RollHistoryPanel } from './ui/RollHistoryPanel';
 import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
 import { ScreenManager } from './utils/ScreenManager';
+import { init as initThrower } from './thrower/index';
+import ThreeJSRenderContext from '../engine/js/rendering/contexts/ThreeJS.RenderContext';
 
 // TODO: handle in managed UI instead
 function wireRollButton(bag: Bag) {
@@ -45,7 +47,19 @@ screenManager.register('mod',
     document.getElementById('die-mod-panel')!,
     [document.getElementById('mod-mode-btn')!]
 );
-screenManager.switchTo('roll');
+
+// Mount 3D viewport: init thrower (creates ThreeJSRenderContext canvas appended to body),
+// then re-parent the canvas into the roll-3d screen container so it stays mounted on tab switch.
+const roll3dScreen = document.getElementById('roll-3d-screen')!;
+initThrower();
+roll3dScreen.appendChild(ThreeJSRenderContext.Instance.canvas);
+
+screenManager.register('roll-3d',
+    roll3dScreen,
+    [document.getElementById('roll-3d-mode-btn')!]
+);
+
+screenManager.switchTo('mod');
 
 const trickCounterPanel = new TrickCounterPanel();
 trickCounterPanel.render();
