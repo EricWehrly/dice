@@ -570,8 +570,89 @@ Resolved decisions:
 7. Style should render directly on the isometric die (textures, pips, orientation).
 8. Skip keyboard face selection.
 9. Only one mod selected at a time via dropdown.
+10. Data model: Die has Mods; each Mod has an optional `targetFaceIndex` (null = core-only, natural face indices = 1..faceCount or 0..faceCount-1).
+11. Single source of truth in game state (Die.Mods), not UI-local state.
+12. Install always replaces current target for that mod (no separate move; reinstall achieves relocation).
+13. Weight (core mod) and Style are separate slots; they do not conflict.
+14. Probabilities show preview based on selected mod + target face during expanded mode (no fallback text).
+15. Style remains global die-wide in this phase; per-face style is out of scope.
+16. Use existing `BAG_UPDATED` event; no new granular event types unless future behavior requires it.
+17. Install button is disabled if no valid target or mod unavailable (inline conditionals in template).
+18. Economy: Reinstall (move between faces) uses Resource transfer logic from existing Resource class.
+    Uninstall does not refund; move is a transfer of the resource from one face slot to another.
+19. Core is distinct from faces: targetFaceIndex is null (core-only effect) or natural face index. No 0-indexing confusion.
 
 ---
+
+## Animation Proposals
+
+If animations are desired, here are three low-risk options with estimates. **Recommendation: Defer to 3D phase unless development time permits.**
+
+### Option A: Expand/Collapse Transition (Subtle Fade)
+**Concept**: When mod selector changes from collapsed to expanded, the carousel fades in while the isometric die fades out over ~200ms. Simple CSS transition or lightweight canvas opacity.
+
+**Complexity**: Very Low  
+**Time to implement**: ~30 minutes  
+**LOC**: ~15–20 lines (CSS or canvas opacity tweaks)  
+**Risks**: None; purely visual feedback.  
+**Value**: Provides clear mode indication to user.
+
+### Option B: Subtle Glow on Selected Mod Dropdown
+**Concept**: When user selects a core mod from the dropdown, the dropdown control gets a 1-second subtle glow (shadow + background color shift) to confirm selection before expanding.
+
+**Complexity**: Very Low  
+**Time to implement**: ~20 minutes  
+**LOC**: ~10–15 lines (CSS animation, or canvas glow draw)  
+**Risks**: None; purely highlight feedback.  
+**Value**: Confirms mod selection intent without blocking flow.
+
+### Option C: Target Face Highlight in Carousel (on selector change)
+**Concept**: When user changes target face selector in expanded mode, the corresponding face tile in the carousel briefly highlights/pulses to show which face is selected.
+
+**Complexity**: Low  
+**Time to implement**: ~45 minutes  
+**LOC**: ~30–40 lines (carousel renderer modification + event wiring)  
+**Risks**: Low; tied to existing carousel renderer.  
+**Value**: Visual feedback that selection maps to carousel correctly.
+
+**Recommendation**: Option A (expand/collapse transition) is the safest and offers the most user-facing value with minimal cost. Options B and C are nice-to-have. If all three are wanted, budget an extra 1–1.5 hours into Phase 3.
+
+---
+
+## Implementation Details Locked
+
+### Data Model (Game State)
+- **Die.mods**: Array of Mod objects.
+- **Mod.id**: Unique identifier (e.g., 'weight', 'spin').
+- **Mod.targetFaceIndex**: Optional number:
+  - `null` or `undefined`: Core slot only, no face effect.
+  - Natural face index (1..faceCount or 0..faceCount-1 depending on die API): Mod targets this face.
+- Single source of truth: game state owns install state, UI state is transient.
+- Core is conceptually separate from faces; targetFaceIndex naturally reflects this.
+
+### Install/Replace Logic
+- Install: Call `die.installMod(modId, targetFaceIndex)`.
+- If mod already installed: Replace targetFaceIndex (move the mod).
+- No duplicates: only one Weight instance per die.
+- Economy: Resource.transfer() is used if moving between faces (existing API).
+
+### Uninstall Logic
+- Uninstall: Call `die.uninstallMod(modId)`.
+- Result: Clears targetFaceIndex for that mod.
+- Economy: Does not refund (resource is consumed for the session).
+
+### Events & Integration
+- On install/uninstall: Emit `BAG_UPDATED` event.
+- Payload: Standard bag change event (no new granular fields unless future features demand).
+- Listeners: Panel re-renders on event; other systems respond as normal.
+
+### Disabled Install Conditions
+- Install disabled if `selectedTargetFaceIndex === null`.
+- Install disabled if `selectedCoreMod === null`.
+- Install disabled if mod is unavailable (future: check availability flags).
+
+---
+
 
 ## Success Criteria
 
@@ -599,62 +680,37 @@ Resolved decisions:
 
 ---
 
+## Implementation Checklist (Ready to Code)
+
+Phase 1 can now begin with:
+
+### Phase 1 Tasks
+1. Create `src/rendering/2d/DieIsometricRenderer.ts` with projection math and render interface.
+2. Refactor `src/ui/DieModificationPanelTemplate.ts` to support collapsed/expanded modes.
+3. Refactor `src/ui/DieModificationPanel.ts` to manage state machine and event listeners.
+4. Add/update styles in `src/styles/die-mod-panel.css` for isometric container and expand/collapse modes.
+5. Integrate isometric renderer calls and test projection visuals.
+
+### Phase 2 Tasks
+6. Wire target face selector to DieModificationPanel state.
+7. Implement Install button logic: call game state API and emit BAG_UPDATED.
+8. Implement Cancel button logic: clear selections and return to collapsed.
+9. Test install-replace, uninstall-clear, cancel-no-state-change flows.
+10. Verify probabilities show preview (selected mod + target face).
+
+### Phase 3 Tasks (if time permits)
+11. Implement optional animation (Option A recommended).
+12. Polish isometric rendering (lighting, face shading, core mod indicator).
+13. Add edge-case handling and error states.
+14. Comprehensive manual visual testing.
+
+---
+
 ## Next Steps
 
-1. Review and refine this design doc with team feedback
-2. Begin Phase 1 implementation (build isometric renderer + basic state machine)
-3. Implement expanded-mode install flow using exploded carousel + explicit Install button
-4. Iterate on visual design and user testing
-5. Integrate with existing mod system and game logic
+✅ **All design decisions locked.** Target face selector scope clarified: `targetFaceIndex` is `null` (core-only) or natural face index (1..faceCount). Ready to code.
 
-
-
---- 
-
-## questions
-
-Data model contract for mod-to-face
-Define exactly where face target lives and its shape.
-Recommendation: mod has targetFaceIndex with explicit values for core vs face, and a single source of truth in game state, not UI-local state.
-Seems right to me. The Die has Mods which have an optional targetFaceIndex. 0 can be the core.
-
-Install/replace semantics
-What happens if Weight is already installed and user picks a new face?
-Recommendation: Install always means replace current target for that mod (no separate move feature), no duplicate Weight instances.
-weight is in mod slot
-"face" (pip icon) is from style slot
-they should not conflict
-
-Cost and economy behavior
-Does reinstall/uninstall affect modsSpent or other counters?
-Recommendation: lock a temporary rule now (for example, reinstall is free during this phase, uninstall refunds nothing) to avoid later logic ambiguity.
-if we think of an installation as a "use", then that use can be transfered or refunded
-that should be how the actual literal Resource class is being used right now...
-
-Expanded mode face options
-Should target include Core and all faces, or faces only?
-Recommendation: define this explicitly in the control label and option list so behavior is obvious.
-
-Probability source and timing
-When expanded, are probabilities showing current die state, or preview with selected mod + selected target face?
-Recommendation: show preview based on selected mod + target face, with fallback text if preview unavailable.
-
-Style rendering scope
-You decided style is rendered on the isometric die; clarify if style remains one global die style or can diverge by face later.
-Recommendation: keep global die style for now, add a note that per-face style is out of scope.
-
-Transition and animation boundaries
-You want minimal motion.
-Recommendation: explicitly cap animation scope to one subtle expand/collapse transition (or none), and ban per-face animated effects for this phase.
-
-Event and integration contract
-Which events fire on install/uninstall and who listens?
-Recommendation: define one event payload now to avoid coupling drift between panel, renderer, and game state.
-
-Failure and disabled states
-What if install is pressed with no valid target, or mod unavailable?
-Recommendation: define disabled Install conditions and inline error/hint behavior.
-
-Test acceptance at behavior level
-Current criteria are good; add concrete behavioral assertions.
-Recommendation: add explicit tests for install-replace, uninstall-clear-target, cancel-no-state-change, and collapsed-after-install.
+1. Begin Phase 1 implementation (isometric renderer + state machine).
+2. Implement expanded-mode install flow (target selector + Install button).
+3. Iterate on visual design and user testing.
+4. Integrate with existing mod system and game logic.

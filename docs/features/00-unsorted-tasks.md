@@ -1,23 +1,5 @@
 ## What's in this file are things that need to be done, which have not yet been fleshed out, evaluated, or mapped into the roadmap.
 
-(done?)
-- core lock should be a style instead (commit current plan first)
-
-(done?)
-- show all die faces in mod carousel (if they can fit)
-if there are too many faces and we need to 'truncate', throw a warning in the console
-
-- initialize high score as the max value of the die in the bag
-(should be 1d6. because we're currently testing starting with 3d6, the high score should be 18)
-I want to make sure that the user doesn't earn a die on their first roll that's over 10, as we should already count as having unlocked both the 10s and the 100s dies. I think we need prevantative logic for that.
-
-- when a trick is accomplished, "light up" the trick in the list
-(border-color?)
-do it quickly but not immediately
-fade in quick but fade out real slow
-no vertical displacement (difference) for any elements
-we can adjust initial border size to allow (pixel space) for like a glow that becomes dimmer
-
 - for high score: capture from the canvas just the die that rolled
 show that (as data uri if possible) in the high score area
 
