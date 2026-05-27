@@ -24,37 +24,51 @@ Notes:
 
 ## Candidate Styles For This Project
 
-1. `circle` (baseline)
+### Implemented
+
+1. `circle` (default)
 - Visual: classic filled circles
 - Readability: excellent
-- Cost: lowest
 
 2. `hollow-circle`
 - Visual: ring outline
 - Readability: high on light backgrounds
-- Cost: low
 
 3. `square`
 - Visual: arcade/tech feel
 - Readability: high
-- Cost: low
 
 4. `diamond`
 - Visual: fantasy/deck-building vibe
 - Readability: medium-high
-- Cost: low
 
-5. `star` (future)
-- Visual: high personality
-- Readability: medium on small tiles
-- Cost: medium
-
-6. `engraved` (future)
-- Visual: pseudo-3D inset pip with highlight/shadow
+5. `star`
+- Visual: five-point filled star
 - Readability: high
-- Cost: medium
 
-Note: engraved and similar treatments should work for both pip marks and numeral fallback.
+6. `heart`
+- Visual: classic playing-card heart
+- Readability: high
+
+7. `club`
+- Visual: playing-card club (three lobes + stem)
+- Readability: medium-high at larger tile sizes
+
+8. `clover`
+- Visual: four-leaf clover (four lobes + stem)
+- Readability: medium-high at larger tile sizes
+
+9. `skull`
+- Visual: cranium with eye sockets and teeth
+- Readability: best at tile size 60+; eye sockets use tile background color for cutout
+- Note: skull is the only shape that reads the tile background color
+
+### Future
+
+10. `engraved`
+- Visual: pseudo-3D inset mark with highlight/shadow pass
+- Readability: high
+- Note: engraved and similar treatments should apply to whichever face mark is active — pips or numeral fallback alike
 
 ## Layout Approaches
 
