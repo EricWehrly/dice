@@ -31,13 +31,9 @@ export class DieModificationPanel {
     private draftCoreMaterial: AvailableMaterialValue = 'bone';
     private draftFaceStyles: AvailableStyleValue[] = [];
 
-    constructor(dice?: ModifiedDie[]) {
+    constructor(dice: ModifiedDie[]) {
         this.root = document.getElementById('die-mod-panel');
-        this.dice = dice ?? [
-            new ModifiedDie({ id: 'die-a', label: 'Copper d6', faceCount: 6 }),
-            new ModifiedDie({ id: 'die-b', label: 'Silver d6', faceCount: 6, mods: [{ faceIndex: 0, grams: 1 }] }),
-            new ModifiedDie({ id: 'die-c', label: 'Bronze d8', faceCount: 8, mods: [{ faceIndex: 3, grams: 0.5 }] }),
-        ];
+        this.dice = dice;
         this.selectedDieId = this.dice[0].id;
         this.resetDraftForSelectedDie();
     }
