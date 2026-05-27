@@ -4,7 +4,7 @@ export interface DieFaceTileColors {
     text: string;
 }
 
-export type PipShape = 'circle' | 'square' | 'diamond' | 'hollow-circle';
+export type PipShape = 'circle' | 'square' | 'diamond' | 'hollow-circle' | 'star' | 'heart' | 'club' | 'clover' | 'skull';
 
 export interface DieDuckType {
     faceUp: number;
@@ -73,7 +73,7 @@ export function drawDieFaceTile(context: CanvasRenderingContext2D, input: DieFac
     if (pipCount > MAX_READABLE_PIPS) {
         drawFaceValueText(context, x, y, size, pipCount);
     } else {
-        drawPips(context, x, y, size, pipCount, pipShape);
+        drawPips(context, x, y, size, pipCount, pipShape, colors);
     }
     context.restore();
 }
@@ -99,6 +99,7 @@ function drawPips(
     size: number,
     pipCount: number,
     pipShape: PipShape,
+    colors: DieFaceTileColors,
 ): void {
     if (pipCount <= 0) {
         return;
@@ -111,7 +112,8 @@ function drawPips(
     if (canonicalCenters) {
         const pipRadius = Math.max(1.8, Math.min(size * 0.1, drawableSize * 0.09));
         for (const [cx, cy] of canonicalCenters) {
-            drawPipShape(context, cx, cy, pipRadius, pipShape);
+            context.fillStyle = colors.text;
+            drawPipShape(context, cx, cy, pipRadius, pipShape, colors);
         }
         return;
     }
@@ -129,7 +131,8 @@ function drawPips(
         const cx = x + inset + cellWidth * (col + 0.5);
         const cy = y + inset + cellHeight * (row + 0.5);
 
-        drawPipShape(context, cx, cy, pipRadius, pipShape);
+        context.fillStyle = colors.text;
+        drawPipShape(context, cx, cy, pipRadius, pipShape, colors);
     }
 }
 
@@ -179,6 +182,7 @@ function drawPipShape(
     centerY: number,
     radius: number,
     shape: PipShape,
+    colors: DieFaceTileColors,
 ): void {
     switch (shape) {
         case 'square': {
@@ -201,6 +205,97 @@ function drawPipShape(
             context.beginPath();
             context.arc(centerX, centerY, Math.max(1, radius * 0.8), 0, Math.PI * 2);
             context.stroke();
+            return;
+        }
+        case 'star': {
+            const outerR = radius;
+            const innerR = radius * 0.42;
+            context.beginPath();
+            for (let i = 0; i < 5; i += 1) {
+                const outerAngle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                const innerAngle = outerAngle + Math.PI / 5;
+                const method = i === 0 ? 'moveTo' : 'lineTo';
+                context[method](centerX + outerR * Math.cos(outerAngle), centerY + outerR * Math.sin(outerAngle));
+                context.lineTo(centerX + innerR * Math.cos(innerAngle), centerY + innerR * Math.sin(innerAngle));
+            }
+            context.closePath();
+            context.fill();
+            return;
+        }
+        case 'heart': {
+            context.beginPath();
+            context.moveTo(centerX, centerY + radius * 0.8);
+            context.bezierCurveTo(
+                centerX - radius * 1.1, centerY + radius * 0.3,
+                centerX - radius * 1.35, centerY - radius * 0.5,
+                centerX, centerY - radius * 0.15,
+            );
+            context.bezierCurveTo(
+                centerX + radius * 1.35, centerY - radius * 0.5,
+                centerX + radius * 1.1, centerY + radius * 0.3,
+                centerX, centerY + radius * 0.8,
+            );
+            context.fill();
+            return;
+        }
+        case 'club': {
+            const lobeR = radius * 0.44;
+            const lobePositions: [number, number][] = [
+                [centerX, centerY - lobeR * 0.72],
+                [centerX - lobeR * 0.8, centerY + lobeR * 0.18],
+                [centerX + lobeR * 0.8, centerY + lobeR * 0.18],
+            ];
+            for (const [lx, ly] of lobePositions) {
+                context.beginPath();
+                context.arc(lx, ly, lobeR, 0, Math.PI * 2);
+                context.fill();
+            }
+            const stemW = radius * 0.22;
+            const stemTop = centerY + lobeR * 0.72;
+            const stemH = radius * 0.65;
+            context.fillRect(centerX - stemW / 2, stemTop, stemW, stemH);
+            context.fillRect(centerX - radius * 0.36, stemTop + stemH - radius * 0.18, radius * 0.72, radius * 0.18);
+            return;
+        }
+        case 'clover': {
+            const leafR = radius * 0.42;
+            const leafOff = leafR * 0.8;
+            const leafPositions: [number, number][] = [
+                [centerX, centerY - leafOff],
+                [centerX + leafOff, centerY],
+                [centerX, centerY + leafOff],
+                [centerX - leafOff, centerY],
+            ];
+            for (const [lx, ly] of leafPositions) {
+                context.beginPath();
+                context.arc(lx, ly, leafR, 0, Math.PI * 2);
+                context.fill();
+            }
+            const stemW = radius * 0.2;
+            const stemTop = centerY + leafOff + leafR * 0.3;
+            context.fillRect(centerX - stemW / 2, stemTop, stemW, radius * 0.5);
+            context.fillRect(centerX - radius * 0.32, stemTop + radius * 0.3, radius * 0.64, radius * 0.18);
+            return;
+        }
+        case 'skull': {
+            context.beginPath();
+            context.arc(centerX, centerY - radius * 0.08, radius * 0.88, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = colors.fill;
+            const eyeR = radius * 0.21;
+            context.beginPath();
+            context.arc(centerX - radius * 0.3, centerY - radius * 0.18, eyeR, 0, Math.PI * 2);
+            context.fill();
+            context.beginPath();
+            context.arc(centerX + radius * 0.3, centerY - radius * 0.18, eyeR, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = colors.text;
+            const toothW = radius * 0.17;
+            const toothH = radius * 0.21;
+            const teethY = centerY + radius * 0.55;
+            for (let t = -1; t <= 1; t += 1) {
+                context.fillRect(centerX + t * toothW * 1.25 - toothW / 2, teethY, toothW * 0.88, toothH);
+            }
             return;
         }
         case 'circle':
