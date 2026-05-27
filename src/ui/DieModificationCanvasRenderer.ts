@@ -161,6 +161,7 @@ export class DieModificationCanvasRenderer {
 
             // Distance-based opacity: 10% reduction per step away from selected.
             // Uses circular (wrap-around) distance through the full item ring, same as nav button wrapping.
+            // NOTE: This opacity fade is canvas-specific; do NOT port this to 3D rendering.
             const raw = itemIndex - selectedFaceIndex;
             const circularDistance = Math.abs(((raw + itemCount + Math.floor(itemCount / 2)) % itemCount) - Math.floor(itemCount / 2));
             const opacity = Math.max(0.3, 1 - circularDistance * 0.1);
