@@ -36,9 +36,9 @@ export class DieModificationCanvasRenderer {
         const tileSize = 56;
         const tileGap = 8;
         const padding = 6;
+        const textTopOffset = 10;
         const probabilityLineHeight = 14;
         const deltaLineHeight = 13;
-        const textTopOffset = 10; // Keep text clear of selection outline/glow.
         const textHeight = textTopOffset + probabilityLineHeight + deltaLineHeight;
 
         // Determine how many tiles can fit based on available width
@@ -101,35 +101,38 @@ export class DieModificationCanvasRenderer {
             }
         }
 
-        // Warn if probability labels might collide horizontally.
-        // TODO: If this becomes common, support multi-row label layout instead of warning.
-        const visibleFaceIndices = itemIndices.filter((index) => index >= 0);
+        // Warn if probability labels are likely to overlap horizontally.
+        // TODO: In the future, support multi-row layout when this warning appears.
         let hasLabelOverlapRisk = false;
+        const visibleFaceIndices = itemIndices.filter((index) => index >= 0);
         if (visibleFaceIndices.length > 1) {
             context.save();
             context.font = `700 12px ${fontUi}`;
             const maxPreviewWidth = visibleFaceIndices.reduce((max, index) => {
-                const text = `${(preview[index] * 100).toFixed(1)}%`;
-                return Math.max(max, context.measureText(text).width);
+                const label = `${preview[index].toFixed(1)}%`;
+                return Math.max(max, context.measureText(label).width);
             }, 0);
+
             context.font = `600 11px ${fontUi}`;
             const maxDeltaWidth = visibleFaceIndices.reduce((max, index) => {
                 const deltaValue = deltas[index];
                 if (Math.abs(deltaValue) <= 0.001) {
                     return max;
                 }
+
                 const sign = deltaValue > 0 ? '+' : '';
-                const text = `${sign}${(deltaValue * 100).toFixed(1)}%`;
-                return Math.max(max, context.measureText(text).width);
+                const label = `${sign}${deltaValue.toFixed(1)}%`;
+                return Math.max(max, context.measureText(label).width);
             }, 0);
             context.restore();
 
             const requiredSpacing = Math.max(maxPreviewWidth, maxDeltaWidth) + 10;
             const centerSpacing = tileSize + tileGap;
             hasLabelOverlapRisk = requiredSpacing > centerSpacing;
+
             if (hasLabelOverlapRisk) {
                 console.warn(
-                    `[DieModificationCanvasRenderer] Probability labels may overlap (required spacing ${requiredSpacing.toFixed(1)} > center spacing ${centerSpacing}).`,
+                    `[DieModificationCanvasRenderer] Label overlap risk: required spacing ${requiredSpacing.toFixed(1)} > center spacing ${centerSpacing}.`,
                 );
             }
         }
@@ -219,7 +222,7 @@ export class DieModificationCanvasRenderer {
                 const textY = padding + tileSize + textTopOffset;
 
                 // Show preview probability
-                const previewText = (previewValue * 100).toFixed(1) + '%';
+                const previewText = previewValue.toFixed(1) + '%';
                 context.fillText(previewText, x + tileSize / 2, textY);
 
                 // Show delta if non-zero
@@ -227,7 +230,7 @@ export class DieModificationCanvasRenderer {
                     context.font = `600 11px ${fontUi}`;
                     context.fillStyle = deltaValue > 0 ? 'rgb(76, 200, 100)' : 'rgb(200, 100, 76)';
                     const deltaSign = deltaValue > 0 ? '+' : '';
-                    const deltaText = deltaSign + (deltaValue * 100).toFixed(1) + '%';
+                    const deltaText = deltaSign + deltaValue.toFixed(1) + '%';
                     context.fillText(deltaText, x + tileSize / 2, textY + probabilityLineHeight);
                 }
             }

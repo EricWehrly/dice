@@ -89,10 +89,11 @@
 
 .die-mod-face-carousel {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
   gap: 8px;
   padding: 0;
+  width: 100%;
 }
 
 .die-mod-face-nav-btn {
@@ -101,7 +102,8 @@
   background: color-mix(in srgb, var(--color-panel-bg) 72%, transparent 28%);
   color: var(--color-text-primary);
   width: 40px;
-  height: 40px;
+  min-height: 96px;
+  height: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -112,11 +114,22 @@
   flex-shrink: 0;
 }
 
+.die-mod-face-nav-btn-prev {
+  justify-self: start;
+}
+
+.die-mod-face-nav-btn-next {
+  justify-self: end;
+}
+
 .die-mod-canvas-wrap {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 68px;
+  min-height: 96px;
+  grid-column: 2;
+  justify-self: center;
+  overflow: hidden;
 }
 
 .die-mod-canvas-wrap canvas {
@@ -151,6 +164,13 @@
   padding: 6px;
   font-size: 12px;
   width: 100%;
+}
+
+.die-mod-setting-select:disabled {
+  opacity: 0.5;
+  background: color-mix(in srgb, var(--color-panel-bg) 70%, gray 30%);
+  color: color-mix(in srgb, var(--color-text-primary) 60%, transparent 40%);
+  cursor: not-allowed;
 }
 
 .die-mod-install-btn {

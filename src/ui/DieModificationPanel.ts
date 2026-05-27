@@ -74,6 +74,8 @@ export class DieModificationPanel {
             root: this.root,
             faceCount: die.faceCount,
             selectedFaceIndex: this.selectedFaceIndex,
+            preview,
+            deltas,
         });
         this.wireHandlers();
     }

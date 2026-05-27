@@ -34,23 +34,17 @@ export interface DieModPanelData {
 
 export function renderDieModPanel(data: DieModPanelData): string {
     const isCore = data.selectedFaceIndex === -1;
-    const selectionLabel = isCore ? 'Core' : `Face ${data.selectedFaceIndex + 1}`;
 
     return `
         <div class="die-mod-shell">
             ${renderDieList(data)}
 
-            <div class="die-mod-face-carousel">
-                <button class="die-mod-face-nav-btn" data-face-step="-1" type="button" aria-label="Previous">&lt;</button>
+            <div class="die-mod-face-carousel" data-carousel-mode="auto">
+                <button class="die-mod-face-nav-btn die-mod-face-nav-btn-prev" data-face-step="-1" type="button" aria-label="Previous">&lt;</button>
                 <div class="die-mod-canvas-wrap">
                     <canvas id="die-mod-canvas"></canvas>
                 </div>
-                <button class="die-mod-face-nav-btn" data-face-step="1" type="button" aria-label="Next">&gt;</button>
-            </div>
-
-            <div class="die-mod-selection-label">
-                <span class="die-mod-label">Selected:</span>
-                <span class="die-mod-selection-name">${selectionLabel}</span>
+                <button class="die-mod-face-nav-btn die-mod-face-nav-btn-next" data-face-step="1" type="button" aria-label="Next">&gt;</button>
             </div>
 
             ${isCore ? renderCoreSettings(data) : renderFaceSettings(data)}
@@ -60,33 +54,7 @@ export function renderDieModPanel(data: DieModPanelData): string {
     `;
 }
 
-function renderCoreSettings(data: DieModPanelData): string {
-    return `
-        <div class="die-mod-settings-block">
-            <label class="die-mod-setting-field">
-                <span class="die-mod-setting-label">mod</span>
-                <select class="die-mod-setting-select" data-scope="core" data-field="mod">
-                    ${AVAILABLE_CORE_MODS.map(
-                        (mod) =>
-                            `<option value="${mod.value}" ${mod.value === data.draftCoreMod ? 'selected' : ''}>${mod.label}</option>`
-                    ).join('')}
-                </select>
-            </label>
-            <label class="die-mod-setting-field">
-                <span class="die-mod-setting-label">material</span>
-                <select class="die-mod-setting-select" data-scope="core" data-field="material">
-                    ${AVAILABLE_MATERIALS.map(
-                        (mat) =>
-                            `<option value="${mat.value}" ${mat.value === data.draftCoreMaterial ? 'selected' : ''}>${mat.label}</option>`
-                    ).join('')}
-                </select>
-            </label>
-        </div>
-    `;
-}
-
 function renderFaceSettings(data: DieModPanelData): string {
-    const selectedStyle = data.draftFaceStyles[data.selectedFaceIndex] ?? 'plain';
     return `
         <div class="die-mod-settings-block">
             <label class="die-mod-setting-field">
@@ -100,10 +68,35 @@ function renderFaceSettings(data: DieModPanelData): string {
             </label>
             <label class="die-mod-setting-field">
                 <span class="die-mod-setting-label">style</span>
-                <select class="die-mod-setting-select" data-scope="face" data-field="style">
+                <select class="die-mod-setting-select" data-scope="face" data-field="style" disabled>
                     ${AVAILABLE_STYLES.map(
                         (style) =>
-                            `<option value="${style.value}" ${style.value === selectedStyle ? 'selected' : ''}>${style.label}</option>`
+                            `<option value="${style.value}" ${style.value === data.draftFaceStyles[data.selectedFaceIndex] ? 'selected' : ''}>${style.label}</option>`
+                    ).join('')}
+                </select>
+            </label>
+        </div>
+    `;
+}
+
+function renderCoreSettings(data: DieModPanelData): string {
+    return `
+        <div class="die-mod-settings-block">
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">mod</span>
+                <select class="die-mod-setting-select" data-scope="core" data-field="mod" disabled>
+                    ${AVAILABLE_CORE_MODS.map(
+                        (mod) =>
+                            `<option value="${mod.value}" ${mod.value === data.draftCoreMod ? 'selected' : ''}>${mod.label}</option>`
+                    ).join('')}
+                </select>
+            </label>
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">material</span>
+                <select class="die-mod-setting-select" data-scope="core" data-field="material" disabled>
+                    ${AVAILABLE_MATERIALS.map(
+                        (material) =>
+                            `<option value="${material.value}" ${material.value === data.draftCoreMaterial ? 'selected' : ''}>${material.label}</option>`
                     ).join('')}
                 </select>
             </label>
