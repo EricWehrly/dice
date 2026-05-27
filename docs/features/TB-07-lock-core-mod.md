@@ -1,110 +1,157 @@
-# TB-07 — Lock as a Core Mod
+# TB-07 — Lock Pip Style and Tap-to-Lock
 
-**Status**: 🔄 In Progress  
-**Depends on**: TB-05 (core mod infrastructure already in `ModifiedDie`, `DieModificationPanel`)
+**Status**: 🔄 In Progress (revised plan)  
+**Depends on**: TB-05 UI and die modification flow
+
+---
+
+## Revision Summary
+
+This feature is now pip-style-first, not core-mod-gated for the first implementation pass.
+
+The lock should be represented as a die pip style and toggled directly by tapping/clicking the die tile on the roll canvas.
+
+The previous core-mod approach is preserved in this file as a parked direction (see Appendix A).
 
 ---
 
 ## Goal
 
-"Lock" is not a universal ability — it is a capability a die earns by having its **Lock core mod** installed. Unmodified dice cannot be locked. The mod panel UI already has a core-mod slot; this feature wires it up for Lock specifically.
+1. Unlock pip style selection in the die modification UI.
+2. Add a lock style to the available styles (and make it the only active style option for now).
+3. When lock style is chosen on a die, that die renders a lock icon where pips normally draw.
+4. Tapping the die tile toggles lock state on/off.
+5. Locked and unlocked states should both use lock-shaped icons, with the shackle position indicating state.
 
 ---
 
-## What is a Core Mod?
+## Visual Direction
 
-Core mods occupy the physical center of the die — its core. Unlike face weight mods (which bias individual face probabilities), core mods change the die's fundamental behavior during a roll session. A die can hold **one core mod at a time**; installing a second replaces the first.
+The lock icon is a pip glyph, not a separate button or corner badge.
 
-The Lock core mod gives the die the ability to be held between rolls.
+- Locked icon: closed shackle.
+- Unlocked icon: raised/open shackle.
+- Increase lock glyph readability versus the first attempt:
+	- make overall lock glyph larger
+	- increase shackle stroke thickness by a few pixels
+	- keep keyhole/body proportions clear at small tile sizes
 
 ---
 
 ## Milestones
 
-### M7.1 — Register Lock as a Core Mod
+### M7.1 — Enable Face Style Control in UI
 
-**Files**: `src/ui/DieModificationTypes.ts`
+Files:
+- src/ui/DieModificationPanelTemplate.ts
+- src/ui/DieModificationPanel.ts
+- src/ui/DieModificationTypes.ts
 
-- Add `{ value: 'lock', label: 'Lock', description: 'Hold this die between rolls. Its face is preserved until the lock breaks.' }` to `AVAILABLE_CORE_MODS`.
-- Add a `description` field to the core mod type shape so the UI can display it.
-- Remove or demote the placeholder `brain` entry if it is not yet backed by behavior (or keep it disabled until TB-08).
+Tasks:
+1. Un-disable the face style select in the panel.
+2. Keep options intentionally narrow for now: lock style only.
+3. Ensure draft state updates and install flow persists the selected style onto the die model.
 
----
-
-### M7.2 — Display Core Mod Description in the Mod Panel
-
-**Files**: `src/ui/DieModificationPanelTemplate.ts` (or equivalent render method)
-
-- When a core mod is selected (draft or installed), show its description text below or beside the select.
-- When no core mod is selected, show a short generic prompt: *"Core mods change how a die behaves during play."*
-- Keep this read-only for the inspector view; description changes with the selected option via normal change-event wiring.
+Acceptance:
+- User can choose lock style in the panel.
+- Install persists style and re-render reflects it.
 
 ---
 
-### M7.3 — Un-disable the Core Mod Select and Enable Install
+### M7.2 — Add Lock Style to Renderer Contract
 
-**Files**: `src/ui/DieModificationPanel.ts`, `src/ui/DieModificationPanelTemplate.ts`
+Files:
+- src/rendering/2d/DieFaceTileRenderer.ts
+- related style/model mapping points in UI render pipeline
 
-The core-mod select is currently disabled (TB-05 left it as a placeholder). Steps:
+Tasks:
+1. Add lock style as a supported pip style.
+2. Draw lock icon at pip center positions (same pipeline as other pip glyphs).
+3. Provide two lock variants:
+	 - lock-closed (for locked state)
+	 - lock-open (for unlocked state when style is lock)
+4. Increase shackle thickness and glyph size to improve readability.
 
-1. Remove the `disabled` attribute from the core-mod `<select>`.
-2. Ensure the existing `draftCoreMod` state and change-handler already work (they should — they just weren't persisted).
-3. The **Install** button should be enabled whenever `draftCoreMod !== 'none'` (consistent with how face mods enable it today).
-4. On install, call `die.addCoreMod('lock')` via `ModifiedDie.addCoreMod()`. This already exists.
-5. Raise `TrickEvents.BAG_CHANGED` after install so the roll screen re-renders.
-
-> **Constraint**: `ModifiedDie.coreMods` is a plain array — guard against duplicate installs (same id already present) in `addCoreMod()` or in the panel's install handler.
-
----
-
-### M7.4 — Gate Lock Button on the Lock Core Mod
-
-**Files**: `src/rendering/2d/DiceCanvasRenderer.ts`
-
-Currently the LOCK / UNLOCK button is drawn for every die. Change the condition:
-
-```typescript
-const hasLockMod = die.coreMods?.some((m) => m.id === 'lock') ?? false;
-```
-
-- If `hasLockMod` is false: draw nothing in the button zone.
-- If `hasLockMod` is true: draw the LOCK / UNLOCK button as today.
-- Clicking the button zone on a die without the mod should be a no-op.
-
-Also update `Bag.toggleLocked()` to be a no-op if the die lacks the lock core mod, as a defensive second layer.
+Acceptance:
+- Lock-style dice visibly render lock pip glyphs.
+- Locked vs unlocked state is legible from icon shape alone.
 
 ---
 
-### M7.5 — Integration Test
+### M7.3 — Tap-to-Lock Interaction on Die Tile
 
-**File**: `tests/integration/lock-core-mod.test.ts` (new)
+Files:
+- src/rendering/2d/DiceCanvasRenderer.ts
+- src/game/Bag.ts
 
-Covers the cross-system chain:
+Tasks:
+1. Use die tile hit-testing for lock toggle interaction.
+2. Remove dependency on lock buttons/signals for interaction.
+3. Keep `toggleLocked` behavior as the state authority.
 
-| # | What | Systems touched |
-|---|------|-----------------|
-| 1 | A die without the Lock mod cannot be locked via `toggleLocked` | `Bag`, `ModifiedDie` |
-| 2 | Installing the Lock core mod via `addCoreMod('lock')` persists to `die.coreMods` | `ModifiedDie` |
-| 3 | After install, `toggleLocked` succeeds and `die.locked` toggles | `Bag`, `ModifiedDie`, `Die` |
-| 4 | `rollAll()` skips re-rolling a locked die with the mod installed | `Bag` |
-| 5 | `rollAll()` **does** re-roll the die once the lock is cleared | `Bag` |
+Acceptance:
+- Clicking/tapping a die toggles lock on/off.
+- Locked dice still skip reroll in current roll logic.
+
+---
+
+### M7.4 — Integration Test Across Systems
+
+File:
+- tests/integration/lock-pip-style-flow.test.ts (new)
+
+End-to-end flow to cover:
+1. Select and install lock style in modification UI model path.
+2. Roll renderer displays lock glyph for that die.
+3. Tap die toggles locked state.
+4. Locked die does not reroll.
+5. Tap again unlocks; die rerolls on next roll.
+
+Systems included:
+- Die modification UI state and install path
+- Die model style persistence
+- Canvas renderer glyph selection/state mapping
+- Bag lock state and roll behavior
 
 ---
 
 ## Definition of Done
 
-- [ ] `AVAILABLE_CORE_MODS` includes `lock` with a `description` field.
-- [ ] Core mod descriptions render in the mod panel.
-- [ ] Core mod select is enabled; Install wires through to `die.addCoreMod('lock')`.
-- [ ] Lock / Unlock button only appears on dice with the Lock core mod installed.
-- [ ] Uninstalling the mod or changing to another means the lock button doesn't work and won't render (test).
-- [ ] `toggleLocked` is a no-op for dice without the mod (defensive guard).
-- [ ] Integration test covers the full install → lock → reroll chain.
+- [ ] Face style select is enabled in UI.
+- [ ] Lock is available as the active style option (only option for now).
+- [ ] Lock glyph draws as a pip and is readable at tile size.
+- [ ] Locked and unlocked icons are distinct via shackle position.
+- [ ] Die tile tap toggles lock state.
+- [ ] Locked dice skip reroll; unlocked dice reroll.
+- [ ] Integration test validates the full style-install plus lock-toggle plus reroll flow.
+
+---
+
+## Incremental Commit Slices
+
+Suggested commit order once implementation starts:
+
+1. Renderer-only lock glyph improvements (closed/open variants, thicker shackle, larger glyph).
+2. UI style select enablement and lock style wiring.
+3. Die-tap interaction wiring and cleanup of obsolete lock button behavior.
+4. Integration test.
 
 ---
 
 ## Deferred
 
-- **Lock breaking** (internal re-roll, same-face breaks the lock) — see [TB-07-lock-breaking.md](./TB-07-lock-breaking.md).
-- **Lock reset via session** — depends on a session/round model not yet designed.
-- **Brain core mod** — separate feature, TB-08 candidate.
+- Lock breaking behavior (same-face internal roll breaks lock): see TB-07-lock-breaking.md.
+- Session-based lock reset: depends on future session/round model.
+
+---
+
+## Appendix A — Parked Core-Mod Direction (kept for later)
+
+Original idea retained:
+
+- Lock is a core mod installed per die.
+- Dice without Lock core mod cannot be locked.
+- Core-mod descriptions shown in UI.
+- Lock UI availability gated by presence of installed core mod.
+
+This approach is intentionally parked, not deleted, and can be restored if pip-style-first proves weaker in playtests.
