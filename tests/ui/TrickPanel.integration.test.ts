@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Trick } from '../../src/game/tricks';
+import { DieFaceResult } from '../../src/game/DieFaceResult';
 import { TrickEvaluator } from '../../src/game/tricks/TrickEvaluator';
 import { TrickPanel } from '../../src/ui/TrickPanel';
 
@@ -8,6 +9,10 @@ import '../../src/game/tricks/OfAKind';
 import '../../src/game/tricks/Ascending';
 import '../../src/game/tricks/Primes';
 
+function faceResults(values: number[]): readonly DieFaceResult[] {
+  return Object.freeze(values.map((value) => new DieFaceResult(value)));
+}
+
 describe('TrickPanel integration', () => {
   it('renders real registered tricks and updates from TrickEvaluator result events', () => {
     document.body.innerHTML = '<ul id="trick-list"></ul>';
@@ -15,7 +20,7 @@ describe('TrickPanel integration', () => {
     const evaluator = new TrickEvaluator();
     const panel = new TrickPanel();
     panel.render();
-    evaluator.evaluateRoll([2, 2, 2]);
+    evaluator.evaluateRoll(faceResults([2, 2, 2]));
 
     const listedTricks = Trick.GetAll<Trick>();
     const itemTitles = Array.from(document.querySelectorAll('.trick-title')).map((node) => node.textContent);

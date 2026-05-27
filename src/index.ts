@@ -4,6 +4,7 @@ import { TrickEvaluator } from './game/tricks/TrickEvaluator';
 import { DiceCanvasRenderer } from './rendering/2d/DiceCanvasRenderer';
 import { ScorePanel } from './ui/ScorePanel';
 import { DieModificationPanel } from './ui';
+import { RollHistoryPanel } from './ui/RollHistoryPanel';
 import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
 import { ScreenManager } from './utils/ScreenManager';
@@ -26,7 +27,7 @@ wireRollButton(bag);
 new DiceCanvasRenderer(bag);
 
 new ScoreProgressionTracker(bag);
-new TrickEvaluator(undefined, bag.rollHistory);
+new TrickEvaluator();
 
 const scorePanel = new ScorePanel();
 scorePanel.render();
@@ -44,10 +45,13 @@ screenManager.register('mod',
     document.getElementById('die-mod-panel')!,
     [document.getElementById('mod-mode-btn')!]
 );
-screenManager.switchTo('mod');
+screenManager.switchTo('roll');
 
 const trickCounterPanel = new TrickCounterPanel();
 trickCounterPanel.render();
 
 const trickPanel = new TrickPanel();
 trickPanel.render();
+
+const rollHistoryPanel = new RollHistoryPanel(bag);
+rollHistoryPanel.render();

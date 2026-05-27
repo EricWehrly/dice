@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import Events from '../../../engine/js/events';
 import { TrickEvents } from '../../../src/game/contracts/TrickContracts';
+import { DieFaceResult } from '../../../src/game/DieFaceResult';
 import { Ascending } from '../../../src/game/tricks/Ascending';
 import { OfAKind } from '../../../src/game/tricks/OfAKind';
 import { Primes } from '../../../src/game/tricks/Primes';
@@ -8,6 +9,10 @@ import { TrickEvaluator, type EvaluationResult, type RollEvaluatedEvent } from '
 
 function createTricks() {
     return [new OfAKind(), new Ascending(), new Primes()];
+}
+
+function faceResults(values: number[]): readonly DieFaceResult[] {
+    return Object.freeze(values.map((value) => new DieFaceResult(value)));
 }
 
 describe('TrickEvaluator', () => {
@@ -18,10 +23,10 @@ describe('TrickEvaluator', () => {
         const subscriptionId = Events.Subscribe(TrickEvents.TRICK_DISCOVERED, callback);
 
         // First completion of OfAKind with score 3
-        evaluator.evaluateRoll([2, 2, 2]);
+        evaluator.evaluateRoll(faceResults([2, 2, 2]));
 
         // Second completion of OfAKind with score 2 (lower, fails minimum)
-        evaluator.evaluateRoll([3, 3, 3]);
+        evaluator.evaluateRoll(faceResults([3, 3, 3]));
 
         expect(callback).toHaveBeenCalledTimes(1);
         if (subscriptionId) {
@@ -40,11 +45,11 @@ describe('TrickEvaluator', () => {
         }
 
         // First completion of OfAKind with score 3
-        evaluator.evaluateRoll([2, 2, 2]);
+        evaluator.evaluateRoll(faceResults([2, 2, 2]));
         expect(ofAKind.highScore).toBe(3);
 
         // Second completion with higher score 5 (should earn cosmetic)
-        evaluator.evaluateRoll([2, 2, 2, 2, 2]);
+        evaluator.evaluateRoll(faceResults([2, 2, 2, 2, 2]));
 
         expect(callback).toHaveBeenCalledTimes(1);
         expect(ofAKind.highScore).toBe(5);
@@ -64,8 +69,8 @@ describe('TrickEvaluator', () => {
             }
         );
 
-        evaluator.evaluateRoll([1, 2, 3, 5]);
-        evaluator.evaluateRoll([1, 2, 2, 5]);
+        evaluator.evaluateRoll(faceResults([1, 2, 3, 5]));
+        evaluator.evaluateRoll(faceResults([1, 2, 2, 5]));
         const [valid, invalid] = capturedResults;
 
         const validResult = valid.find((item) => item.trickId === 'prime-distinct');

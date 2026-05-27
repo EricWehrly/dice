@@ -34,8 +34,15 @@ export class InARow extends Trick {
 
         let streakLength = 1;
         let candidate = currentRoll;
+        let startIndex = rollHistory.records.length - 1;
 
-        for (let index = rollHistory.records.length - 1; index >= 0; index -= 1) {
+        // Bag-owned history can already contain this exact roll by reference.
+        // Skip that entry so we only count prior rolls in the streak scan.
+        if (startIndex >= 0 && rollHistory.records[startIndex] === currentRoll) {
+            startIndex -= 1;
+        }
+
+        for (let index = startIndex; index >= 0; index -= 1) {
             const record = rollHistory.records[index];
             if (!DieFaceResult.isFullRoll(record) || !this.sameRoll(candidate, record)) {
                 break;

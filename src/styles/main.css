@@ -269,6 +269,15 @@ p {
   border-color: color-mix(in srgb, #e1a959 75%, black 25%);
 }
 
+.roll-history-tricks {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  opacity: 0.75;
+  font-style: italic;
+  text-transform: capitalize;
+}
+
 @media (max-width: 1100px), (max-aspect-ratio: 6/5) {
   .app {
     grid-template-columns: 1fr;

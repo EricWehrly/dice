@@ -9,6 +9,7 @@ export interface BagRolledEvent extends GameEvent {
     faces: number[];
     faceResults: readonly DieFaceResult[];
     diceIds: string[];
+    rollHistory: RecordHistory<readonly DieFaceResult[]>;
 }
 
 export class Bag {
@@ -31,20 +32,20 @@ export class Bag {
         const faceResults = Object.freeze(activeDice.map((die) => new DieFaceResult(die.faceUp, { rolled: !die.locked })));
         const faces = faceResults.map((faceResult) => faceResult.computed_value);
 
+        this.rollHistory.push(faceResults);
+
         Events.RaiseEvent<BagRolledEvent>(TrickEvents.BAG_ROLLED, {
             faces,
             faceResults,
             diceIds: activeDice.map((die) => die.id),
+            rollHistory: this.rollHistory,
         });
-
-        this.rollHistory.push(faceResults);
 
         return faces;
     }
 
     addDie(die: ModifiedDie): void {
         this.dice.push(die);
-        this.rollHistory.clear();
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 
@@ -81,7 +82,6 @@ export class Bag {
         }
 
         die.locked = !die.locked;
-        this.rollHistory.clear();
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 }
