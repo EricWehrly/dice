@@ -129,7 +129,7 @@ export class DiceCanvasRenderer {
             this.context.fillStyle = dieLabelColor;
             this.context.textAlign = 'center';
             this.context.textBaseline = 'top';
-            this.context.fillText(die.label, x + tileSize / 2, y + tileSize + 4);
+            this.context.fillText(die.name, x + tileSize / 2, y + tileSize + 4);
 
             // Reset context state after shared tile renderer
             this.context.globalAlpha = 1;

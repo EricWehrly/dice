@@ -1,33 +1,40 @@
+import Entity from '../../engine/js/entities/character/Entity';
+import type { EntityOptions } from '../../engine/js/entities/character/EntityOptions';
+import { FACTORY_CREATED_SYMBOL } from '../../engine/js/entities/character/EntityBuilder';
 import { generateId } from '../../engine/js/util/javascript-extensions';
 
-export interface DieOptions {
+export interface DieOptions extends EntityOptions {
     faceCount?: number;
     id?: string;
-    label?: string;
     randomizer?: () => number;
 }
 
-export class Die {
-    readonly id: string;
+export class Die extends Entity {
     readonly faceCount: number;
     private readonly randomizer: () => number;
     faceUp: number;
     active: boolean;
     locked: boolean;
-    label: string;
 
-    constructor({ faceCount = 6, id = generateId(), label, randomizer = Math.random }: DieOptions = {}) {
+    constructor({ faceCount = 6, id = generateId(), randomizer = Math.random, ...entityOptions }: DieOptions = {}) {
         if (!Number.isInteger(faceCount) || faceCount < 2) {
             throw new Error('faceCount must be an integer >= 2');
         }
 
-        this.id = id;
+        const resolvedName = entityOptions.name ?? `d${faceCount}`;
+
+        super({
+            ...entityOptions,
+            id,
+            name: resolvedName,
+            [FACTORY_CREATED_SYMBOL]: true, // circumvent engine factory restriction, allow 'new Die()'
+        });
+
         this.faceCount = faceCount;
         this.randomizer = randomizer;
         this.faceUp = 1;
         this.active = true;
         this.locked = false;
-        this.label = label ?? `d${faceCount}`;
     }
 
     roll(): number {

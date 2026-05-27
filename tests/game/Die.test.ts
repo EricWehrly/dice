@@ -19,11 +19,11 @@ describe('Die', () => {
         expect(value).toBe(6);
     });
 
-    it('respects provided id and label', () => {
-        const die = new Die({ faceCount: 8, id: 'die-1', label: 'custom-d8' });
+    it('respects provided id and name', () => {
+        const die = new Die({ faceCount: 8, id: 'die-1', name: 'custom-d8' });
 
         expect(die.id).toBe('die-1');
         expect(die.faceCount).toBe(8);
-        expect(die.label).toBe('custom-d8');
+        expect(die.name).toBe('custom-d8');
     });
 });
