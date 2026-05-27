@@ -1,36 +1,45 @@
 import { drawDieFaceTile } from '../../rendering/2d/DieFaceTileRenderer';
 
+type MockContext = ReturnType<typeof createMockContext>;
+
+function createMockContext() {
+    return {
+        save: vi.fn(),
+        restore: vi.fn(),
+        fillRect: vi.fn(),
+        strokeRect: vi.fn(),
+        fillText: vi.fn(),
+        beginPath: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        stroke: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        closePath: vi.fn(),
+        bezierCurveTo: vi.fn(),
+        globalAlpha: 1,
+        shadowColor: '',
+        shadowBlur: 0,
+        shadowOffsetY: 0,
+        fillStyle: '',
+        strokeStyle: '',
+        lineWidth: 0,
+        font: '',
+        textAlign: 'start' as CanvasTextAlign,
+        textBaseline: 'alphabetic' as CanvasTextBaseline,
+    };
+}
+
+function ctx(mock: MockContext): CanvasRenderingContext2D {
+    return mock as unknown as CanvasRenderingContext2D;
+}
+
 describe('drawDieFaceTile', () => {
-    function createMockContext() {
-        return {
-            save: vi.fn(),
-            restore: vi.fn(),
-            fillRect: vi.fn(),
-            strokeRect: vi.fn(),
-            fillText: vi.fn(),
-            beginPath: vi.fn(),
-            arc: vi.fn(),
-            fill: vi.fn(),
-            stroke: vi.fn(),
-            moveTo: vi.fn(),
-            lineTo: vi.fn(),
-            closePath: vi.fn(),
-            globalAlpha: 1,
-            shadowColor: '',
-            shadowBlur: 0,
-            shadowOffsetY: 0,
-            fillStyle: '',
-            strokeStyle: '',
-            lineWidth: 0,
-            textAlign: 'start',
-            textBaseline: 'alphabetic',
-        };
-    }
 
     it('draws pips and does not draw numeric text', () => {
         const context = createMockContext();
 
-        drawDieFaceTile(context, {
+        drawDieFaceTile(ctx(context), {
             x: 10,
             y: 12,
             die: { faceUp: 5, active: true, locked: false },
@@ -49,7 +58,7 @@ describe('drawDieFaceTile', () => {
     it('draws no pips when face value is zero', () => {
         const context = createMockContext();
 
-        drawDieFaceTile(context, {
+        drawDieFaceTile(ctx(context), {
             x: 0,
             y: 0,
             die: { faceUp: 0, active: true, locked: false },
@@ -66,7 +75,7 @@ describe('drawDieFaceTile', () => {
     it('draws a centered middle pip for face value 3', () => {
         const context = createMockContext();
 
-        drawDieFaceTile(context, {
+        drawDieFaceTile(ctx(context), {
             x: 10,
             y: 20,
             size: 80,
@@ -92,7 +101,7 @@ describe('drawDieFaceTile', () => {
     it('draws face value 5 as corners plus center', () => {
         const context = createMockContext();
 
-        drawDieFaceTile(context, {
+        drawDieFaceTile(ctx(context), {
             x: 0,
             y: 0,
             size: 80,
@@ -118,7 +127,7 @@ describe('drawDieFaceTile', () => {
     it('draws numeral fallback for face values above readable pip threshold', () => {
         const context = createMockContext();
 
-        drawDieFaceTile(context, {
+        drawDieFaceTile(ctx(context), {
             x: 4,
             y: 6,
             size: 80,
