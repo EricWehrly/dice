@@ -57,6 +57,23 @@ describe('Bag', () => {
         }
     });
 
+    it('stores roll history entries with face result fields needed by tricks', () => {
+        const lockedDie = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.8 });
+        const rolledDie = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.8 });
+        lockedDie.faceUp = 2;
+        lockedDie.locked = true;
+        const bag = new Bag([lockedDie, rolledDie]);
+
+        bag.rollAll();
+
+        const record = bag.rollHistory.records[0];
+        expect(record).toHaveLength(2);
+        expect(record[0].rolled).toBe(false);
+        expect(record[0].computed_value).toBe(2);
+        expect(record[1].rolled).toBe(true);
+        expect(record[1].computed_value).toBe(5);
+    });
+
     it('toggles active flag by id', () => {
         const d1 = new Die({ faceCount: 6, id: 'd1' });
         const bag = new Bag([d1]);

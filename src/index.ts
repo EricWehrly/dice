@@ -26,7 +26,7 @@ wireRollButton(bag);
 new DiceCanvasRenderer(bag);
 
 new ScoreProgressionTracker(bag);
-new TrickEvaluator();
+new TrickEvaluator(undefined, bag.rollHistory);
 
 const scorePanel = new ScorePanel();
 scorePanel.render();

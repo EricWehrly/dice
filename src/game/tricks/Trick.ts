@@ -1,4 +1,6 @@
 import Listed from '../../../engine/js/baseTypes/listed';
+import { DieFaceResult } from '../DieFaceResult';
+import type { RecordHistory } from '../RecordHistory';
 
 /**
  * Abstract contract for a trick evaluation.
@@ -7,6 +9,11 @@ import Listed from '../../../engine/js/baseTypes/listed';
 export interface TrickResult {
   success: boolean;
   score: number;
+}
+
+export interface TrickEvaluationContext {
+  rollHistory?: RecordHistory<readonly DieFaceResult[]>;
+  currentRoll?: readonly DieFaceResult[];
 }
 
 export abstract class Trick extends Listed {
@@ -23,5 +30,5 @@ export abstract class Trick extends Listed {
    * Evaluate this trick against the given faces.
    * Returns success status and score in a single evaluation.
    */
-  abstract evaluate(faces: number[]): TrickResult;
+  abstract evaluate(faces: number[], context?: TrickEvaluationContext): TrickResult;
 }

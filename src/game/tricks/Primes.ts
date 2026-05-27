@@ -1,4 +1,4 @@
-import { Trick, type TrickResult } from './Trick';
+import { Trick, type TrickEvaluationContext, type TrickResult } from './Trick';
 
 /**
  * Prime Distinct: All faces show distinct prime numbers.
@@ -12,7 +12,7 @@ export class Primes extends Trick {
   // TODO: support N-sided die, and/or check/warn when die can roll higher than these
   private primes = new Set([1, 2, 3, 5, 7, 11, 13]);
 
-  evaluate(faces: number[]): TrickResult {
+  evaluate(faces: number[], _context?: TrickEvaluationContext): TrickResult {
     const success = this.isPrimeDistinct(faces);
     return {
       success,

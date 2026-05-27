@@ -1,4 +1,4 @@
-import { Trick, type TrickResult } from './Trick';
+import { Trick, type TrickEvaluationContext, type TrickResult } from './Trick';
 import { GLOBAL_MINIMUM_THRESHOLD } from './constants';
 
 /**
@@ -11,7 +11,7 @@ export class Ascending extends Trick {
     super({ id: 'ascending', name: 'Ascending' });
   }
 
-  evaluate(faces: number[]): TrickResult {
+  evaluate(faces: number[], _context?: TrickEvaluationContext): TrickResult {
     if (faces.length < GLOBAL_MINIMUM_THRESHOLD) {
       return { success: false, score: 0 };
     }

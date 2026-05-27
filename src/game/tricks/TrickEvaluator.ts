@@ -2,8 +2,11 @@ import Events from '../../../engine/js/events';
 import type { GameEvent } from '../../../engine/js/events';
 import Resource from '../../../engine/js/entities/resource';
 import type { BagRolledEvent } from '../Bag';
+import { DieFaceResult } from '../DieFaceResult';
+import { RecordHistory } from '../RecordHistory';
 import { TrickEvents } from '../contracts/TrickContracts';
 import { Trick } from './index';
+import type { TrickEvaluationContext } from './Trick';
 
 export interface EvaluationResult {
     trickId: string;
@@ -28,9 +31,11 @@ interface TrickHighScoreEvent extends GameEvent {
 
 export class TrickEvaluator {
     readonly tricks: Trick[];
+    readonly rollHistory: RecordHistory<readonly DieFaceResult[]>;
 
-    constructor(tricks: Trick[] = Trick.GetAll<Trick>()) {
-        this.tricks = tricks;
+    constructor(tricks?: Trick[], rollHistory?: RecordHistory<readonly DieFaceResult[]>) {
+        this.tricks = tricks || Trick.GetAll<Trick>();
+        this.rollHistory = rollHistory || new RecordHistory<readonly DieFaceResult[]>(20);
         if (!Resource.Get('mods')) {
             new Resource({ name: 'mods', value: 0 });
         }
@@ -41,22 +46,57 @@ export class TrickEvaluator {
         Events.Subscribe<BagRolledEvent>(
             TrickEvents.BAG_ROLLED,
             (event) => {
-                this.evaluateRoll(event.faces);
+                this.evaluateRoll(event.faceResults, { persistHistory: false });
             },
             { priority: 10 }
         );
+
+        Events.Subscribe(TrickEvents.BAG_CHANGED, () => {
+            this.rollHistory.clear();
+        });
     }
 
-    evaluateRoll(faces: number[]): void {
-        const results = this.tricks.map((trick) => this.evaluateTrick(trick, faces));
+    evaluateRoll(
+        roll: number[] | readonly DieFaceResult[],
+        options: { persistHistory?: boolean } = {}
+    ): EvaluationResult[] {
+        const faceResults = this.normalizeFaceResults(roll);
+        const faces = DieFaceResult.getComputedValues(faceResults);
+        const evaluationContext: TrickEvaluationContext = {
+            rollHistory: this.rollHistory,
+            currentRoll: faceResults,
+        };
+
+        const results = this.tricks.map((trick) => this.evaluateTrick(trick, faces, evaluationContext));
         Events.RaiseEvent<RollEvaluatedEvent>(TrickEvents.ROLL_EVALUATED, { results });
+
+        if (options.persistHistory ?? true) {
+            this.rollHistory.push(faceResults);
+        }
+
+        return results;
+    }
+
+    private normalizeFaceResults(roll: number[] | readonly DieFaceResult[]): readonly DieFaceResult[] {
+        if (roll.length === 0) {
+            return [];
+        }
+
+        const firstResult = roll[0];
+        if (typeof firstResult === 'number') {
+            return Object.freeze((roll as number[]).map((value) => new DieFaceResult(value)));
+        }
+
+        const faceResults = roll as readonly DieFaceResult[];
+        return Object.isFrozen(faceResults) ? faceResults : Object.freeze([...faceResults]);
     }
 
     private evaluateTrick(
         trick: Trick,
-        faces: number[]
+        faces: number[],
+        context?: TrickEvaluationContext
     ): EvaluationResult {
-        const { success, score } = trick.evaluate(faces);
+        const { success, score } = trick.evaluate(faces, context);
 
         const isFirstCompletion = success && !trick.achieved;
         const isNewHighScore = trick.achieved && (trick.highScore === null || score > trick.highScore);

@@ -1,40 +1,50 @@
 import Events, { type GameEvent } from '../../engine/js/events';
 import { TrickEvents } from './contracts/TrickContracts';
 import { Die } from './Die';
+import { DieFaceResult } from './DieFaceResult';
 import { ModifiedDie } from './ModifiedDie';
+import { RecordHistory } from './RecordHistory';
 
 export interface BagRolledEvent extends GameEvent {
     faces: number[];
+    faceResults: readonly DieFaceResult[];
     diceIds: string[];
 }
 
 export class Bag {
     readonly dice: ModifiedDie[];
+    readonly rollHistory: RecordHistory<readonly DieFaceResult[]>;
 
     constructor(initialDice: ModifiedDie[] = [new ModifiedDie(), new ModifiedDie(), new ModifiedDie()]) {
         this.dice = [...initialDice];
+        this.rollHistory = new RecordHistory<readonly DieFaceResult[]>(20);
     }
 
     rollAll(): number[] {
         const activeDice = this.getActiveDice();
-        activeDice
-            .filter((die) => !die.locked)
+        const unlockedActiveDice = activeDice.filter((die) => !die.locked);
+        unlockedActiveDice
             .forEach((die) => {
                 die.roll();
             });
 
-        const faces = activeDice.map((die) => die.faceUp);
+        const faceResults = Object.freeze(activeDice.map((die) => new DieFaceResult(die.faceUp, { rolled: !die.locked })));
+        const faces = faceResults.map((faceResult) => faceResult.computed_value);
 
         Events.RaiseEvent<BagRolledEvent>(TrickEvents.BAG_ROLLED, {
             faces,
+            faceResults,
             diceIds: activeDice.map((die) => die.id),
         });
+
+        this.rollHistory.push(faceResults);
 
         return faces;
     }
 
     addDie(die: ModifiedDie): void {
         this.dice.push(die);
+        this.rollHistory.clear();
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 
@@ -45,6 +55,7 @@ export class Bag {
         }
 
         this.dice.splice(index, 1);
+        this.rollHistory.clear();
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 
@@ -59,6 +70,7 @@ export class Bag {
         }
 
         die.active = !die.active;
+        this.rollHistory.clear();
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 
@@ -69,6 +81,7 @@ export class Bag {
         }
 
         die.locked = !die.locked;
+        this.rollHistory.clear();
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 }

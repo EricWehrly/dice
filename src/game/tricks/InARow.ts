@@ -1,48 +1,66 @@
-import { Trick, type TrickResult } from './Trick';
+import { DieFaceResult } from '../DieFaceResult';
+import { Trick, type TrickEvaluationContext, type TrickResult } from './Trick';
 import { GLOBAL_MINIMUM_THRESHOLD } from './constants';
 
-/**
- * In a Row: at least GLOBAL_MINIMUM_THRESHOLD identical face values in a contiguous streak.
- * Score: longest contiguous streak length when successful.
- */
 export class InARow extends Trick {
-  constructor() {
-    super({ id: 'in-a-row', name: 'In a Row' });
-  }
-
-  evaluate(faces: number[]): TrickResult {
-    if (faces.length < GLOBAL_MINIMUM_THRESHOLD) {
-      return { success: false, score: 0 };
+    constructor() {
+        super({ id: 'in-a-row', name: 'In a Row' });
     }
 
-    const longestStreak = this.longestIdenticalStreak(faces);
-    const success = longestStreak >= GLOBAL_MINIMUM_THRESHOLD;
+    evaluate(_faces: number[], context?: TrickEvaluationContext): TrickResult {
+        if (!context?.currentRoll || !DieFaceResult.isFullRoll(context.currentRoll)) {
+            return { success: false, score: 0 };
+        }
 
-    return {
-      success,
-      score: success ? longestStreak : 0,
-    };
-  }
+        const streakLength = this.getStreakLength(context);
+        const success = streakLength >= GLOBAL_MINIMUM_THRESHOLD;
 
-  private longestIdenticalStreak(faces: number[]): number {
-    if (faces.length === 0) {
-      return 0;
+        return {
+            success,
+            score: success ? streakLength : 0,
+        };
     }
 
-    let longest = 1;
-    let current = 1;
+    private getStreakLength(context: TrickEvaluationContext): number {
+        const currentRoll = context.currentRoll;
+        if (!currentRoll) {
+            return 0;
+        }
 
-    for (let i = 1; i < faces.length; i++) {
-      if (faces[i] === faces[i - 1]) {
-        current += 1;
-        longest = Math.max(longest, current);
-      } else {
-        current = 1;
-      }
+        const rollHistory = context.rollHistory;
+        if (!rollHistory) {
+            return 1;
+        }
+
+        let streakLength = 1;
+        let candidate = currentRoll;
+
+        for (let index = rollHistory.records.length - 1; index >= 0; index -= 1) {
+            const record = rollHistory.records[index];
+            if (!DieFaceResult.isFullRoll(record) || !this.sameRoll(candidate, record)) {
+                break;
+            }
+
+            streakLength += 1;
+            candidate = record;
+        }
+
+        return streakLength;
     }
 
-    return longest;
-  }
+    private sameRoll(a: readonly DieFaceResult[], b: readonly DieFaceResult[]): boolean {
+        if (a.length !== b.length) {
+            return false;
+        }
+
+        for (let index = 0; index < a.length; index += 1) {
+            if (a[index].computed_value !== b[index].computed_value) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 export const inARowTrick = new InARow();
