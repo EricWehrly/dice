@@ -8,6 +8,7 @@ type EconomyResourceName = typeof economyResources[number];
 export class TrickCounterPanel {
     private readonly counterGrid: HTMLDivElement;
     private readonly counterElements: Record<EconomyResourceName, HTMLDivElement>;
+    private readonly previousValues: Record<EconomyResourceName, number> = { mods: 0, cosmetics: 0 };
 
     constructor() {
         this.counterGrid = this.getRequiredElement<HTMLDivElement>('counter-grid');
@@ -19,7 +20,17 @@ export class TrickCounterPanel {
     render(): void {
         for (const resourceName of economyResources) {
             const earned = Resource.Get(resourceName)?.value || 0;
+            const increased = earned > this.previousValues[resourceName];
+            
+            if (increased) {
+                this.counterElements[resourceName].classList.remove('counter--highlight');
+                // Trigger reflow to restart animation
+                void this.counterElements[resourceName].offsetWidth;
+                this.counterElements[resourceName].classList.add('counter--highlight');
+            }
+            
             this.counterElements[resourceName].textContent = `${resourceName} Earned: ${earned}`;
+            this.previousValues[resourceName] = earned;
         }
     }
 

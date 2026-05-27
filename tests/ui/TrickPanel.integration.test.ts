@@ -20,6 +20,7 @@ describe('TrickPanel integration', () => {
     const listedTricks = Trick.GetAll<Trick>();
     const itemTitles = Array.from(document.querySelectorAll('.trick-title')).map((node) => node.textContent);
     const metaValues = Array.from(document.querySelectorAll('.trick-meta')).map((node) => node.textContent);
+    const hitItems = Array.from(document.querySelectorAll('.trick-item--recent-hit'));
 
     expect(itemTitles).toContain('Of a Kind');
     expect(itemTitles).toContain('Ascending');
@@ -27,5 +28,6 @@ describe('TrickPanel integration', () => {
     expect(itemTitles.length).toBe(listedTricks.length);
     expect(metaValues.some((value) => value?.includes('hit'))).toBe(true);
     expect(metaValues.some((value) => value?.includes('HS 3'))).toBe(true);
+    expect(hitItems.length).toBeGreaterThan(0);
   });
 });

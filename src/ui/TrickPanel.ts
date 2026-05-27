@@ -31,7 +31,7 @@ export class TrickPanel {
             const result = resultById.get(trick.id);
 
             const li = document.createElement('li');
-            li.className = 'trick-item';
+            li.className = result?.success ? 'trick-item trick-item--recent-hit' : 'trick-item';
 
             const title = document.createElement('div');
             title.className = 'trick-title';

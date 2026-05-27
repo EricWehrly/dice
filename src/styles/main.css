@@ -126,9 +126,14 @@ p {
   padding: 6px;
   border-radius: 8px;
   background: var(--color-counter-bg);
-  border: 1px solid var(--color-counter-border);
+  border: 2px solid color-mix(in srgb, var(--color-counter-border) 65%, transparent 35%);
+  box-shadow: 0 0 0 0 transparent;
   font-size: 13px;
   text-transform: capitalize;
+}
+
+.counter--highlight {
+  animation: currency-glow 1800ms ease-out 120ms 1;
 }
 
 .score-panel {
@@ -136,9 +141,31 @@ p {
   padding: 6px;
   border-radius: 8px;
   background: var(--color-counter-bg);
-  border: 1px solid var(--color-counter-border);
+  border: 2px solid color-mix(in srgb, var(--color-counter-border) 65%, transparent 35%);
+  box-shadow: 0 0 0 0 transparent;
   font-size: 13px;
   font-weight: 700;
+}
+
+.score-panel--highlight {
+  animation: currency-glow 1800ms ease-out 120ms 1;
+}
+
+@keyframes currency-glow {
+  0% {
+    border-color: color-mix(in srgb, #ffd88b 10%, var(--color-counter-border) 90%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, #ffd88b 0%, transparent 100%);
+  }
+
+  18% {
+    border-color: color-mix(in srgb, #ffd88b 78%, #ffffff 22%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, #ffd88b 55%, transparent 45%);
+  }
+
+  100% {
+    border-color: color-mix(in srgb, #ffd88b 16%, var(--color-counter-border) 84%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, #ffd88b 0%, transparent 100%);
+  }
 }
 
 .trick-list {
@@ -153,7 +180,29 @@ p {
   padding: 6px;
   border-radius: 8px;
   background: var(--color-counter-bg);
-  border: 1px solid var(--color-counter-border);
+  border: 2px solid color-mix(in srgb, var(--color-counter-border) 65%, transparent 35%);
+  box-shadow: 0 0 0 0 transparent;
+}
+
+.trick-item--recent-hit {
+  animation: trick-hit-glow 1800ms ease-out 120ms 1;
+}
+
+@keyframes trick-hit-glow {
+  0% {
+    border-color: color-mix(in srgb, #ffd88b 10%, var(--color-counter-border) 90%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, #ffd88b 0%, transparent 100%);
+  }
+
+  18% {
+    border-color: color-mix(in srgb, #ffd88b 78%, #ffffff 22%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, #ffd88b 55%, transparent 45%);
+  }
+
+  100% {
+    border-color: color-mix(in srgb, #ffd88b 16%, var(--color-counter-border) 84%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, #ffd88b 0%, transparent 100%);
+  }
 }
 
 .trick-title {
@@ -165,6 +214,59 @@ p {
   margin-top: 2px;
   font-size: 12px;
   opacity: 0.85;
+}
+
+.roll-history-panel {
+  margin: 6px 0;
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--color-counter-bg);
+  border: 1px solid var(--color-counter-border);
+}
+
+.roll-history-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.roll-history-list {
+  list-style: decimal-leading-zero;
+  margin: 0;
+  padding: 0 0 0 24px;
+  display: grid;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.roll-history-item {
+  min-height: 24px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--color-counter-border) 80%, black 20%);
+  background: color-mix(in srgb, var(--color-counter-bg) 86%, black 14%);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.roll-history-face {
+  display: inline-block;
+  min-width: 12px;
+  text-align: center;
+}
+
+.roll-history-face.is-locked {
+  opacity: 0.45;
+}
+
+.roll-history-separator {
+  margin: 0 6px;
+  opacity: 0.7;
+}
+
+.roll-history-item.is-partial {
+  border-color: color-mix(in srgb, #e1a959 75%, black 25%);
 }
 
 @media (max-width: 1100px), (max-aspect-ratio: 6/5) {
