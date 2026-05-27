@@ -586,36 +586,24 @@ Resolved decisions:
 
 ## Animation Proposals
 
-If animations are desired, here are three low-risk options with estimates. **Recommendation: Defer to 3D phase unless development time permits.**
-
-### Option A: Expand/Collapse Transition (Subtle Fade)
-**Concept**: When mod selector changes from collapsed to expanded, the carousel fades in while the isometric die fades out over ~200ms. Simple CSS transition or lightweight canvas opacity.
-
-**Complexity**: Very Low  
-**Time to implement**: ~30 minutes  
-**LOC**: ~15–20 lines (CSS or canvas opacity tweaks)  
-**Risks**: None; purely visual feedback.  
-**Value**: Provides clear mode indication to user.
-
-### Option B: Subtle Glow on Selected Mod Dropdown
-**Concept**: When user selects a core mod from the dropdown, the dropdown control gets a 1-second subtle glow (shadow + background color shift) to confirm selection before expanding.
-
-**Complexity**: Very Low  
-**Time to implement**: ~20 minutes  
-**LOC**: ~10–15 lines (CSS animation, or canvas glow draw)  
-**Risks**: None; purely highlight feedback.  
-**Value**: Confirms mod selection intent without blocking flow.
-
-### Option C: Target Face Highlight in Carousel (on selector change)
-**Concept**: When user changes target face selector in expanded mode, the corresponding face tile in the carousel briefly highlights/pulses to show which face is selected.
+### Option C: Quick Explode-Out / Collapse-In
+**Concept**: Animate the face tiles briefly separating outward from the die center before settling into the expanded carousel, then reverse the same motion when collapsing back.
 
 **Complexity**: Low  
 **Time to implement**: ~45 minutes  
-**LOC**: ~30–40 lines (carousel renderer modification + event wiring)  
-**Risks**: Low; tied to existing carousel renderer.  
-**Value**: Visual feedback that selection maps to carousel correctly.
+**LOC**: ~30–40 lines (tile offset tween + render timing)  
+**Risks**: Low; uses the existing face layout, just with transient offsets.  
+**Value**: Makes the explode metaphor explicit while still being cheap to render.
 
-**Recommendation**: Option A (expand/collapse transition) is the safest and offers the most user-facing value with minimal cost. Options B and C are nice-to-have. If all three are wanted, budget an extra 1–1.5 hours into Phase 3.
+**Decision**: This is the only transition animation in scope for this doc.
+
+### Implementation Guardrails (Fail Fast)
+
+- Time-box implementation attempt to 45 minutes; if not stable by then, ship without transition animation.
+- Runtime budget: target ~200ms total animation duration and abort to instant state swap if frame pacing degrades.
+- If animation setup fails (missing canvas/context/state mismatch), immediately fall back to non-animated expand/collapse.
+- Add a simple feature flag (for example `enableDieModTransitionAnimation`) so the behavior can be disabled without refactoring.
+- Do not block install/cancel flow on animation completion; state transitions remain authoritative.
 
 ---
 
@@ -699,7 +687,7 @@ Phase 1 can now begin with:
 10. Verify probabilities show preview (selected mod + target face).
 
 ### Phase 3 Tasks (if time permits)
-11. Implement optional animation (Option A recommended).
+11. Implement Option C transition animation with fail-fast fallback to instant mode switch.
 12. Polish isometric rendering (lighting, face shading, core mod indicator).
 13. Add edge-case handling and error states.
 14. Comprehensive manual visual testing.

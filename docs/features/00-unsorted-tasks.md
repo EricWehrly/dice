@@ -9,10 +9,7 @@ show that (as data uri if possible) in the high score area
 - (later) unlock and then buy the sword, heart, and shield
 
 - default circle pip is score / currency
-different pip faces are worth more currency
-squares are 2x
-rings are 8x
-gems are 10x
+gem faces are 10x currency value?
 
 - colors are worth score
 each band worth 0-255
@@ -21,6 +18,9 @@ white is worth 768
 but you can increase / get a higher score by alternating colors
 maybe brighter isn't necessarily worth more, but combining is
 so doing RGB LED (lol gaemr meme) is like the highest score
+
+(let's later allow the dice to be drawn with different colors in addition to the pips,
+and add it effectively as another pip, scored based on the RGB of the die body)
 
 - move 'resources' to canvas screen
 and draw them with the appropriate (pip) icons related to them

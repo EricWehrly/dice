@@ -90,3 +90,16 @@ Engine-native shell + one fully wired screen switch path:
 ## Future Expansion
 
 Once F10 shell is working, modal presentation becomes a presentation-layer decision: swap the shell adapter, not the screens.
+
+## Planned Mods (not yet implemented)
+
+| Mod | Status | Notes |
+|-----|--------|-------|
+| Weight (1.0–2.5g) | ✅ Active | Face-targeted; shifts probability toward weighted face |
+| Brain | 🔮 Future | AI-assisted adaptive weighting; adjusts per-face weights based on usage patterns. See `src/ui/DieModificationTypes.ts` for placeholder comment. |
+
+## Style And Naming Intent (Planned)
+
+- Default die style should be `plastic` for the upgrading/modification flow.
+- In the modification screen, the default die label should read `plastic d6`.
+- This is a documentation-only intent for now; implementation is intentionally deferred.
