@@ -32,6 +32,8 @@ export interface DieModPanelData {
     hasActualDeltas: boolean;
     selectedCoreMod: AvailableCoreModValue | null;
     selectedTargetFaceIndex: number | null;
+    showTargetFaceSelector: boolean;
+    targetFaceAnimation: 'none' | 'enter' | 'leave';
 }
 
 export function renderDieModPanel(data: DieModPanelData): string {
@@ -42,16 +44,21 @@ export function renderDieModPanel(data: DieModPanelData): string {
         <div class="die-mod-shell">
             ${renderDieList(data)}
 
-            <!-- Viewport: exploded carousel when mod selected, isometric otherwise -->
-            ${modSelected ? `
-            <div class="die-mod-face-carousel" data-carousel-mode="auto">
-                <div class="die-mod-canvas-wrap">
-                    <canvas id="die-mod-canvas"></canvas>
+            <!-- Viewport: keep both mounted and cross-fade -->
+            <div class="die-mod-viewport">
+                <div class="die-mod-viewport-layer die-mod-viewport-layer--iso ${modSelected ? 'is-fading-out' : 'is-fading-in'}">
+                    <div class="die-mod-isometric-container">
+                        <canvas id="die-isometric-canvas"></canvas>
+                    </div>
                 </div>
-            </div>` : `
-            <div class="die-mod-isometric-container">
-                <canvas id="die-isometric-canvas"></canvas>
-            </div>`}
+                <div class="die-mod-viewport-layer die-mod-viewport-layer--faces ${modSelected ? 'is-fading-in' : 'is-fading-out'}">
+                    <div class="die-mod-face-carousel" data-carousel-mode="auto">
+                        <div class="die-mod-canvas-wrap">
+                            <canvas id="die-mod-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Core mod selector -->
             <label class="die-mod-setting-field">
@@ -67,7 +74,7 @@ export function renderDieModPanel(data: DieModPanelData): string {
 
             <!-- Sub-properties container: fixed height, overflow hidden, slides child in -->
             <div class="die-mod-sub-props">
-                <label class="die-mod-setting-field die-mod-sub-field${modSelected ? ' is-visible' : ''}">
+                <label class="die-mod-setting-field die-mod-sub-field${data.showTargetFaceSelector ? ' is-visible' : ''}${data.targetFaceAnimation === 'enter' ? ' is-entering' : ''}${data.targetFaceAnimation === 'leave' ? ' is-leaving' : ''}">
                     <span class="die-mod-setting-label">target face</span>
                     <select class="die-mod-setting-select die-mod-target-face-selector" ${modSelected ? '' : 'disabled'}>
                         <option value="">-- select face --</option>

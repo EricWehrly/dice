@@ -41,6 +41,9 @@ export class DieModificationPanel {
     // Core mod install state
     private selectedCoreMod: AvailableCoreModValue | null = null;
     private selectedTargetFaceIndex: number | null = null;
+    private wasModSelected = false;
+    private isTargetFaceLeaving = false;
+    private targetFaceLeaveTimeoutId: number | null = null;
 
     constructor(dice: ModifiedDie[]) {
         this.root = document.getElementById('die-mod-panel');
@@ -58,6 +61,32 @@ export class DieModificationPanel {
         this.ensureDraftLength(die.faceCount);
         this.ensureFaceIndex(die.faceCount);
         const previewFaceMods = this.getPreviewFaceMods();
+        const modSelected = this.selectedCoreMod !== null && this.selectedCoreMod !== 'none';
+        const targetFaceAnimation = !this.wasModSelected && modSelected
+            ? 'enter'
+            : this.wasModSelected && !modSelected
+                ? 'leave'
+                : 'none';
+
+        if (targetFaceAnimation === 'leave') {
+            this.isTargetFaceLeaving = true;
+            if (this.targetFaceLeaveTimeoutId !== null) {
+                window.clearTimeout(this.targetFaceLeaveTimeoutId);
+            }
+            this.targetFaceLeaveTimeoutId = window.setTimeout(() => {
+                this.isTargetFaceLeaving = false;
+                this.targetFaceLeaveTimeoutId = null;
+                this.render();
+            }, 180);
+        } else if (targetFaceAnimation === 'enter') {
+            if (this.targetFaceLeaveTimeoutId !== null) {
+                window.clearTimeout(this.targetFaceLeaveTimeoutId);
+                this.targetFaceLeaveTimeoutId = null;
+            }
+            this.isTargetFaceLeaving = false;
+        }
+
+        const showTargetFaceSelector = modSelected || this.isTargetFaceLeaving;
         const current = getFaceChances(die);
         const preview = getPreviewChances(die, previewFaceMods);
         const deltas = preview.map((value, index) => value - current[index]);
@@ -80,28 +109,30 @@ export class DieModificationPanel {
             hasActualDeltas,
             selectedCoreMod: this.selectedCoreMod,
             selectedTargetFaceIndex: this.selectedTargetFaceIndex,
+            showTargetFaceSelector,
+            targetFaceAnimation,
         };
 
         this.root.innerHTML = renderDieModPanel(templateData);
 
-        // Swap viewport: exploded carousel when a mod is selected, isometric otherwise
-        if (this.selectedCoreMod && this.selectedCoreMod !== 'none') {
-            this.canvasRenderer.render({
-                root: this.root,
-                faceCount: die.faceCount,
-                selectedFaceIndex: this.selectedTargetFaceIndex ?? 0,
-                preview,
-                deltas,
-            });
-        } else {
-            this.isometricRenderer.render({
-                root: this.root,
-                faceCount: die.faceCount,
-                currentCoreMod: this.selectedCoreMod,
-                coreModInstalledOnFace: null, // TODO: Get from die.mods when available
-                style: (this.draftFaceStyles[0] ?? 'plain') as 'plain' | 'etched' | 'polished' | 'hammered',
-            });
-        }
+        // Keep both viewports rendered so CSS can cross-fade between them.
+        this.isometricRenderer.render({
+            root: this.root,
+            faceCount: die.faceCount,
+            currentCoreMod: this.selectedCoreMod,
+            coreModInstalledOnFace: null, // TODO: Get from die.mods when available
+            style: (this.draftFaceStyles[0] ?? 'plain') as 'plain' | 'etched' | 'polished' | 'hammered',
+        });
+
+        this.canvasRenderer.render({
+            root: this.root,
+            faceCount: die.faceCount,
+            selectedFaceIndex: this.selectedTargetFaceIndex ?? 0,
+            preview,
+            deltas,
+        });
+
+        this.wasModSelected = modSelected;
 
         this.wireHandlers();
     }
@@ -132,8 +163,18 @@ export class DieModificationPanel {
         coreModSelector?.addEventListener('change', (event) => {
             const target = event.target as HTMLSelectElement;
             const modValue = target.value as AvailableCoreModValue;
-            this.selectedCoreMod = modValue !== 'none' ? modValue : null;
-            this.selectedTargetFaceIndex = null; // Reset face when mod changes
+            const wasModVisible = this.selectedCoreMod !== null && this.selectedCoreMod !== 'none';
+            const nextCoreMod = modValue !== 'none' ? modValue : null;
+            const willModBeVisible = nextCoreMod !== null;
+
+            this.selectedCoreMod = nextCoreMod;
+
+            // Preserve selected face across weight amount changes.
+            // Only reset when the face selector becomes hidden.
+            if (wasModVisible && !willModBeVisible) {
+                this.selectedTargetFaceIndex = null;
+            }
+
             this.render();
         });
 

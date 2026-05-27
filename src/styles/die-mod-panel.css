@@ -89,12 +89,35 @@
   color: color-mix(in srgb, var(--color-gold-trim) 78%, white 22%);
 }
 
+.die-mod-viewport {
+  position: relative;
+  width: 100%;
+  height: 105px;
+}
+
+.die-mod-viewport-layer {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.18s ease;
+}
+
+.die-mod-viewport-layer.is-fading-in {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.die-mod-viewport-layer.is-fading-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .die-mod-face-carousel {
   display: flex;
   justify-content: center;
   align-items: stretch;
   padding: 0;
   width: 100%;
+  height: 100%;
 }
 
 .die-mod-canvas-wrap {
@@ -195,7 +218,7 @@
 .die-mod-isometric-container {
   position: relative;
   width: 100%;
-  height: 105px;
+  height: 100%;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -240,6 +263,9 @@
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+}
+
+.die-mod-sub-field.is-entering {
   animation: die-mod-sub-field-enter 0.18s ease-out both;
 }
 
@@ -254,7 +280,8 @@
   }
 }
 
-.die-mod-sub-field:not(.is-visible) {
+.die-mod-sub-field.is-leaving {
+  pointer-events: none;
   animation: die-mod-sub-field-exit 0.18s ease-in both;
 }
 
