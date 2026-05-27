@@ -3,6 +3,7 @@ import { drawDieFaceTile } from '../rendering/2d/DieFaceTileRenderer';
 export interface DieModificationCanvasRenderInput {
     root: HTMLElement;
     faceCount: number;
+    selectedFaceIndex: number; // -1 = core, 0+ = face index
 }
 
 /**
@@ -10,7 +11,7 @@ export interface DieModificationCanvasRenderInput {
  */
 export class DieModificationCanvasRenderer {
     render(input: DieModificationCanvasRenderInput): void {
-        const { root, faceCount } = input;
+        const { root, faceCount, selectedFaceIndex } = input;
 
         const canvas = root.querySelector<HTMLCanvasElement>('#die-mod-canvas');
         if (!canvas) {
@@ -23,11 +24,11 @@ export class DieModificationCanvasRenderer {
         }
 
         const dpr = window.devicePixelRatio || 1;
-        const padding = 0;
-        const columnWidth = 92;
-        const tileSize = 44;
-        const centerPosition = Math.floor(faceCount / 2);
-        const width = padding * 2 + (faceCount + 1) * columnWidth;
+        const tileSize = 56;
+        const tileGap = 8;
+        const tilesPerView = 3;
+        const padding = 6;
+        const width = padding * 2 + tilesPerView * tileSize + (tilesPerView - 1) * tileGap;
         const height = padding * 2 + tileSize;
 
         canvas.width = Math.floor(width * dpr);
@@ -45,62 +46,67 @@ export class DieModificationCanvasRenderer {
         const coreGlow = this.getThemeColor('--color-gold-trim-soft', '#7f6b2d');
         const corePanelBg = this.getThemeColor('--color-counter-bg', '#111');
 
-        for (let index = 0; index < faceCount; index += 1) {
-            const displayIndex = index < centerPosition ? index : index + 1;
-            const x = padding + displayIndex * columnWidth;
-            const tileX = x + (columnWidth - tileSize) / 2;
+        // Calculate prev, current, next indices (core=-1, faces=0..faceCount-1)
+        const itemCount = faceCount + 1;
+        const wrapIndex = (index: number): number => {
+            const pos = ((index + 1) % itemCount + itemCount) % itemCount;
+            return pos - 1;
+        };
 
-            // Duck-typed dummy die for rendering purposes
-            const dummyDie = { faceUp: index + 1, active: true, locked: false };
+        const itemIndices = [
+            wrapIndex(selectedFaceIndex - 1),
+            selectedFaceIndex,
+            wrapIndex(selectedFaceIndex + 1),
+        ];
 
-            drawDieFaceTile(context, {
-                x: tileX,
-                y: padding,
-                size: tileSize,
-                die: dummyDie,
-                colors: {
-                    fill: tileBg,
-                    stroke: tileBorder,
-                    text: tileText,
-                },
-                shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
-            });
-        }
+        itemIndices.forEach((itemIndex, position) => {
+            const x = padding + position * (tileSize + tileGap);
+            const opacity = position === 1 ? 1 : 0.55;
+            context.globalAlpha = opacity;
 
-        const coreX = padding + centerPosition * columnWidth;
-        const coreTileX = coreX + (columnWidth - tileSize) / 2;
+            if (itemIndex === -1) {
+                // Draw core tile
+                drawDieFaceTile(context, {
+                    x,
+                    y: padding,
+                    size: tileSize,
+                    die: { faceUp: 0, active: true, locked: false },
+                    colors: {
+                        fill: corePanelBg,
+                        stroke: coreAccent,
+                        text: tileText,
+                    },
+                    shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
+                });
+            } else {
+                // Draw face tile
+                drawDieFaceTile(context, {
+                    x,
+                    y: padding,
+                    size: tileSize,
+                    die: { faceUp: itemIndex + 1, active: true, locked: false },
+                    colors: {
+                        fill: tileBg,
+                        stroke: tileBorder,
+                        text: tileText,
+                    },
+                    shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
+                });
+            }
 
-        // Core slot is not a real face, just a display slot
-        const coreDummyDie = { faceUp: 0, active: true, locked: false };
-
-        drawDieFaceTile(context, {
-            x: coreTileX,
-            y: padding,
-            die: coreDummyDie,
-            size: tileSize,
-            colors: {
-                fill: corePanelBg,
-                stroke: coreAccent,
-                text: tileText,
-            },
-            shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
+            if (position === 1) {
+                // Add glow to selected (center) item
+                context.globalAlpha = 1;
+                context.save();
+                context.strokeStyle = coreAccent;
+                context.shadowColor = coreGlow;
+                context.shadowBlur = 8;
+                context.lineWidth = 2;
+                context.strokeRect(x - 2, padding - 2, tileSize + 4, tileSize + 4);
+                context.restore();
+            }
         });
 
-        context.save();
-        context.strokeStyle = coreAccent;
-        context.shadowColor = coreGlow;
-        context.shadowBlur = 6;
-        context.globalAlpha = 0.45;
-        context.strokeRect(coreTileX, padding, tileSize, tileSize);
-        context.restore();
-
-        const innerSize = tileSize - 16;
-        const innerX = coreTileX + (tileSize - innerSize) / 2;
-        const innerY = padding + (tileSize - innerSize) / 2;
-        context.strokeStyle = coreAccent;
-        context.globalAlpha = 0.42;
-        context.lineWidth = 1;
-        context.strokeRect(innerX, innerY, innerSize, innerSize);
         context.globalAlpha = 1;
     }
 

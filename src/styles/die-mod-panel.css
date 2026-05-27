@@ -30,10 +30,6 @@
 }
 
 .die-mod-panel {
-  --die-mod-label-col: 72px;
-  --die-mod-row-gap: 8px;
-  --die-mod-col-width: 92px;
-  --die-mod-face-count: 6;
   margin: 0;
   padding: 12px;
   border-radius: 8px;
@@ -45,14 +41,9 @@
   gap: 8px;
 }
 
-.die-mod-panel h3 {
-  font-size: 14px;
-  margin-bottom: 2px;
-}
-
-.die-mod-caption {
-  font-size: 12px;
-  opacity: 0.85;
+.die-mod-shell {
+  display: grid;
+  gap: 10px;
 }
 
 .die-mod-list {
@@ -76,92 +67,93 @@
   border-color: color-mix(in srgb, var(--color-button-grad-start) 70%, white 30%);
 }
 
-.die-mod-canvas-wrap {
+.die-mod-selection-label {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+}
+
+.die-mod-selection-label .die-mod-label {
+  opacity: 0.7;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.die-mod-selection-label .die-mod-selection-name {
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-gold-trim) 78%, white 22%);
+}
+
+.die-mod-face-carousel {
   display: grid;
-  grid-template-columns: var(--die-mod-label-col) minmax(0, 1fr);
-  column-gap: var(--die-mod-row-gap);
-  overflow-x: auto;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+}
+
+.die-mod-face-nav-btn {
+  border: 1px solid color-mix(in srgb, var(--color-counter-border) 75%, transparent);
   border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--color-counter-border) 70%, transparent);
-  background: color-mix(in srgb, var(--color-panel-bg) 84%, black 16%);
-  padding: 6px 0 6px 0;
+  background: color-mix(in srgb, var(--color-panel-bg) 72%, transparent 28%);
+  color: var(--color-text-primary);
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.die-mod-canvas-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 68px;
 }
 
 .die-mod-canvas-wrap canvas {
   display: block;
-  grid-column: 2;
 }
 
-.die-mod-row {
+.die-mod-settings-block {
   display: grid;
-  grid-template-columns: var(--die-mod-label-col) minmax(0, 1fr) 120px;
-  gap: var(--die-mod-row-gap);
-  align-items: end;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-counter-border) 70%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-panel-bg) 84%, black 16%);
+  padding: 8px;
 }
 
-.die-mod-picker {
-  font-size: 12px;
+.die-mod-setting-field {
+  display: grid;
+  gap: 4px;
 }
 
-.die-mod-label {
+.die-mod-setting-label {
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
-.die-mod-select {
+.die-mod-setting-select {
   border: 1px solid var(--color-counter-border);
   border-radius: 6px;
   background: color-mix(in srgb, var(--color-panel-bg) 85%, black 15%);
   color: var(--color-text-primary);
-  padding: 4px 6px;
-  font-size: 11px;
+  padding: 6px;
+  font-size: 12px;
   width: 100%;
 }
 
-.die-mod-face-target-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--die-mod-face-count), var(--die-mod-col-width));
-  min-width: max-content;
-  gap: 0;
-}
-
-.die-mod-face-target {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0 2px 0;
-}
-
-.die-mod-slot-label {
-  text-align: center;
-  font-size: 10px;
-  line-height: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  opacity: 0.82;
-}
-
-.die-mod-core-slot {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  background: color-mix(in srgb, var(--color-panel-bg) 82%, black 18%);
-  border: 1px solid color-mix(in srgb, var(--color-gold-trim) 65%, black 35%);
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-gold-trim-soft) 55%, transparent);
-  padding: 2px 2px 0;
-  margin: 0 2px;
-}
-
-.die-mod-core-slot-label {
-  color: color-mix(in srgb, var(--color-gold-trim) 78%, white 22%);
-  font-weight: 700;
-  opacity: 0.94;
-}
-
 .die-mod-install-btn {
-  justify-self: end;
   border: 1px solid var(--color-counter-border);
   border-radius: 6px;
   background: color-mix(in srgb, var(--color-panel-bg) 85%, black 15%);
@@ -169,54 +161,13 @@
   padding: 8px 10px;
   font-weight: 700;
   cursor: pointer;
+  width: 100%;
 }
 
 .die-mod-install-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   filter: grayscale(0.25);
-}
-
-.die-mod-values {
-  overflow-x: auto;
-}
-
-.die-mod-value-row {
-  display: grid;
-  grid-template-columns: var(--die-mod-label-col) minmax(0, 1fr);
-  gap: var(--die-mod-row-gap);
-  align-items: center;
-  margin-top: 2px;
-}
-
-.die-mod-row-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  opacity: 0.85;
-}
-
-.die-mod-value-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--die-mod-face-count), var(--die-mod-col-width));
-  min-width: max-content;
-}
-
-.die-mod-value-cell {
-  text-align: center;
-  font-size: 11px;
-}
-
-.die-mod-core-gap {
-  opacity: 0;
-}
-
-.die-mod-value-cell.delta-up {
-  color: var(--color-mod-delta-up);
-}
-
-.die-mod-value-cell.delta-down {
-  color: var(--color-mod-delta-down);
 }
 
 @media (max-width: 1100px), (max-aspect-ratio: 6/5) {
@@ -227,21 +178,5 @@
 
   .play-mode-toggle {
     width: 100%;
-  }
-
-  .die-mod-row {
-    grid-template-columns: 1fr;
-  }
-
-  .die-mod-canvas-wrap {
-    grid-template-columns: 1fr;
-  }
-
-  .die-mod-canvas-wrap canvas {
-    grid-column: 1;
-  }
-
-  .die-mod-value-row {
-    grid-template-columns: 1fr;
   }
 }

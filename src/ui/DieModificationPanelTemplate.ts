@@ -8,40 +8,106 @@
 import {
     type AvailableModValue,
     type AvailableCoreModValue,
+    type AvailableMaterialValue,
+    type AvailableStyleValue,
     AVAILABLE_MODS,
     AVAILABLE_CORE_MODS,
+    AVAILABLE_MATERIALS,
+    AVAILABLE_STYLES,
 } from './DieModificationTypes';
 
 export interface DieModPanelData {
     dice: Array<{ id: string; label: string; faceCount: number }>;
     selectedDieId: string;
+    selectedFaceIndex: number; // -1 = core, 0+ = face index
+    faceCount: number;
     draftFaceMods: AvailableModValue[];
     draftCoreMod: AvailableCoreModValue;
+    draftCoreMaterial: AvailableMaterialValue;
+    draftFaceStyles: AvailableStyleValue[];
     preview: number[];
     deltas: number[];
     current: number[];
-    faceCount: number;
-    centerPosition: number;
     hasDraftChanges: boolean;
     hasActualDeltas: boolean;
-    installedModCount: number;
 }
 
 export function renderDieModPanel(data: DieModPanelData): string {
+    const isCore = data.selectedFaceIndex === -1;
+    const selectionLabel = isCore ? 'Core' : `Face ${data.selectedFaceIndex + 1}`;
+
     return `
-        <h3>Die Modifications</h3>
+        <div class="die-mod-shell">
+            ${renderDieList(data)}
 
-        ${renderDieList(data)}
-        
-        <div class="die-mod-canvas-wrap">
-            <canvas id="die-mod-canvas"></canvas>
+            <div class="die-mod-face-carousel">
+                <button class="die-mod-face-nav-btn" data-face-step="-1" type="button" aria-label="Previous">&lt;</button>
+                <div class="die-mod-canvas-wrap">
+                    <canvas id="die-mod-canvas"></canvas>
+                </div>
+                <button class="die-mod-face-nav-btn" data-face-step="1" type="button" aria-label="Next">&gt;</button>
+            </div>
+
+            <div class="die-mod-selection-label">
+                <span class="die-mod-label">Selected:</span>
+                <span class="die-mod-selection-name">${selectionLabel}</span>
+            </div>
+
+            ${isCore ? renderCoreSettings(data) : renderFaceSettings(data)}
+
+            <button id="die-mod-install-btn" class="die-mod-install-btn" type="button" ${data.hasDraftChanges ? '' : 'disabled'}>Install</button>
         </div>
+    `;
+}
 
-        ${renderModRow(data)}
+function renderCoreSettings(data: DieModPanelData): string {
+    return `
+        <div class="die-mod-settings-block">
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">mod</span>
+                <select class="die-mod-setting-select" data-scope="core" data-field="mod">
+                    ${AVAILABLE_CORE_MODS.map(
+                        (mod) =>
+                            `<option value="${mod.value}" ${mod.value === data.draftCoreMod ? 'selected' : ''}>${mod.label}</option>`
+                    ).join('')}
+                </select>
+            </label>
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">material</span>
+                <select class="die-mod-setting-select" data-scope="core" data-field="material">
+                    ${AVAILABLE_MATERIALS.map(
+                        (mat) =>
+                            `<option value="${mat.value}" ${mat.value === data.draftCoreMaterial ? 'selected' : ''}>${mat.label}</option>`
+                    ).join('')}
+                </select>
+            </label>
+        </div>
+    `;
+}
 
-        ${renderValuesSection(data)}
-
-        <p class="die-mod-caption">Installed mods on selected die: ${data.installedModCount}</p>
+function renderFaceSettings(data: DieModPanelData): string {
+    const selectedStyle = data.draftFaceStyles[data.selectedFaceIndex] ?? 'plain';
+    return `
+        <div class="die-mod-settings-block">
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">mod</span>
+                <select class="die-mod-setting-select" data-scope="face" data-field="mod">
+                    ${AVAILABLE_MODS.map(
+                        (mod) =>
+                            `<option value="${mod.value}" ${mod.value === data.draftFaceMods[data.selectedFaceIndex] ? 'selected' : ''}>${mod.label}</option>`
+                    ).join('')}
+                </select>
+            </label>
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">style</span>
+                <select class="die-mod-setting-select" data-scope="face" data-field="style">
+                    ${AVAILABLE_STYLES.map(
+                        (style) =>
+                            `<option value="${style.value}" ${style.value === selectedStyle ? 'selected' : ''}>${style.label}</option>`
+                    ).join('')}
+                </select>
+            </label>
+        </div>
     `;
 }
 
@@ -60,89 +126,4 @@ function renderDieList(data: DieModPanelData): string {
     `;
 }
 
-function renderModRow(data: DieModPanelData): string {
-    return `
-        <div class="die-mod-row">
-            <div class="die-mod-picker die-mod-label">mod</div>
 
-            <div class="die-mod-face-targets">
-                <div class="die-mod-face-target-grid">
-                    ${Array.from({ length: data.faceCount }, (_, index) => {
-                        if (index === data.centerPosition) {
-                            return `
-                                <label class="die-mod-face-target die-mod-core-slot" title="Die core">
-                                    <span class="die-mod-slot-label die-mod-core-slot-label">core</span>
-                                    <select id="die-mod-core-select" class="die-mod-select">
-                                        ${AVAILABLE_CORE_MODS.map(
-                                            (mod) =>
-                                                `<option value="${mod.value}" ${mod.value === data.draftCoreMod ? 'selected' : ''}>${mod.label}</option>`
-                                        ).join('')}
-                                    </select>
-                                </label>
-                                <label class="die-mod-face-target" title="Face ${index + 1}">
-                                    <select class="die-mod-select" data-face-index="${index}">
-                                        ${AVAILABLE_MODS.map(
-                                            (mod) =>
-                                                `<option value="${mod.value}" ${mod.value === data.draftFaceMods[index] ? 'selected' : ''}>${mod.label}</option>`
-                                        ).join('')}
-                                    </select>
-                                </label>
-                            `;
-                        }
-                        return `
-                            <label class="die-mod-face-target" title="Face ${index + 1}">
-                                <select class="die-mod-select" data-face-index="${index}">
-                                    ${AVAILABLE_MODS.map(
-                                        (mod) =>
-                                            `<option value="${mod.value}" ${mod.value === data.draftFaceMods[index] ? 'selected' : ''}>${mod.label}</option>`
-                                    ).join('')}
-                                </select>
-                            </label>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-
-            <button id="die-mod-install-btn" class="die-mod-install-btn" type="button" ${data.hasDraftChanges ? '' : 'disabled'}>Install</button>
-        </div>
-    `;
-}
-
-function renderValuesSection(data: DieModPanelData): string {
-    return `
-        <div class="die-mod-values">
-            <div class="die-mod-value-row">
-                <div class="die-mod-row-label">up chance</div>
-                <div class="die-mod-value-grid">
-                    ${Array.from({ length: data.faceCount + 1 }, (_, displayIndex) => {
-                        if (displayIndex === data.centerPosition) {
-                            return '<div class="die-mod-value-cell die-mod-core-gap"></div>';
-                        }
-                        const faceIndex = displayIndex < data.centerPosition ? displayIndex : displayIndex - 1;
-                        const value = data.preview[faceIndex] ?? 0;
-                        return `<div class="die-mod-value-cell">${value.toFixed(1)}%</div>`;
-                    }).join('')}
-                </div>
-            </div>
-            ${
-                data.hasActualDeltas
-                    ? `<div class="die-mod-value-row">
-                <div class="die-mod-row-label"></div>
-                <div class="die-mod-value-grid">
-                    ${Array.from({ length: data.faceCount + 1 }, (_, displayIndex) => {
-                        if (displayIndex === data.centerPosition) {
-                            return '<div class="die-mod-value-cell die-mod-core-gap"></div>';
-                        }
-                        const faceIndex = displayIndex < data.centerPosition ? displayIndex : displayIndex - 1;
-                        const delta = data.deltas[faceIndex] ?? 0;
-                        const className = delta > 0 ? 'delta-up' : delta < 0 ? 'delta-down' : '';
-                        const value = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`;
-                        return `<div class="die-mod-value-cell ${className}">${value}</div>`;
-                    }).join('')}
-                </div>
-            </div>`
-                    : ''
-            }
-        </div>
-    `;
-}

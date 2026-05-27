@@ -14,6 +14,8 @@ import {
     AVAILABLE_MODS,
     type AvailableModValue,
     type AvailableCoreModValue,
+    type AvailableMaterialValue,
+    type AvailableStyleValue,
 } from './DieModificationTypes';
 import { getFaceChances, getPreviewChances } from '../game/DiceProbability';
 import { ModifiedDie } from '../game/ModifiedDie';
@@ -23,8 +25,11 @@ export class DieModificationPanel {
     private readonly canvasRenderer = new DieModificationCanvasRenderer();
     private readonly dice: ModifiedDie[];
     private selectedDieId: string;
+    private selectedFaceIndex = -1; // -1 = core, 0+ = face index
     private draftFaceMods: AvailableModValue[] = [];
     private draftCoreMod: AvailableCoreModValue = 'none';
+    private draftCoreMaterial: AvailableMaterialValue = 'bone';
+    private draftFaceStyles: AvailableStyleValue[] = [];
 
     constructor(dice?: ModifiedDie[]) {
         this.root = document.getElementById('die-mod-panel');
@@ -44,29 +49,27 @@ export class DieModificationPanel {
 
         const die = this.getSelectedDie();
         this.ensureDraftLength(die.faceCount);
+        this.ensureFaceIndex(die.faceCount);
         const current = getFaceChances(die);
         const preview = getPreviewChances(die, this.draftFaceMods);
         const deltas = preview.map((value, index) => value - current[index]);
         const hasDraftChanges = this.hasDraftChanges();
         const hasActualDeltas = deltas.some((delta) => Math.abs(delta) > 0.01);
-        const centerPosition = Math.floor(die.faceCount / 2);
-
-        this.root.style.setProperty('--die-mod-face-count', String(die.faceCount + 1));
-        this.root.style.setProperty('--die-mod-center-position', String(centerPosition));
 
         const templateData: DieModPanelData = {
             dice: this.dice,
             selectedDieId: this.selectedDieId,
+            selectedFaceIndex: this.selectedFaceIndex,
+            faceCount: die.faceCount,
             draftFaceMods: this.draftFaceMods,
             draftCoreMod: this.draftCoreMod,
+            draftCoreMaterial: this.draftCoreMaterial,
+            draftFaceStyles: this.draftFaceStyles,
             preview,
             deltas,
             current,
-            faceCount: die.faceCount,
-            centerPosition,
             hasDraftChanges,
             hasActualDeltas,
-            installedModCount: die.mods.length + die.coreMods.length,
         };
 
         this.root.innerHTML = renderDieModPanel(templateData);
@@ -74,6 +77,7 @@ export class DieModificationPanel {
         this.canvasRenderer.render({
             root: this.root,
             faceCount: die.faceCount,
+            selectedFaceIndex: this.selectedFaceIndex,
         });
         this.wireHandlers();
     }
@@ -90,7 +94,20 @@ export class DieModificationPanel {
                     return;
                 }
                 this.selectedDieId = dieId;
+                this.selectedFaceIndex = 0;
                 this.resetDraftForSelectedDie();
+                this.render();
+            });
+        });
+
+        this.root.querySelectorAll<HTMLButtonElement>('.die-mod-face-nav-btn').forEach((button) => {
+            button.addEventListener('click', () => {
+                const die = this.getSelectedDie();
+                const step = Number(button.dataset.faceStep ?? '0');
+                if (!Number.isFinite(step) || step === 0) {
+                    return;
+                }
+                this.selectedFaceIndex = this.wrapFaceIndex(this.selectedFaceIndex + step, die.faceCount);
                 this.render();
             });
         });
@@ -116,22 +133,23 @@ export class DieModificationPanel {
             this.render();
         });
 
-        this.root.querySelectorAll<HTMLSelectElement>('.die-mod-select[data-face-index]').forEach((select) => {
+        this.root.querySelectorAll<HTMLSelectElement>('.die-mod-setting-select').forEach((select) => {
             select.addEventListener('change', () => {
-                const faceIndex = Number(select.dataset.faceIndex ?? '-1');
-                if (Number.isNaN(faceIndex) || faceIndex < 0) {
-                    return;
+                const scope = select.dataset.scope;
+                const field = select.dataset.field;
+
+                if (scope === 'core' && field === 'mod') {
+                    this.draftCoreMod = (select.value as AvailableCoreModValue) ?? 'none';
+                } else if (scope === 'core' && field === 'material') {
+                    this.draftCoreMaterial = (select.value as AvailableMaterialValue) ?? 'bone';
+                } else if (scope === 'face' && field === 'mod') {
+                    this.draftFaceMods[this.selectedFaceIndex] = (select.value as AvailableModValue) ?? 'none';
+                } else if (scope === 'face' && field === 'style') {
+                    this.draftFaceStyles[this.selectedFaceIndex] = (select.value as AvailableStyleValue) ?? 'plain';
                 }
 
-                this.draftFaceMods[faceIndex] = (select.value as AvailableModValue) ?? 'none';
                 this.render();
             });
-        });
-
-        const coreSelect = this.root.querySelector<HTMLSelectElement>('#die-mod-core-select');
-        coreSelect?.addEventListener('change', () => {
-            this.draftCoreMod = (coreSelect.value as AvailableCoreModValue) ?? 'none';
-            this.render();
         });
     }
 
@@ -141,6 +159,21 @@ export class DieModificationPanel {
         }
 
         this.draftFaceMods = Array.from({ length: faceCount }, (_, index) => this.draftFaceMods[index] ?? 'none');
+    }
+
+    private ensureFaceIndex(faceCount: number): void {
+        this.selectedFaceIndex = this.wrapFaceIndex(this.selectedFaceIndex, faceCount);
+    }
+
+    private wrapFaceIndex(index: number, faceCount: number): number {
+        if (faceCount <= 0) {
+            return -1;
+        }
+        // Total positions: -1 (core) through faceCount-1 (last face)
+        // Total count: faceCount + 1
+        const totalPositions = faceCount + 1;
+        const position = ((index + 1) % totalPositions + totalPositions) % totalPositions;
+        return position - 1;
     }
 
     private hasDraftChanges(): boolean {
@@ -154,7 +187,9 @@ export class DieModificationPanel {
     private resetDraftForSelectedDie(): void {
         const die = this.getSelectedDie();
         this.draftFaceMods = Array.from({ length: die.faceCount }, () => 'none');
+        this.draftFaceStyles = Array.from({ length: die.faceCount }, () => 'plain');
         this.draftCoreMod = 'none';
+        this.draftCoreMaterial = 'bone';
     }
 
     private getSelectedDie(): ModifiedDie {

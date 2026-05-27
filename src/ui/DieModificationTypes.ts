@@ -15,8 +15,24 @@ export const AVAILABLE_MODS = [
 
 export const AVAILABLE_CORE_MODS = [
     { value: 'none', label: '---', grams: 0 },
-    { value: 'core', label: 'Core', grams: 0 },
+    { value: 'brain', label: 'Brain', grams: 0 },
+] as const;
+
+export const AVAILABLE_MATERIALS = [
+    { value: 'bone', label: 'Bone' },
+    { value: 'brass', label: 'Brass' },
+    { value: 'wood', label: 'Wood' },
+    { value: 'obsidian', label: 'Obsidian' },
+] as const;
+
+export const AVAILABLE_STYLES = [
+    { value: 'plain', label: 'Plain finish' },
+    { value: 'etched', label: 'Etched finish' },
+    { value: 'polished', label: 'Polished finish' },
+    { value: 'hammered', label: 'Hammered finish' },
 ] as const;
 
 export type AvailableModValue = typeof AVAILABLE_MODS[number]['value'];
 export type AvailableCoreModValue = typeof AVAILABLE_CORE_MODS[number]['value'];
+export type AvailableMaterialValue = typeof AVAILABLE_MATERIALS[number]['value'];
+export type AvailableStyleValue = typeof AVAILABLE_STYLES[number]['value'];
