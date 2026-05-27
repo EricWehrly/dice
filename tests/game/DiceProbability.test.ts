@@ -6,7 +6,7 @@ describe('DiceProbability', () => {
     it('returns normalized face-up chance percentages that sum to 100', () => {
         const die = new ModifiedDie({
             faceCount: 6,
-            mods: [{ faceIndex: 0, grams: 1.5, id: 'weight-1.5g' }],
+            mod: { faceIndex: 0, grams: 1.5, id: 'weight-1.5g' },
         });
 
         const chances = getFaceChances(die);
@@ -19,7 +19,7 @@ describe('DiceProbability', () => {
     it('uses installed mods as the source of truth for weight effects', () => {
         const die = new ModifiedDie({
             faceCount: 6,
-            mods: [{ faceIndex: 0, grams: 1.0, id: 'weight-1.0g' }],
+            mod: { faceIndex: 0, grams: 1.0, id: 'weight-1.0g' },
         });
 
         const chances = getFaceChances(die);
@@ -33,7 +33,6 @@ describe('DiceProbability', () => {
         const die = new ModifiedDie({
             faceCount: 6,
             faceStats: [{ weight: 3 }],
-            mods: [],
         });
 
         const chances = getFaceChances(die);
@@ -47,7 +46,7 @@ describe('DiceProbability', () => {
     it('applies extra preview mods on top of installed mods', () => {
         const die = new ModifiedDie({
             faceCount: 6,
-            mods: [{ faceIndex: 0, grams: 1.0, id: 'weight-1.0g' }],
+            mod: { faceIndex: 0, grams: 1.0, id: 'weight-1.0g' },
         });
 
         const base = getFaceChances(die);
@@ -60,7 +59,7 @@ describe('DiceProbability', () => {
     it('treats draft preview as replacement, not additive stacking, on the same face', () => {
         const die = new ModifiedDie({
             faceCount: 6,
-            mods: [{ faceIndex: 0, grams: 1.0, id: 'weight-1.0g' }],
+            mod: { faceIndex: 0, grams: 1.0, id: 'weight-1.0g' },
         });
 
         const draftCurrent = ['weight-1.0', 'none', 'none', 'none', 'none', 'none'] as const;
@@ -90,7 +89,7 @@ describe('DiceProbability', () => {
     it('returns naked probabilities when draft clears an installed weight', () => {
         const die = new ModifiedDie({
             faceCount: 6,
-            mods: [{ faceIndex: 0, grams: 1.5, id: 'weight-1.5g' }],
+            mod: { faceIndex: 0, grams: 1.5, id: 'weight-1.5g' },
         });
 
         const clearedDraft = ['none', 'none', 'none', 'none', 'none', 'none'] as const;
@@ -105,7 +104,7 @@ describe('DiceProbability', () => {
     it('increases installed face probability when changing to lighter weight', () => {
         const die = new ModifiedDie({
             faceCount: 6,
-            mods: [{ faceIndex: 0, grams: 2.0, id: 'weight-2.0g' }],
+            mod: { faceIndex: 0, grams: 2.0, id: 'weight-2.0g' },
         });
 
         const currentDraft = ['weight-2.0', 'none', 'none', 'none', 'none', 'none'] as const;
@@ -129,7 +128,7 @@ describe('DiceProbability', () => {
     it('decreases installed face probability when changing to heavier weight', () => {
         const die = new ModifiedDie({
             faceCount: 6,
-            mods: [{ faceIndex: 0, grams: 1.0, id: 'weight-1.0g' }],
+            mod: { faceIndex: 0, grams: 1.0, id: 'weight-1.0g' },
         });
 
         const currentDraft = ['weight-1.0', 'none', 'none', 'none', 'none', 'none'] as const;
@@ -151,7 +150,7 @@ describe('DiceProbability', () => {
     });
 
     it('opposite face gains more than adjacent faces when adding weight', () => {
-        const die = new ModifiedDie({ faceCount: 6, mods: [] });
+        const die = new ModifiedDie({ faceCount: 6 });
         const baseline = getFaceChances(die);
         const weighted = getFaceChances(die, [{ faceIndex: 0, grams: 2.0 }]);
 
@@ -165,7 +164,7 @@ describe('DiceProbability', () => {
     });
 
     it('adjacent faces lose some face-up chance when a nearby face is weighted', () => {
-        const die = new ModifiedDie({ faceCount: 6, mods: [] });
+        const die = new ModifiedDie({ faceCount: 6 });
         const baseline = getFaceChances(die);
         const weighted = getFaceChances(die, [{ faceIndex: 0, grams: 2.0 }]);
 

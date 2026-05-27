@@ -35,6 +35,7 @@ export interface DieModPanelData {
     showTargetFaceSelector: boolean;
     targetFaceAnimation: 'none' | 'enter' | 'leave';
     canInstall: boolean;
+    actionLabel: 'Install' | 'Uninstall';
 }
 
 export function renderDieModPanel(data: DieModPanelData): string {
@@ -100,7 +101,7 @@ export function renderDieModPanel(data: DieModPanelData): string {
             <!-- Install button — always present at bottom, enabled only when mod + face both selected -->
             <div class="die-mod-actions">
                 <button class="die-mod-install-btn" type="button" ${canInstall ? '' : 'disabled'}>
-                    Install
+                    ${data.actionLabel}
                 </button>
             </div>
         </div>

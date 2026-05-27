@@ -29,6 +29,26 @@
 3. **Interaction**: Face-first → Mod-first workflow with button-based install
 4. **Scope**: Phase 2 of core mod system (Phase 1 is basic install/uninstall)
 
+## Current Implementation Status
+
+### Done in code
+- Isometric 2D die renderer exists and is used for the collapsed view.
+- Panel now uses a collapsed/expanded hybrid layout with a cross-fade between the two viewports.
+- Core mod selection controls whether the target-face selector is shown.
+- Probability previews/deltas are now based on the current installed die state, not a naked baseline.
+- Preview and install behavior use replacement semantics for the selected face rather than additive stacking.
+- Install now uses game-state die APIs, and install/uninstall event propagation comes from the die model via `BAG_CHANGED`.
+- Uninstall is mapped to selecting `none` in the core-mod selector (no separate Cancel button in current UI).
+- Integration tests now cover install-replace, uninstall-clear, and select-none-without-install behavior.
+- Isometric view now shows a core mod indicator for installed/selected core mods.
+- Regression tests now cover normalization, replacement behavior, lighter/heavier directionality, and distance-based opposite/adjacent expectations.
+
+### Remaining / still not fully resolved
+- The original Cancel-based collapse flow described below is no longer the current interaction model.
+- The older doc text still references a future explode/collapse transition proposal; current code uses a simpler cross-fade and target-face show/hide animation.
+- Lighting and additional isometric polish are intentionally deferred to the future 3D phase.
+- If we want this doc to be fully authoritative, some of the later narrative sections should be trimmed or rewritten to match the current UI exactly.
+
 ---
 
 ## Architecture Overview
@@ -576,7 +596,7 @@ Resolved decisions:
 13. Weight (core mod) and Style are separate slots; they do not conflict.
 14. Probabilities show preview based on selected mod + target face during expanded mode (no fallback text).
 15. Style remains global die-wide in this phase; per-face style is out of scope.
-16. Use existing `BAG_UPDATED` event; no new granular event types unless future behavior requires it.
+16. Use existing `BAG_CHANGED` event; no new granular event types unless future behavior requires it.
 17. Install button is disabled if no valid target or mod unavailable (inline conditionals in template).
 18. Economy: Reinstall (move between faces) uses Resource transfer logic from existing Resource class.
     Uninstall does not refund; move is a transfer of the resource from one face slot to another.
@@ -630,7 +650,7 @@ Resolved decisions:
 - Economy: Does not refund (resource is consumed for the session).
 
 ### Events & Integration
-- On install/uninstall: Emit `BAG_UPDATED` event.
+- On install/uninstall: Emit `BAG_CHANGED` from model state changes.
 - Payload: Standard bag change event (no new granular fields unless future features demand).
 - Listeners: Panel re-renders on event; other systems respond as normal.
 
@@ -673,32 +693,31 @@ Resolved decisions:
 Phase 1 can now begin with:
 
 ### Phase 1 Tasks
-1. Create `src/rendering/2d/DieIsometricRenderer.ts` with projection math and render interface.
-2. Refactor `src/ui/DieModificationPanelTemplate.ts` to support collapsed/expanded modes.
-3. Refactor `src/ui/DieModificationPanel.ts` to manage state machine and event listeners.
-4. Add/update styles in `src/styles/die-mod-panel.css` for isometric container and expand/collapse modes.
-5. Integrate isometric renderer calls and test projection visuals.
+1. [x] Create `src/rendering/2d/DieIsometricRenderer.ts` with projection math and render interface.
+2. [x] Refactor `src/ui/DieModificationPanelTemplate.ts` to support collapsed/expanded modes.
+3. [x] Refactor `src/ui/DieModificationPanel.ts` to manage state machine and event listeners.
+4. [x] Add/update styles in `src/styles/die-mod-panel.css` for isometric container and expand/collapse modes.
+5. [x] Integrate isometric renderer calls and test projection visuals.
 
 ### Phase 2 Tasks
-6. Wire target face selector to DieModificationPanel state.
-7. Implement Install button logic: call game state API and emit BAG_UPDATED.
-8. Implement Cancel button logic: clear selections and return to collapsed.
-9. Test install-replace, uninstall-clear, cancel-no-state-change flows.
-10. Verify probabilities show preview (selected mod + target face).
+6. [x] Wire target face selector to DieModificationPanel state.
+7. [x] Implement Install button logic: call game state API; model layer emits `BAG_CHANGED`.
+8. [x] Implement Cancel-equivalent logic: selecting `none` clears selections and returns to collapsed. (Current UI does not include a dedicated Cancel button.)
+9. [x] Test install-replace, uninstall-clear, and select-none-without-install-no-state-change flows.
+10. [x] Verify probabilities show preview (selected mod + target face).
 
 ### Phase 3 Tasks (if time permits)
-11. Implement Option C transition animation with fail-fast fallback to instant mode switch.
-12. Polish isometric rendering (lighting, face shading, core mod indicator).
-13. Add edge-case handling and error states.
-14. Comprehensive manual visual testing.
+11. [ ] Implement Option C transition animation with fail-fast fallback to instant mode switch. (Superseded by the current cross-fade/selector animation behavior in code.)
+12. [ ] Add core mod indicator to isometric rendering. (Lighting and additional polish deferred to 3D phase.)
+13. [ ] Add edge-case handling and error states.
+14. [ ] Comprehensive manual visual testing.
 
 ---
 
 ## Next Steps
 
-✅ **All design decisions locked.** Target face selector scope clarified: `targetFaceIndex` is `null` (core-only) or natural face index (1..faceCount). Ready to code.
+✅ **Core UI and probability behavior are implemented.** The remaining work is mostly game-state integration and doc cleanup.
 
-1. Begin Phase 1 implementation (isometric renderer + state machine).
-2. Implement expanded-mode install flow (target selector + Install button).
-3. Iterate on visual design and user testing.
-4. Integrate with existing mod system and game logic.
+1. Wire install/uninstall through the real game-state API and `BAG_CHANGED` flow.
+2. Decide whether the doc should be trimmed to match the current no-Cancel, cross-fade UI exactly.
+3. Finish any remaining visual polish or state-sync edge cases.

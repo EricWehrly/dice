@@ -21,10 +21,15 @@ const OPPOSITE_DISTANCE_FACTOR = 0.6;
 
 export type DiceModel = {
     faceCount: number;
+    mod?: DieWeightMod | null;
     mods?: DieWeightMod[];
 };
 
 function getInstalledWeightGrams(die: DiceModel, faceIndex: number): number {
+    if (die.mod && die.mod.faceIndex === faceIndex) {
+        return Math.max(0, die.mod.grams);
+    }
+
     const mods = die.mods ?? [];
     let total = 0;
     for (const mod of mods) {

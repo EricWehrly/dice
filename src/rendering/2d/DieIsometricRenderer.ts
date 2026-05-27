@@ -300,6 +300,32 @@ function drawModIndicator(
     ctx.fillText('M', centerX, centerY);
 }
 
+function drawCenteredModIndicator(
+    ctx: CanvasRenderingContext2D,
+    topCorners: IsometricPoint[],
+    rightCorners: IsometricPoint[],
+    frontCorners: IsometricPoint[]
+): void {
+    const allCorners = [...topCorners, ...rightCorners, ...frontCorners];
+    const centerX = allCorners.reduce((sum, point) => sum + point.x, 0) / allCorners.length;
+    const centerY = allCorners.reduce((sum, point) => sum + point.y, 0) / allCorners.length;
+
+    ctx.fillStyle = 'rgba(255, 165, 0, 0.22)';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ff8c00';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ff8c00';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('M', centerX, centerY);
+}
+
 export class DieIsometricRenderer {
     /**
      * Renders an isometric die to a canvas within the provided root element.
@@ -360,14 +386,24 @@ export class DieIsometricRenderer {
         drawFaceWithPips(ctx, projectedRight, faces3D.right, 6, 'right', scale, offsetX, offsetY, input.style);
         drawFaceWithPips(ctx, projectedFront, faces3D.front, 3, 'front', scale, offsetX, offsetY, input.style);
 
+        const hasCoreMod = input.currentCoreMod !== null || input.coreModInstalledOnFace !== null;
+        if (!hasCoreMod) {
+            return;
+        }
+
         if (input.coreModInstalledOnFace === 0) {
             drawModIndicator(ctx, projectedTop, true);
+            return;
         }
         if (input.coreModInstalledOnFace === 1) {
             drawModIndicator(ctx, projectedRight, true);
+            return;
         }
         if (input.coreModInstalledOnFace === 2) {
             drawModIndicator(ctx, projectedFront, true);
+            return;
         }
+
+        drawCenteredModIndicator(ctx, projectedTop, projectedRight, projectedFront);
     }
 }

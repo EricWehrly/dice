@@ -22,6 +22,8 @@ import {
 import { getPreviewChances } from '../game/DiceProbability';
 import { ModifiedDie } from '../game/ModifiedDie';
 
+type PendingModAction = 'install' | 'uninstall' | 'none';
+
 export class DieModificationPanel {
     private readonly root: HTMLElement | null;
     private readonly isometricRenderer = new DieIsometricRenderer();
@@ -87,7 +89,9 @@ export class DieModificationPanel {
         }
 
         const showTargetFaceSelector = modSelected || this.isTargetFaceLeaving;
-        const canInstall = this.canInstallPendingChange();
+        const pendingAction = this.getPendingAction(die);
+        const canInstall = pendingAction !== 'none';
+        const actionLabel = pendingAction === 'uninstall' ? 'Uninstall' : 'Install';
         const current = getPreviewChances(die, this.draftFaceMods);
         const preview = getPreviewChances(die, previewFaceMods);
         const deltas = preview.map((value, index) => value - current[index]);
@@ -113,16 +117,20 @@ export class DieModificationPanel {
             showTargetFaceSelector,
             targetFaceAnimation,
             canInstall,
+            actionLabel,
         };
 
         this.root.innerHTML = renderDieModPanel(templateData);
+
+        const installedCoreModId = die.getInstalledModId();
+        const installedCoreModFaceIndex = die.getInstalledModFaceIndex();
 
         // Keep both viewports rendered so CSS can cross-fade between them.
         this.isometricRenderer.render({
             root: this.root,
             faceCount: die.faceCount,
-            currentCoreMod: this.selectedCoreMod,
-            coreModInstalledOnFace: null, // TODO: Get from die.mods when available
+            currentCoreMod: this.selectedCoreMod ?? installedCoreModId,
+            coreModInstalledOnFace: installedCoreModFaceIndex,
             style: (this.draftFaceStyles[0] ?? 'plain') as 'plain' | 'etched' | 'polished' | 'hammered',
         });
 
@@ -165,8 +173,9 @@ export class DieModificationPanel {
         coreModSelector?.addEventListener('change', (event) => {
             const target = event.target as HTMLSelectElement;
             const modValue = target.value as AvailableCoreModValue;
+
             const wasModVisible = this.selectedCoreMod !== null && this.selectedCoreMod !== 'none';
-            const nextCoreMod = modValue !== 'none' ? modValue : null;
+            const nextCoreMod = modValue;
             const willModBeVisible = nextCoreMod !== null;
 
             this.selectedCoreMod = nextCoreMod;
@@ -209,8 +218,21 @@ export class DieModificationPanel {
      * Calls die.installMod(modId, targetFaceIndex) API.
      */
     private handleInstall(): void {
-        if (!this.canInstallPendingChange()) {
+        const die = this.getSelectedDie();
+        const pendingAction = this.getPendingAction(die);
+        if (pendingAction === 'none') {
             console.warn('DieModificationPanel: No mod selected for install');
+            return;
+        }
+
+        if (pendingAction === 'uninstall') {
+            const didUninstall = die.uninstallMod();
+            if (!didUninstall) {
+                return;
+            }
+
+            this.resetDraftForSelectedDie();
+            this.render();
             return;
         }
 
@@ -220,26 +242,58 @@ export class DieModificationPanel {
             return;
         }
 
-        // TODO: Wire to real die.installMod(modId, targetFaceIndex) API
-        // For now, apply directly to draft face mods as placeholder state.
-        this.draftFaceMods[selectedTargetFaceIndex] = selectedCoreMod as AvailableModValue;
+        const didInstall = die.installMod(selectedCoreMod, selectedTargetFaceIndex);
+        if (!didInstall) {
+            return;
+        }
+
+        this.resetDraftForSelectedDie();
 
         // Keep selected mod + face after install.
         // Button will disable because there is no longer a pending change.
         this.draftCoreMod = selectedCoreMod;
-        
-        // Emit BAG_UPDATED event (TODO: implement when game state API available)
-        // window.dispatchEvent(new CustomEvent('BAG_UPDATED', { detail: { dieId: die.id } }));
         this.render();
     }
 
+    private handleCancel(): void {
+        this.selectedCoreMod = null;
+        this.selectedTargetFaceIndex = null;
+    }
+
     private canInstallPendingChange(): boolean {
-        if (!this.selectedCoreMod || this.selectedCoreMod === 'none' || this.selectedTargetFaceIndex === null) {
-            return false;
+        const die = this.getSelectedDie();
+        return this.getPendingAction(die) !== 'none';
+    }
+
+    private getPendingAction(die: ModifiedDie): PendingModAction {
+        const selectedCoreMod = this.selectedCoreMod;
+        const installedMod = die.mod;
+
+        if (selectedCoreMod === null) {
+            return 'none';
         }
 
-        const currentFaceMod = this.draftFaceMods[this.selectedTargetFaceIndex] ?? 'none';
-        return currentFaceMod !== this.selectedCoreMod;
+        if (selectedCoreMod === 'none') {
+            return installedMod ? 'uninstall' : 'none';
+        }
+
+        if (this.selectedTargetFaceIndex === null) {
+            return 'none';
+        }
+
+        if (!installedMod) {
+            return 'install';
+        }
+
+        if (installedMod.id !== selectedCoreMod) {
+            return 'install';
+        }
+
+        if (installedMod.faceIndex !== this.selectedTargetFaceIndex) {
+            return 'install';
+        }
+
+        return 'none';
     }
 
     private ensureDraftLength(faceCount: number): void {
@@ -293,13 +347,11 @@ export class DieModificationPanel {
 
     private getDraftFaceModsFromDie(die: ModifiedDie): AvailableModValue[] {
         const gramsByFace = Array.from({ length: die.faceCount }, (_, faceIndex) => {
-            let total = 0;
-            for (const mod of die.mods) {
-                if (mod.faceIndex === faceIndex) {
-                    total += mod.grams;
-                }
+            if (die.mod?.faceIndex === faceIndex) {
+                return Math.max(0, die.mod.grams);
             }
-            return Math.max(0, total);
+
+            return 0;
         });
 
         return gramsByFace.map((grams) => this.mapGramsToModValue(grams));

@@ -11,34 +11,26 @@ export interface DieWeightMod {
     grams: number;
 }
 
-export interface DieCoreMod {
-    id: string;
-}
-
 export interface ModifiedDieOptions extends DieOptions {
     stats?: DieStats;
     faceStats?: DieStats[];
-    mods?: DieWeightMod[];
-    coreMods?: DieCoreMod[];
+    mod?: DieWeightMod | null;
 }
 
 export class ModifiedDie extends Die {
     readonly stats: DieStats;
-    readonly mods: DieWeightMod[];
-    readonly coreMods: DieCoreMod[];
+    mod: DieWeightMod | null;
     private readonly faceStats: DieStats[];
 
-    constructor({ stats = {}, faceStats = [], mods = [], coreMods = [], ...dieOptions }: ModifiedDieOptions = {}) {
+    constructor({ stats = {}, faceStats = [], mod = null, ...dieOptions }: ModifiedDieOptions = {}) {
         super(dieOptions);
         this.stats = { ...stats };
         this.faceStats = Array.from({ length: this.faceCount }, (_, index) => ({ ...(faceStats[index] ?? {}) }));
-        this.mods = [];
+        this.mod = null;
 
-        for (const mod of mods) {
-            this.addWeightMod(mod.faceIndex, mod.grams, mod.id);
+        if (this.isValidInitialMod(mod)) {
+            this.setInstalledMod(mod, false);
         }
-
-        this.coreMods = [...coreMods];
     }
 
     getStat(stat: DieStatKey): number {
@@ -61,22 +53,63 @@ export class ModifiedDie extends Die {
             return;
         }
 
-        this.mods.push({
+        this.setInstalledMod({
             id: id ?? `weight-${grams.toFixed(1)}g`,
             faceIndex,
             grams,
-        });
-        this.addFaceStat(faceIndex, FACE_STAT_KEYS.WEIGHT, grams);
-        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+        }, true);
     }
 
     addCoreMod(id: string): void {
-        if (!id) {
-            return;
+        // Core mods are represented by the single `mod` slot in the new model.
+        void id;
+    }
+
+    installMod(modId: string, targetFaceIndex: number): boolean {
+        const grams = this.resolveModGrams(modId);
+        if (grams === null) {
+            return false;
+        }
+        if (!Number.isInteger(targetFaceIndex) || targetFaceIndex < 0 || targetFaceIndex >= this.faceCount) {
+            return false;
         }
 
-        this.coreMods.push({ id });
-        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+        this.setInstalledMod({
+            id: modId,
+            faceIndex: targetFaceIndex,
+            grams,
+        }, true);
+        return true;
+    }
+
+    uninstallMod(modId?: string): boolean {
+        if (!this.mod) {
+            return false;
+        }
+
+        void modId;
+
+        this.clearInstalledMod(true);
+        return true;
+    }
+
+    getInstalledModFaceIndex(modId?: string): number | null {
+        if (!this.mod) {
+            return null;
+        }
+        if (modId && this.mod.id !== modId) {
+            return null;
+        }
+
+        return this.mod.faceIndex;
+    }
+
+    getInstalledWeightModId(): string | null {
+        return this.getInstalledModId();
+    }
+
+    getInstalledModId(): string | null {
+        return this.mod?.id ?? null;
     }
 
     private setStat(stat: DieStatKey, value: number): void {
@@ -117,5 +150,58 @@ export class ModifiedDie extends Die {
 
         const next = this.getFaceStat(faceIndex, stat, 0) + delta;
         this.setFaceStat(faceIndex, stat, next);
+    }
+
+    private clearInstalledMod(emitEvent: boolean): void {
+        if (!this.mod) {
+            return;
+        }
+
+        this.addFaceStat(this.mod.faceIndex, FACE_STAT_KEYS.WEIGHT, -this.mod.grams);
+        this.mod = null;
+        if (emitEvent) {
+            Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+        }
+    }
+
+    private setInstalledMod(mod: DieWeightMod, emitEvent: boolean): void {
+        if (this.mod) {
+            this.addFaceStat(this.mod.faceIndex, FACE_STAT_KEYS.WEIGHT, -this.mod.grams);
+        }
+
+        this.mod = {
+            id: mod.id,
+            faceIndex: mod.faceIndex,
+            grams: mod.grams,
+        };
+        this.addFaceStat(mod.faceIndex, FACE_STAT_KEYS.WEIGHT, mod.grams);
+        if (emitEvent) {
+            Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+        }
+    }
+
+    private resolveModGrams(modId: string): number | null {
+        if (this.mod?.id === modId) {
+            return this.mod.grams;
+        }
+
+        const match = /^weight-([0-9]+(?:\.[0-9]+)?)/.exec(modId);
+        if (!match) {
+            return null;
+        }
+
+        const grams = Number(match[1]);
+        return Number.isFinite(grams) && grams > 0 ? grams : null;
+    }
+
+    private isValidInitialMod(mod: DieWeightMod | null | undefined): mod is DieWeightMod {
+        return Boolean(
+            mod
+            && Number.isInteger(mod.faceIndex)
+            && mod.faceIndex >= 0
+            && mod.faceIndex < this.faceCount
+            && Number.isFinite(mod.grams)
+            && mod.grams > 0,
+        );
     }
 }
