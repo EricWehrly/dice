@@ -9,16 +9,18 @@ describe('ScorePanel integration', () => {
 
         const bag = new Bag();
         const tracker = new ScoreProgressionTracker(bag);
-        const panel = new ScorePanel();
+        const panel = new ScorePanel(tracker.getHighScore());
         panel.render();
 
+        expect(document.getElementById('score-panel')?.classList.contains('score-panel--highlight')).toBe(false);
+
         tracker.observeRoll([2, 2, 2]);
-        expect(document.getElementById('score-panel')?.textContent).toBe('High Score: 6');
+        expect(document.getElementById('score-panel')?.textContent).toBe('High Score: 18');
 
         tracker.observeRoll([1, 1, 1]);
-        expect(document.getElementById('score-panel')?.textContent).toBe('High Score: 6');
-
-        tracker.observeRoll([6, 6, 6]);
         expect(document.getElementById('score-panel')?.textContent).toBe('High Score: 18');
+
+        tracker.observeRoll([7, 6, 6]);
+        expect(document.getElementById('score-panel')?.textContent).toBe('High Score: 19');
     });
 });

@@ -11,10 +11,13 @@ export interface ScoreUpdatedEvent extends GameEvent {
 
 export class ScoreProgressionTracker {
     private readonly bag: Bag;
-    private highScore = 0;
+    private readonly unlockedMagnitudeFloor: number;
+    private highScore: number;
 
-    constructor(bag: Bag) {
+    constructor(bag: Bag, options: { unlockedMagnitudeFloor?: number } = {}) {
         this.bag = bag;
+        this.unlockedMagnitudeFloor = options.unlockedMagnitudeFloor ?? 2;
+        this.highScore = this.calculateBagMaxRoll();
 
         Events.Subscribe<BagRolledEvent>(
             TrickEvents.BAG_ROLLED,
@@ -22,6 +25,15 @@ export class ScoreProgressionTracker {
                 this.observeRoll(event.faces);
             }
         );
+    }
+
+    private calculateBagMaxRoll(): number {
+        const activeDice = this.bag.getActiveDice();
+        return activeDice.reduce((sum, die) => sum + die.faceCount, 0);
+    }
+
+    getHighScore(): number {
+        return this.highScore;
     }
 
     observeRoll(faces: readonly number[]): void {
@@ -40,8 +52,8 @@ export class ScoreProgressionTracker {
             previousHighScore,
         });
 
-        const fromMagnitude = this.getDecimalMagnitude(previousHighScore);
-        const toMagnitude = this.getDecimalMagnitude(this.highScore);
+        const fromMagnitude = Math.max(this.getDecimalMagnitude(previousHighScore), this.unlockedMagnitudeFloor);
+        const toMagnitude = Math.max(this.getDecimalMagnitude(this.highScore), this.unlockedMagnitudeFloor);
 
         if (toMagnitude <= fromMagnitude) {
             return;

@@ -11,20 +11,19 @@ describe('ScoreProgressionTracker', () => {
         const scoreCallback = vi.fn();
         const scoreSubscription = Events.Subscribe(TrickEvents.SCORE_UPDATED, scoreCallback);
 
-        tracker.observeRoll([6, 1, 5]);
-        tracker.observeRoll([1, 1, 1]);
         tracker.observeRoll([6, 6, 6]);
+        tracker.observeRoll([1, 1, 1]);
+        tracker.observeRoll([7, 6, 6]);
 
-        expect(scoreCallback).toHaveBeenCalledTimes(2);
-        expect(scoreCallback.mock.calls[0][0].highScore).toBe(12);
-        expect(scoreCallback.mock.calls[1][0].highScore).toBe(18);
+        expect(scoreCallback).toHaveBeenCalledTimes(1);
+        expect(scoreCallback.mock.calls[0][0].highScore).toBe(19);
 
         if (scoreSubscription) {
             Events.Unsubscribe(scoreSubscription);
         }
     });
 
-    it('adds one die when high score enters double digits', () => {
+    it('does not add dice for 10s/100s tiers and adds one die at 1000s tier', () => {
         const bag = new Bag();
         const tracker = new ScoreProgressionTracker(bag);
         const scoreCallback = vi.fn();
@@ -33,8 +32,11 @@ describe('ScoreProgressionTracker', () => {
 
         const beforeDiceCount = bag.dice.length;
 
-        tracker.observeRoll([3, 3, 3]);
-        tracker.observeRoll([6, 1, 5]);
+        tracker.observeRoll([99, 1, 0]);
+
+        expect(bag.dice.length).toBe(beforeDiceCount);
+
+        tracker.observeRoll([500, 500, 1]);
 
         expect(scoreCallback).toHaveBeenCalledTimes(2);
         expect(bag.dice.length).toBe(beforeDiceCount + 1);

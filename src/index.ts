@@ -26,10 +26,10 @@ const bag = new Bag();
 wireRollButton(bag);
 new DiceCanvasRenderer(bag);
 
-new ScoreProgressionTracker(bag);
+const scoreTracker = new ScoreProgressionTracker(bag);
 new TrickEvaluator();
 
-const scorePanel = new ScorePanel();
+const scorePanel = new ScorePanel(scoreTracker.getHighScore());
 scorePanel.render();
 
 const dieModificationPanel = new DieModificationPanel(bag.dice);
