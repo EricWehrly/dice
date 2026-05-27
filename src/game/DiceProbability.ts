@@ -11,6 +11,14 @@ import type { DieWeightMod } from './ModifiedDie';
 const BASE_FACE_WEIGHT = 1;
 const WEIGHT_FACTOR = 0.12;
 
+// Distance-based influence model (integer distance, no physical units).
+// d = 0: weighted face itself (strongly reduced face-up chance)
+// d = 1: adjacent faces (slightly reduced face-up chance)
+// d = 2: opposite face (increased face-up chance)
+const SELF_DISTANCE_FACTOR = -1.0;
+const ADJACENT_DISTANCE_FACTOR = -0.35;
+const OPPOSITE_DISTANCE_FACTOR = 0.6;
+
 export type DiceModel = {
     faceCount: number;
     mods?: DieWeightMod[];
@@ -28,6 +36,39 @@ function getInstalledWeightGrams(die: DiceModel, faceIndex: number): number {
     return Math.max(0, total);
 }
 
+function getOppositeFaceIndex(faceCount: number, faceIndex: number): number {
+    // D6 mapping: faces 1..6 are paired to sum to 7.
+    // With zero-based indexes this is index + oppositeIndex = 5.
+    if (faceCount === 6) {
+        return 5 - faceIndex;
+    }
+
+    return -1;
+}
+
+function getIntegerFaceDistance(faceCount: number, sourceFaceIndex: number, targetFaceIndex: number): 0 | 1 | 2 {
+    if (sourceFaceIndex === targetFaceIndex) {
+        return 0;
+    }
+
+    const opposite = getOppositeFaceIndex(faceCount, sourceFaceIndex);
+    if (opposite === targetFaceIndex) {
+        return 2;
+    }
+
+    return 1;
+}
+
+function getDistanceFactor(distance: 0 | 1 | 2): number {
+    if (distance === 0) {
+        return SELF_DISTANCE_FACTOR;
+    }
+    if (distance === 2) {
+        return OPPOSITE_DISTANCE_FACTOR;
+    }
+    return ADJACENT_DISTANCE_FACTOR;
+}
+
 /**
  * Get the weight in grams for a modification value.
  * Used to convert mod option selections into actual weight deltas.
@@ -41,22 +82,36 @@ export function getModGrams(modValue: AvailableModValue): number {
 }
 
 /**
- * Calculate face-by-face probability percentages given a die and its actual mods.
- * Higher probability faces are weighted down by their mods.
+ * Calculate face-by-face face-up chance percentages given installed and preview weights.
+ *
+ * Model is intentionally simple and purely math-based:
+ * - Integer face distance only (0=self, 1=adjacent, 2=opposite)
+ * - No physical units, no geometry simulation
+ * - Weighted face and adjacent faces trend down in face-up chance
+ * - Opposite face trends up in face-up chance
  */
 export function getFaceChances(die: DiceModel, extraMods: DieWeightMod[] = []): number[] {
     const weights = Array.from({ length: die.faceCount }, () => BASE_FACE_WEIGHT);
 
-    for (let faceIndex = 0; faceIndex < weights.length; faceIndex += 1) {
-        const installedWeight = getInstalledWeightGrams(die, faceIndex);
-        if (installedWeight > 0) {
-            weights[faceIndex] = Math.max(0.05, weights[faceIndex] - installedWeight * WEIGHT_FACTOR);
+    const allMods: DieWeightMod[] = [];
+    for (let faceIndex = 0; faceIndex < die.faceCount; faceIndex += 1) {
+        const grams = getInstalledWeightGrams(die, faceIndex);
+        if (grams > 0) {
+            allMods.push({ faceIndex, grams });
+        }
+    }
+    for (const mod of extraMods) {
+        if (mod.faceIndex >= 0 && mod.faceIndex < die.faceCount && mod.grams > 0) {
+            allMods.push(mod);
         }
     }
 
-    for (const mod of extraMods) {
-        if (mod.faceIndex >= 0 && mod.faceIndex < weights.length) {
-            weights[mod.faceIndex] = Math.max(0.05, weights[mod.faceIndex] - mod.grams * WEIGHT_FACTOR);
+    for (const mod of allMods) {
+        const impact = mod.grams * WEIGHT_FACTOR;
+        for (let targetFaceIndex = 0; targetFaceIndex < die.faceCount; targetFaceIndex += 1) {
+            const distance = getIntegerFaceDistance(die.faceCount, mod.faceIndex, targetFaceIndex);
+            const factor = getDistanceFactor(distance);
+            weights[targetFaceIndex] = Math.max(0.05, weights[targetFaceIndex] + impact * factor);
         }
     }
 
@@ -69,19 +124,21 @@ export function getFaceChances(die: DiceModel, extraMods: DieWeightMod[] = []): 
  * Used by UI to show live preview of what probabilities would be if draft mods were installed.
  */
 export function getPreviewChances(die: DiceModel, draftFaceMods: AvailableModValue[]): number[] {
-    const previewMods: DieWeightMod[] = [];
+    const desiredGramsByFace = Array.from({ length: die.faceCount }, (_, faceIndex) =>
+        getInstalledWeightGrams(die, faceIndex)
+    );
 
-    for (let faceIndex = 0; faceIndex < draftFaceMods.length; faceIndex += 1) {
-        const modValue = draftFaceMods[faceIndex];
-        const grams = getModGrams(modValue);
-        if (modValue !== 'none' && grams > 0) {
+    for (let faceIndex = 0; faceIndex < draftFaceMods.length && faceIndex < desiredGramsByFace.length; faceIndex += 1) {
+        desiredGramsByFace[faceIndex] = getModGrams(draftFaceMods[faceIndex]);
+    }
+
+    const previewMods: DieWeightMod[] = [];
+    for (let faceIndex = 0; faceIndex < desiredGramsByFace.length; faceIndex += 1) {
+        const grams = desiredGramsByFace[faceIndex];
+        if (grams > 0) {
             previewMods.push({ faceIndex, grams });
         }
     }
 
-    if (previewMods.length === 0) {
-        return getFaceChances(die);
-    }
-
-    return getFaceChances(die, previewMods);
+    return getFaceChances({ faceCount: die.faceCount }, previewMods);
 }

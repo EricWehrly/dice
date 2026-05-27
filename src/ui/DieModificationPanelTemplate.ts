@@ -34,11 +34,12 @@ export interface DieModPanelData {
     selectedTargetFaceIndex: number | null;
     showTargetFaceSelector: boolean;
     targetFaceAnimation: 'none' | 'enter' | 'leave';
+    canInstall: boolean;
 }
 
 export function renderDieModPanel(data: DieModPanelData): string {
     const modSelected = data.selectedCoreMod !== null && data.selectedCoreMod !== 'none';
-    const canInstall = modSelected && data.selectedTargetFaceIndex !== null;
+    const canInstall = data.canInstall;
 
     return `
         <div class="die-mod-shell">

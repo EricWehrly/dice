@@ -19,7 +19,7 @@ import {
     type AvailableMaterialValue,
     type AvailableStyleValue,
 } from './DieModificationTypes';
-import { getFaceChances, getPreviewChances } from '../game/DiceProbability';
+import { getPreviewChances } from '../game/DiceProbability';
 import { ModifiedDie } from '../game/ModifiedDie';
 
 export class DieModificationPanel {
@@ -87,7 +87,8 @@ export class DieModificationPanel {
         }
 
         const showTargetFaceSelector = modSelected || this.isTargetFaceLeaving;
-        const current = getFaceChances(die);
+        const canInstall = this.canInstallPendingChange();
+        const current = getPreviewChances(die, this.draftFaceMods);
         const preview = getPreviewChances(die, previewFaceMods);
         const deltas = preview.map((value, index) => value - current[index]);
         const hasDraftChanges = this.hasDraftChanges();
@@ -111,6 +112,7 @@ export class DieModificationPanel {
             selectedTargetFaceIndex: this.selectedTargetFaceIndex,
             showTargetFaceSelector,
             targetFaceAnimation,
+            canInstall,
         };
 
         this.root.innerHTML = renderDieModPanel(templateData);
@@ -207,24 +209,37 @@ export class DieModificationPanel {
      * Calls die.installMod(modId, targetFaceIndex) API.
      */
     private handleInstall(): void {
-        if (!this.selectedCoreMod || this.selectedCoreMod === 'none') {
+        if (!this.canInstallPendingChange()) {
             console.warn('DieModificationPanel: No mod selected for install');
             return;
         }
 
-        const die = this.getSelectedDie();
-        
+        const selectedCoreMod = this.selectedCoreMod;
+        const selectedTargetFaceIndex = this.selectedTargetFaceIndex;
+        if (!selectedCoreMod || selectedTargetFaceIndex === null) {
+            return;
+        }
+
         // TODO: Wire to real die.installMod(modId, targetFaceIndex) API
-        // For now, store as draftCoreMod placeholder
-        this.draftCoreMod = this.selectedCoreMod;
+        // For now, apply directly to draft face mods as placeholder state.
+        this.draftFaceMods[selectedTargetFaceIndex] = selectedCoreMod as AvailableModValue;
+
+        // Keep selected mod + face after install.
+        // Button will disable because there is no longer a pending change.
+        this.draftCoreMod = selectedCoreMod;
         
         // Emit BAG_UPDATED event (TODO: implement when game state API available)
         // window.dispatchEvent(new CustomEvent('BAG_UPDATED', { detail: { dieId: die.id } }));
-
-        // Reset install state after installing
-        this.selectedCoreMod = null;
-        this.selectedTargetFaceIndex = null;
         this.render();
+    }
+
+    private canInstallPendingChange(): boolean {
+        if (!this.selectedCoreMod || this.selectedCoreMod === 'none' || this.selectedTargetFaceIndex === null) {
+            return false;
+        }
+
+        const currentFaceMod = this.draftFaceMods[this.selectedTargetFaceIndex] ?? 'none';
+        return currentFaceMod !== this.selectedCoreMod;
     }
 
     private ensureDraftLength(faceCount: number): void {
@@ -270,10 +285,53 @@ export class DieModificationPanel {
 
     private resetDraftForSelectedDie(): void {
         const die = this.getSelectedDie();
-        this.draftFaceMods = Array.from({ length: die.faceCount }, () => 'none');
+        this.draftFaceMods = this.getDraftFaceModsFromDie(die);
         this.draftFaceStyles = Array.from({ length: die.faceCount }, () => 'plain');
         this.draftCoreMod = 'none';
         this.draftCoreMaterial = 'bone';
+    }
+
+    private getDraftFaceModsFromDie(die: ModifiedDie): AvailableModValue[] {
+        const gramsByFace = Array.from({ length: die.faceCount }, (_, faceIndex) => {
+            let total = 0;
+            for (const mod of die.mods) {
+                if (mod.faceIndex === faceIndex) {
+                    total += mod.grams;
+                }
+            }
+            return Math.max(0, total);
+        });
+
+        return gramsByFace.map((grams) => this.mapGramsToModValue(grams));
+    }
+
+    private mapGramsToModValue(grams: number): AvailableModValue {
+        if (grams <= 0) {
+            return 'none';
+        }
+
+        const weightedMods = AVAILABLE_MODS.filter((mod) => mod.value !== 'none');
+        if (weightedMods.length === 0) {
+            return 'none';
+        }
+
+        const exactMatch = weightedMods.find((mod) => Math.abs(mod.grams - grams) < 1e-6);
+        if (exactMatch) {
+            return exactMatch.value;
+        }
+
+        let nearest = weightedMods[0];
+        let nearestDistance = Math.abs(nearest.grams - grams);
+
+        for (const mod of weightedMods.slice(1)) {
+            const distance = Math.abs(mod.grams - grams);
+            if (distance < nearestDistance) {
+                nearest = mod;
+                nearestDistance = distance;
+            }
+        }
+
+        return nearest.value;
     }
 
     private getSelectedDie(): ModifiedDie {

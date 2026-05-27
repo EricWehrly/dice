@@ -103,3 +103,12 @@ Once F10 shell is working, modal presentation becomes a presentation-layer decis
 - Default die style should be `plastic` for the upgrading/modification flow.
 - In the modification screen, the default die label should read `plastic d6`.
 - This is a documentation-only intent for now; implementation is intentionally deferred.
+
+## Future Selector Motion Animation (Planned)
+
+- for die face selection: Replace simple selector cross-fade with directional travel behavior.
+- First animate selector movement from previous face to newly selected face.
+- Then animate selector border travel with a visible leading edge (2D implementation), with matching conceptual behavior for 3D.
+- Rotation direction should follow movement direction:
+- Left-to-right movement uses clockwise border travel.
+- Right-to-left movement uses counter-clockwise border travel.
