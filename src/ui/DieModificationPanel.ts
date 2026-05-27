@@ -4,11 +4,13 @@
  * UI for inspecting a die, selecting and previewing modifications,
  * and installing them to the die.
  * 
- * Current: Read-only dummy UI with hard-coded mod options.
- * Future: Wire real Die model and Modification resolver.
+ * Phase 1: Two-mode UI
+ * - Collapsed: Browse die + select core mod + select style
+ * - Expanded: Install selected mod to specific face, with target face selector
  */
 
 import { renderDieModPanel, type DieModPanelData } from './DieModificationPanelTemplate';
+import { DieIsometricRenderer } from '../rendering/2d/DieIsometricRenderer';
 import { DieModificationCanvasRenderer } from './DieModificationCanvasRenderer';
 import {
     AVAILABLE_MODS,
@@ -22,14 +24,23 @@ import { ModifiedDie } from '../game/ModifiedDie';
 
 export class DieModificationPanel {
     private readonly root: HTMLElement | null;
+    private readonly isometricRenderer = new DieIsometricRenderer();
     private readonly canvasRenderer = new DieModificationCanvasRenderer();
     private readonly dice: ModifiedDie[];
+    
+    // Die/face selection (persistent across modes)
     private selectedDieId: string;
     private selectedFaceIndex = -1; // -1 = core, 0+ = face index
+    
+    // Legacy draft state (for face mods in future phases)
     private draftFaceMods: AvailableModValue[] = [];
     private draftCoreMod: AvailableCoreModValue = 'none';
     private draftCoreMaterial: AvailableMaterialValue = 'bone';
     private draftFaceStyles: AvailableStyleValue[] = [];
+    
+    // Core mod install state
+    private selectedCoreMod: AvailableCoreModValue | null = null;
+    private selectedTargetFaceIndex: number | null = null;
 
     constructor(dice: ModifiedDie[]) {
         this.root = document.getElementById('die-mod-panel');
@@ -46,8 +57,9 @@ export class DieModificationPanel {
         const die = this.getSelectedDie();
         this.ensureDraftLength(die.faceCount);
         this.ensureFaceIndex(die.faceCount);
+        const previewFaceMods = this.getPreviewFaceMods();
         const current = getFaceChances(die);
-        const preview = getPreviewChances(die, this.draftFaceMods);
+        const preview = getPreviewChances(die, previewFaceMods);
         const deltas = preview.map((value, index) => value - current[index]);
         const hasDraftChanges = this.hasDraftChanges();
         const hasActualDeltas = deltas.some((delta) => Math.abs(delta) > 0.01);
@@ -66,17 +78,31 @@ export class DieModificationPanel {
             current,
             hasDraftChanges,
             hasActualDeltas,
+            selectedCoreMod: this.selectedCoreMod,
+            selectedTargetFaceIndex: this.selectedTargetFaceIndex,
         };
 
         this.root.innerHTML = renderDieModPanel(templateData);
 
-        this.canvasRenderer.render({
-            root: this.root,
-            faceCount: die.faceCount,
-            selectedFaceIndex: this.selectedFaceIndex,
-            preview,
-            deltas,
-        });
+        // Swap viewport: exploded carousel when a mod is selected, isometric otherwise
+        if (this.selectedCoreMod && this.selectedCoreMod !== 'none') {
+            this.canvasRenderer.render({
+                root: this.root,
+                faceCount: die.faceCount,
+                selectedFaceIndex: this.selectedTargetFaceIndex ?? 0,
+                preview,
+                deltas,
+            });
+        } else {
+            this.isometricRenderer.render({
+                root: this.root,
+                faceCount: die.faceCount,
+                currentCoreMod: this.selectedCoreMod,
+                coreModInstalledOnFace: null, // TODO: Get from die.mods when available
+                style: (this.draftFaceStyles[0] ?? 'plain') as 'plain' | 'etched' | 'polished' | 'hammered',
+            });
+        }
+
         this.wireHandlers();
     }
 
@@ -85,6 +111,7 @@ export class DieModificationPanel {
             return;
         }
 
+        // Die selector chips
         this.root.querySelectorAll<HTMLButtonElement>('.die-mod-chip').forEach((button) => {
             button.addEventListener('click', () => {
                 const dieId = button.dataset.dieId;
@@ -94,61 +121,69 @@ export class DieModificationPanel {
                 this.selectedDieId = dieId;
                 this.selectedFaceIndex = 0;
                 this.resetDraftForSelectedDie();
+                this.selectedCoreMod = null;
+                this.selectedTargetFaceIndex = null;
                 this.render();
             });
         });
 
-        this.root.querySelectorAll<HTMLButtonElement>('.die-mod-face-nav-btn').forEach((button) => {
-            button.addEventListener('click', () => {
-                const die = this.getSelectedDie();
-                const step = Number(button.dataset.faceStep ?? '0');
-                if (!Number.isFinite(step) || step === 0) {
-                    return;
-                }
-                this.selectedFaceIndex = this.wrapFaceIndex(this.selectedFaceIndex + step, die.faceCount);
-                this.render();
-            });
-        });
-
-        const installButton = this.root.querySelector<HTMLButtonElement>('#die-mod-install-btn');
-        installButton?.addEventListener('click', () => {
-            const die = this.getSelectedDie();
-            for (let index = 0; index < this.draftFaceMods.length; index += 1) {
-                const modValue = this.draftFaceMods[index];
-                const mod = AVAILABLE_MODS.find((item) => item.value === modValue);
-                if (!mod || mod.value === 'none') {
-                    continue;
-                }
-
-                die.addWeightMod(index, mod.grams);
-            }
-
-            if (this.draftCoreMod !== 'none') {
-                die.addCoreMod(this.draftCoreMod);
-            }
-
-            this.resetDraftForSelectedDie();
+        // Core mod selector
+        const coreModSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-core-mod-selector');
+        coreModSelector?.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            const modValue = target.value as AvailableCoreModValue;
+            this.selectedCoreMod = modValue !== 'none' ? modValue : null;
+            this.selectedTargetFaceIndex = null; // Reset face when mod changes
             this.render();
         });
 
-        this.root.querySelectorAll<HTMLSelectElement>('.die-mod-setting-select').forEach((select) => {
-            select.addEventListener('change', () => {
-                const scope = select.dataset.scope;
-                const field = select.dataset.field;
-
-                if (scope === 'core' && field === 'mod') {
-                    this.draftCoreMod = (select.value as AvailableCoreModValue) ?? 'none';
-                } else if (scope === 'core' && field === 'material') {
-                    this.draftCoreMaterial = (select.value as AvailableMaterialValue) ?? 'bone';
-                } else if (scope === 'face' && field === 'mod') {
-                    this.draftFaceMods[this.selectedFaceIndex] = (select.value as AvailableModValue) ?? 'none';
-                } else if (scope === 'face' && field === 'style') {
-                    this.draftFaceStyles[this.selectedFaceIndex] = (select.value as AvailableStyleValue) ?? 'plain';
-                }
-
-                this.render();
-            });
+        // Collapsed mode: Style selector
+        const styleSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-style-selector');
+        styleSelector?.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            this.draftFaceStyles[0] = (target.value as AvailableStyleValue) ?? 'plain';
+            this.render();
         });
+
+        // Target face selector (shown only when a mod is selected)
+        const targetSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-target-face-selector');
+        targetSelector?.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            const value = target.value;
+            this.selectedTargetFaceIndex = value ? parseInt(value, 10) : null;
+            this.render();
+        });
+
+        // Install button
+        const installBtn = this.root.querySelector<HTMLButtonElement>('.die-mod-install-btn');
+        installBtn?.addEventListener('click', () => {
+            this.handleInstall();
+        });
+    }
+
+    /**
+     * Handle Install button click: apply mod to die and collapse.
+     * Calls die.installMod(modId, targetFaceIndex) API.
+     */
+    private handleInstall(): void {
+        if (!this.selectedCoreMod || this.selectedCoreMod === 'none') {
+            console.warn('DieModificationPanel: No mod selected for install');
+            return;
+        }
+
+        const die = this.getSelectedDie();
+        
+        // TODO: Wire to real die.installMod(modId, targetFaceIndex) API
+        // For now, store as draftCoreMod placeholder
+        this.draftCoreMod = this.selectedCoreMod;
+        
+        // Emit BAG_UPDATED event (TODO: implement when game state API available)
+        // window.dispatchEvent(new CustomEvent('BAG_UPDATED', { detail: { dieId: die.id } }));
+
+        // Reset install state after installing
+        this.selectedCoreMod = null;
+        this.selectedTargetFaceIndex = null;
+        this.render();
     }
 
     private ensureDraftLength(faceCount: number): void {
@@ -174,6 +209,16 @@ export class DieModificationPanel {
         return position - 1;
     }
 
+    private getPreviewFaceMods(): AvailableModValue[] {
+        const previewMods = [...this.draftFaceMods];
+        if (!this.selectedCoreMod || this.selectedCoreMod === 'none' || this.selectedTargetFaceIndex === null) {
+            return previewMods;
+        }
+
+        previewMods[this.selectedTargetFaceIndex] = this.selectedCoreMod as AvailableModValue;
+        return previewMods;
+    }
+
     private hasDraftChanges(): boolean {
         if (this.draftCoreMod !== 'none') {
             return true;
@@ -193,6 +238,5 @@ export class DieModificationPanel {
     private getSelectedDie(): ModifiedDie {
         return this.dice.find((die) => die.id === this.selectedDieId) ?? this.dice[0];
     }
-
 }
 

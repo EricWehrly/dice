@@ -3,7 +3,7 @@ import { drawDieFaceTile } from '../rendering/2d/DieFaceTileRenderer';
 export interface DieModificationCanvasRenderInput {
     root: HTMLElement;
     faceCount: number;
-    selectedFaceIndex: number; // -1 = core, 0+ = face index
+    selectedFaceIndex: number; // 0+ = face index
     preview: number[];
     deltas: number[];
 }
@@ -13,8 +13,40 @@ export interface DieModificationCanvasRenderInput {
  */
 export class DieModificationCanvasRenderer {
     private lastTilesCount = 3; // Default fallback
+    private readonly selectionFadeDurationMs = 180;
+    private animationFrameId: number | null = null;
+    private lastRenderInput: DieModificationCanvasRenderInput | null = null;
+    private previousSelectedFaceIndex: number | null = null;
+    private currentSelectedFaceIndex: number | null = null;
+    private selectionFadeStartMs = 0;
 
     render(input: DieModificationCanvasRenderInput): void {
+        this.lastRenderInput = input;
+
+        if (this.currentSelectedFaceIndex === null) {
+            this.currentSelectedFaceIndex = input.selectedFaceIndex;
+            this.previousSelectedFaceIndex = input.selectedFaceIndex;
+            this.selectionFadeStartMs = performance.now() - this.selectionFadeDurationMs;
+        } else if (this.currentSelectedFaceIndex !== input.selectedFaceIndex) {
+            this.previousSelectedFaceIndex = this.currentSelectedFaceIndex;
+            this.currentSelectedFaceIndex = input.selectedFaceIndex;
+            this.selectionFadeStartMs = performance.now();
+        }
+
+        if (this.animationFrameId !== null) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+
+        this.drawFrame(performance.now());
+    }
+
+    private drawFrame(now: number): void {
+        const input = this.lastRenderInput;
+        if (!input) {
+            return;
+        }
+
         const { root, faceCount, selectedFaceIndex, preview, deltas } = input;
 
         const canvas = root.querySelector<HTMLCanvasElement>('#die-mod-canvas');
@@ -41,19 +73,15 @@ export class DieModificationCanvasRenderer {
         const deltaLineHeight = 13;
         const textHeight = textTopOffset + probabilityLineHeight + deltaLineHeight;
 
-        // Determine available width from the carousel container, subtracting nav buttons.
-        // canvasWrap.clientWidth is always 0 (auto grid column sized by its own canvas).
+        // Determine available width from the carousel container.
+        // canvasWrap.clientWidth is often 0 (auto-sized by its own canvas), so use the carousel width.
         const carousel = root.querySelector<HTMLElement>('[data-carousel-mode]');
-        const prevBtn = root.querySelector<HTMLElement>('.die-mod-face-nav-btn-prev');
-        const nextBtn = root.querySelector<HTMLElement>('.die-mod-face-nav-btn-next');
-        const navWidth = (prevBtn?.offsetWidth ?? 40) + (nextBtn?.offsetWidth ?? 40);
-        const carouselGap = 16; // 2 gaps × 8px
-        const wrapperWidth = (carousel?.clientWidth ?? 0) - navWidth - carouselGap;
+        const wrapperWidth = carousel?.clientWidth ?? 0;
         if (wrapperWidth <= 0) {
             console.warn('[DieModCanvas] Could not determine carousel width — panel may not be laid out yet. Showing all tiles.');
         }
         const minTiles = 3; // Always show at least 3 (carousel)
-        const maxTiles = faceCount + 1; // Max is all tiles (core + faces)
+        const maxTiles = faceCount; // Max is all face tiles
         const tileWidth = tileSize + tileGap;
         const availableWidth = wrapperWidth - padding * 2;
         // When wrapperWidth is unknown (<=0), fall back to showing all tiles
@@ -90,18 +118,16 @@ export class DieModificationCanvasRenderer {
         const uiText = this.getThemeColor('--color-text-primary', '#f6f0da');
         const coreAccent = this.getThemeColor('--color-gold-trim', '#d4af37');
         const coreGlow = this.getThemeColor('--color-gold-trim-soft', '#7f6b2d');
-        const corePanelBg = this.getThemeColor('--color-counter-bg', '#111');
         const fontUi = this.getThemeFont('--font-ui', '"Trebuchet MS", "Segoe UI", sans-serif');
 
         // Calculate which tiles to show
-        const itemCount = faceCount + 1;
+        const itemCount = faceCount;
         let itemIndices: number[];
 
         if (needsWrapping) {
             // Carousel mode: show around selected index
             const wrapIndex = (index: number): number => {
-                const pos = ((index + 1) % itemCount + itemCount) % itemCount;
-                return pos - 1;
+                return ((index % itemCount) + itemCount) % itemCount;
             };
 
             itemIndices = [];
@@ -112,7 +138,7 @@ export class DieModificationCanvasRenderer {
         } else {
             // Full mode: show all tiles
             itemIndices = [];
-            for (let i = -1; i < faceCount; i++) {
+            for (let i = 0; i < faceCount; i++) {
                 itemIndices.push(i);
             }
         }
@@ -120,7 +146,7 @@ export class DieModificationCanvasRenderer {
         // Warn if probability labels are likely to overlap horizontally.
         // TODO: In the future, support multi-row layout when this warning appears.
         let hasLabelOverlapRisk = false;
-        const visibleFaceIndices = itemIndices.filter((index) => index >= 0);
+        const visibleFaceIndices = itemIndices;
         if (visibleFaceIndices.length > 1) {
             context.save();
             context.font = `700 12px ${fontUi}`;
@@ -159,6 +185,16 @@ export class DieModificationCanvasRenderer {
                 ? position === Math.floor(tilesCanFit / 2)
                 : itemIndex === selectedFaceIndex;
 
+            const currentTarget = this.currentSelectedFaceIndex ?? selectedFaceIndex;
+            const previousTarget = this.previousSelectedFaceIndex ?? currentTarget;
+            const fadeProgress = Math.min(
+                1,
+                Math.max(0, (now - this.selectionFadeStartMs) / this.selectionFadeDurationMs),
+            );
+            const prevGlow = itemIndex === previousTarget ? 1 : 0;
+            const nextGlow = itemIndex === currentTarget ? 1 : 0;
+            const glowAlpha = prevGlow * (1 - fadeProgress) + nextGlow * fadeProgress;
+
             // Distance-based opacity: 10% reduction per step away from selected.
             // Uses circular (wrap-around) distance through the full item ring, same as nav button wrapping.
             // NOTE: This opacity fade is canvas-specific; do NOT port this to 3D rendering.
@@ -166,64 +202,25 @@ export class DieModificationCanvasRenderer {
             const circularDistance = Math.abs(((raw + itemCount + Math.floor(itemCount / 2)) % itemCount) - Math.floor(itemCount / 2));
             const opacity = Math.max(0.3, 1 - circularDistance * 0.1);
 
-            if (itemIndex === -1) {
-                // Draw core tile base with a neutral border so selection glow is the only accent.
-                drawDieFaceTile(context, {
-                    x,
-                    y: padding,
-                    size: tileSize,
-                    die: { faceUp: 0, active: true, locked: false },
-                    colors: {
-                        fill: corePanelBg,
-                        stroke: tileBorder,
-                        text: tileText,
-                    },
-                    shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
-                    opacityMultiplier: opacity,
-                });
+            // Draw face tile
+            drawDieFaceTile(context, {
+                x,
+                y: padding,
+                size: tileSize,
+                die: { faceUp: itemIndex + 1, active: true, locked: false },
+                colors: {
+                    fill: tileBg,
+                    stroke: tileBorder,
+                    text: tileText,
+                },
+                shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
+                opacityMultiplier: opacity,
+            });
 
-                // Soft core orb: dark center that fades toward the edges.
-                context.save();
-                context.beginPath();
-                context.arc(x + tileSize / 2, padding + tileSize / 2, tileSize * 0.36, 0, Math.PI * 2);
-                context.clip();
-
-                const orbGradient = context.createRadialGradient(
-                    x + tileSize / 2,
-                    padding + tileSize / 2,
-                    tileSize * 0.08,
-                    x + tileSize / 2,
-                    padding + tileSize / 2,
-                    tileSize * 0.36,
-                );
-                orbGradient.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
-                orbGradient.addColorStop(0.55, 'rgba(0, 0, 0, 0.45)');
-                orbGradient.addColorStop(1, 'rgba(0, 0, 0, 0.06)');
-
-                context.fillStyle = orbGradient;
-                context.fillRect(x, padding, tileSize, tileSize);
-                context.restore();
-            } else {
-                // Draw face tile
-                drawDieFaceTile(context, {
-                    x,
-                    y: padding,
-                    size: tileSize,
-                    die: { faceUp: itemIndex + 1, active: true, locked: false },
-                    colors: {
-                        fill: tileBg,
-                        stroke: tileBorder,
-                        text: tileText,
-                    },
-                    shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
-                    opacityMultiplier: opacity,
-                });
-            }
-
-            if (isSelected) {
+            if (isSelected || glowAlpha > 0.001) {
                 // Add glow to selected item
-                context.globalAlpha = 1;
                 context.save();
+                context.globalAlpha = Math.max(glowAlpha, isSelected ? 0.001 : 0);
                 context.strokeStyle = coreAccent;
                 context.shadowColor = coreGlow;
                 context.shadowBlur = 8;
@@ -233,7 +230,7 @@ export class DieModificationCanvasRenderer {
             }
 
             // Draw probability text below every visible face.
-            if (itemIndex >= 0 && !hasLabelOverlapRisk) {
+            if (!hasLabelOverlapRisk) {
                 context.globalAlpha = 1;
                 context.fillStyle = uiText;
                 context.font = `700 12px ${fontUi}`;
@@ -260,6 +257,16 @@ export class DieModificationCanvasRenderer {
         });
 
         context.globalAlpha = 1;
+
+        const fadeProgress = Math.min(
+            1,
+            Math.max(0, (now - this.selectionFadeStartMs) / this.selectionFadeDurationMs),
+        );
+        if (fadeProgress < 1 && this.lastRenderInput) {
+            this.animationFrameId = requestAnimationFrame((timestamp) => this.drawFrame(timestamp));
+        } else {
+            this.animationFrameId = null;
+        }
     }
 
     private getThemeColor(variableName: string, fallback: string): string {

@@ -15,7 +15,13 @@ export const AVAILABLE_MODS = [
 
 export const AVAILABLE_CORE_MODS = [
     { value: 'none', label: '---', grams: 0 },
-    { value: 'brain', label: 'Brain', grams: 0 },
+    { value: 'weight-1.0', label: 'Weight 1.0g', grams: 1.0 },
+    { value: 'weight-1.5', label: 'Weight 1.5g', grams: 1.5 },
+    { value: 'weight-2.0', label: 'Weight 2.0g', grams: 2.0 },
+    { value: 'weight-2.5', label: 'Weight 2.5g', grams: 2.5 },
+    // FUTURE: { value: 'brain', label: 'Brain', grams: 0 }
+    // Brain mod - AI-assisted adaptive weighting per face.
+    // See: docs/active/roadmap.md "Planned Mods", docs/features/F-brain-mod.md (future)
 ] as const;
 
 export const AVAILABLE_MATERIALS = [
