@@ -1,5 +1,7 @@
 import { Die, type DieOptions } from './Die';
 import { FACE_STAT_KEYS, type DieStatKey, type FaceStatKey } from './DieStatKeys';
+import Events from '../../engine/js/events';
+import { TrickEvents } from './contracts/TrickContracts';
 
 export type DieStats = Record<string, number>;
 
@@ -65,6 +67,7 @@ export class ModifiedDie extends Die {
             grams,
         });
         this.addFaceStat(faceIndex, FACE_STAT_KEYS.WEIGHT, grams);
+        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 
     addCoreMod(id: string): void {
@@ -73,6 +76,7 @@ export class ModifiedDie extends Die {
         }
 
         this.coreMods.push({ id });
+        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 
     private setStat(stat: DieStatKey, value: number): void {
