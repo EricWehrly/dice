@@ -6,9 +6,6 @@ import { drawDieFaceTile } from './DieFaceTileRenderer';
 export class DiceCanvasRenderer {
     private static readonly TILE_SIZE = 80;
     private static readonly GAP = 16;
-    private static readonly LABEL_HEIGHT = 18;
-    private static readonly LOCK_BTN_HEIGHT = 22;
-    private static readonly LOCK_BTN_MARGIN = 4;
 
     private readonly canvas: HTMLCanvasElement;
     private readonly context: CanvasRenderingContext2D;
@@ -64,8 +61,8 @@ export class DiceCanvasRenderer {
 
         this.clear(canvasColor, trimColor);
 
-        const { TILE_SIZE: tileSize, GAP: gap, LABEL_HEIGHT: labelHeight, LOCK_BTN_HEIGHT: btnHeight, LOCK_BTN_MARGIN: btnMargin } = DiceCanvasRenderer;
-        const rowStride = tileSize + labelHeight + btnMargin + btnHeight + gap;
+        const { TILE_SIZE: tileSize, GAP: gap } = DiceCanvasRenderer;
+        const rowStride = tileSize + gap;
         const perRow = this.getTilesPerRow();
 
         this.bag.dice.forEach((die, index) => {
@@ -80,6 +77,8 @@ export class DiceCanvasRenderer {
                 y,
                 die,
                 size: tileSize,
+                pipShape: die.locked ? 'padlock' : 'circle',
+                pipCountOverride: die.locked ? 1 : undefined,
                 colors: {
                     fill: dieFaceColor,
                     stroke: die.locked ? (trimColor ?? dieStrokeColor) : dieStrokeColor,
@@ -90,6 +89,7 @@ export class DiceCanvasRenderer {
             // Die label
             this.context.font = '500 12px "Trebuchet MS", sans-serif';
             this.context.fillStyle = dieLabelColor;
+            this.context.textAlign = 'center';
             this.context.textBaseline = 'top';
             this.context.fillText(die.label, x + tileSize / 2, y + tileSize + 4);
 
@@ -98,27 +98,6 @@ export class DiceCanvasRenderer {
             this.context.shadowColor = 'transparent';
             this.context.shadowBlur = 0;
             this.context.shadowOffsetY = 0;
-
-            // Lock button
-            const btnY = y + tileSize + labelHeight + btnMargin;
-            if (die.locked) {
-                this.context.fillStyle = trimColor ?? '#c9a94a';
-                this.context.strokeStyle = trimColor ?? '#c9a94a';
-            } else {
-                this.context.fillStyle = 'rgba(255,255,255,0.06)';
-                this.context.strokeStyle = dieStrokeColor;
-            }
-            this.context.lineWidth = 1.5;
-            this.context.beginPath();
-            this.context.roundRect(x + 4, btnY, tileSize - 8, btnHeight, 4);
-            this.context.fill();
-            this.context.stroke();
-
-            this.context.fillStyle = die.locked ? '#1a0d2e' : dieLabelColor;
-            this.context.font = `700 11px "Trebuchet MS", sans-serif`;
-            this.context.textAlign = 'center';
-            this.context.textBaseline = 'middle';
-            this.context.fillText(die.locked ? 'UNLOCK' : 'LOCK', x + tileSize / 2, btnY + btnHeight / 2);
         });
 
         this.context.globalAlpha = 1;
@@ -143,8 +122,8 @@ export class DiceCanvasRenderer {
     }
 
     private getDieAtPoint(x: number, y: number) {
-        const { TILE_SIZE: tileSize, GAP: gap, LABEL_HEIGHT: labelHeight, LOCK_BTN_HEIGHT: btnHeight, LOCK_BTN_MARGIN: btnMargin } = DiceCanvasRenderer;
-        const rowStride = tileSize + labelHeight + btnMargin + btnHeight + gap;
+        const { TILE_SIZE: tileSize, GAP: gap } = DiceCanvasRenderer;
+        const rowStride = tileSize + gap;
         const perRow = this.getTilesPerRow();
 
         for (const [index, die] of this.bag.dice.entries()) {
@@ -152,12 +131,8 @@ export class DiceCanvasRenderer {
             const row = Math.floor(index / perRow);
             const tileX = gap + col * (tileSize + gap);
             const tileY = gap + row * rowStride;
-            const btnY = tileY + tileSize + labelHeight + btnMargin;
 
-            const btnLeft = tileX + 4;
-            const btnRight = tileX + tileSize - 4;
-
-            if (x >= btnLeft && x <= btnRight && y >= btnY && y <= btnY + btnHeight) {
+            if (x >= tileX && x <= tileX + tileSize && y >= tileY && y <= tileY + tileSize) {
                 return die;
             }
         }

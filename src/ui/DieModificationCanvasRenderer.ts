@@ -41,18 +41,34 @@ export class DieModificationCanvasRenderer {
         const deltaLineHeight = 13;
         const textHeight = textTopOffset + probabilityLineHeight + deltaLineHeight;
 
-        // Determine how many tiles can fit based on available width
-        const wrapperWidth = canvasWrap.clientWidth;
+        // Determine available width from the carousel container, subtracting nav buttons.
+        // canvasWrap.clientWidth is always 0 (auto grid column sized by its own canvas).
+        const carousel = root.querySelector<HTMLElement>('[data-carousel-mode]');
+        const prevBtn = root.querySelector<HTMLElement>('.die-mod-face-nav-btn-prev');
+        const nextBtn = root.querySelector<HTMLElement>('.die-mod-face-nav-btn-next');
+        const navWidth = (prevBtn?.offsetWidth ?? 40) + (nextBtn?.offsetWidth ?? 40);
+        const carouselGap = 16; // 2 gaps × 8px
+        const wrapperWidth = (carousel?.clientWidth ?? 0) - navWidth - carouselGap;
+        if (wrapperWidth <= 0) {
+            console.warn('[DieModCanvas] Could not determine carousel width — panel may not be laid out yet. Showing all tiles.');
+        }
         const minTiles = 3; // Always show at least 3 (carousel)
         const maxTiles = faceCount + 1; // Max is all tiles (core + faces)
         const tileWidth = tileSize + tileGap;
         const availableWidth = wrapperWidth - padding * 2;
-        const tilesCanFit = Math.max(minTiles, Math.min(maxTiles, Math.floor((availableWidth + tileGap) / tileWidth)));
+        // When wrapperWidth is unknown (<=0), fall back to showing all tiles
+        const tilesCanFit = wrapperWidth > 0
+            ? Math.max(minTiles, Math.min(maxTiles, Math.floor((availableWidth + tileGap) / tileWidth)))
+            : maxTiles;
         this.lastTilesCount = tilesCanFit;
 
         // Check if we need carousel wrapping
         const needsWrapping = tilesCanFit < maxTiles;
-        const carousel = root.querySelector<HTMLElement>('[data-carousel-mode]');
+        if (needsWrapping && wrapperWidth > 0) {
+            console.warn(
+                `[DieModCanvas] Not all ${maxTiles} face tiles fit (wrapperWidth=${wrapperWidth}px, tilesCanFit=${tilesCanFit}). Carousel mode active.`
+            );
+        }
         if (carousel) {
             carousel.dataset.carouselMode = needsWrapping ? 'auto' : 'full';
         }
@@ -142,8 +158,12 @@ export class DieModificationCanvasRenderer {
             const isSelected = needsWrapping
                 ? position === Math.floor(tilesCanFit / 2)
                 : itemIndex === selectedFaceIndex;
-            const opacity = isSelected ? 1 : 0.55;
-            context.globalAlpha = opacity;
+
+            // Distance-based opacity: 10% reduction per step away from selected.
+            // Uses circular (wrap-around) distance through the full item ring, same as nav button wrapping.
+            const raw = itemIndex - selectedFaceIndex;
+            const circularDistance = Math.abs(((raw + itemCount + Math.floor(itemCount / 2)) % itemCount) - Math.floor(itemCount / 2));
+            const opacity = Math.max(0.3, 1 - circularDistance * 0.1);
 
             if (itemIndex === -1) {
                 // Draw core tile base with a neutral border so selection glow is the only accent.
@@ -158,6 +178,7 @@ export class DieModificationCanvasRenderer {
                         text: tileText,
                     },
                     shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
+                    opacityMultiplier: opacity,
                 });
 
                 // Soft core orb: dark center that fades toward the edges.
@@ -194,6 +215,7 @@ export class DieModificationCanvasRenderer {
                         text: tileText,
                     },
                     shadowOptions: { color: 'transparent', blur: 0, offsetY: 0 },
+                    opacityMultiplier: opacity,
                 });
             }
 

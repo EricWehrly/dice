@@ -4,7 +4,7 @@ export interface DieFaceTileColors {
     text: string;
 }
 
-export type PipShape = 'circle' | 'square' | 'diamond' | 'hollow-circle' | 'star' | 'heart' | 'club' | 'clover' | 'skull';
+export type PipShape = 'circle' | 'square' | 'diamond' | 'hollow-circle' | 'star' | 'heart' | 'club' | 'clover' | 'skull' | 'padlock';
 
 export interface DieDuckType {
     faceUp: number;
@@ -26,7 +26,9 @@ export interface DieFaceTileRenderInput {
     size?: number; // defaults to DEFAULT_TILE_SIZE (80)
     lineWidth?: number; // defaults to 3 if locked, 2 otherwise
     pipShape?: PipShape; // defaults to circle
+    pipCountOverride?: number; // defaults to die.faceUp rounded down
     shadowOptions?: ShadowOptions; // defaults to standard drop shadow
+    opacityMultiplier?: number; // defaults to 1, multiplies active/inactive alpha
 }
 
 const DEFAULT_TILE_SIZE = 80;
@@ -45,9 +47,10 @@ export function drawDieFaceTile(context: CanvasRenderingContext2D, input: DieFac
     const { x, y, die, colors } = input;
     const size = input.size ?? DEFAULT_TILE_SIZE;
     const lineWidth = input.lineWidth ?? (die.locked ? 3 : 2);
-    const alpha = die.active ? 1 : 0.4;
+    const opacityMultiplier = input.opacityMultiplier ?? 1;
+    const alpha = (die.active ? 1 : 0.4) * opacityMultiplier;
     const pipShape = input.pipShape ?? DEFAULT_PIP_SHAPE;
-    const pipCount = Math.max(0, Math.floor(die.faceUp));
+    const pipCount = Math.max(0, Math.floor(input.pipCountOverride ?? die.faceUp));
 
     const shadowColor = input.shadowOptions?.color ?? DEFAULT_SHADOW_COLOR;
     const shadowBlur = input.shadowOptions?.blur ?? DEFAULT_SHADOW_BLUR;
@@ -296,6 +299,29 @@ function drawPipShape(
             for (let t = -1; t <= 1; t += 1) {
                 context.fillRect(centerX + t * toothW * 1.25 - toothW / 2, teethY, toothW * 0.88, toothH);
             }
+            return;
+        }
+        case 'padlock': {
+            const bodyW = radius * 1.45;
+            const bodyH = radius * 1.15;
+            const bodyX = centerX - bodyW / 2;
+            const bodyY = centerY - radius * 0.02;
+
+            context.fillRect(bodyX, bodyY, bodyW, bodyH);
+
+            context.lineWidth = Math.max(1, radius * 0.22);
+            context.beginPath();
+            context.arc(centerX, bodyY, radius * 0.55, Math.PI, 0);
+            context.stroke();
+
+            const keyholeR = Math.max(1, radius * 0.16);
+            context.fillStyle = colors.fill;
+            context.beginPath();
+            context.arc(centerX, bodyY + bodyH * 0.45, keyholeR, 0, Math.PI * 2);
+            context.fill();
+            context.fillRect(centerX - keyholeR * 0.45, bodyY + bodyH * 0.45, keyholeR * 0.9, keyholeR * 1.2);
+
+            context.fillStyle = colors.text;
             return;
         }
         case 'circle':

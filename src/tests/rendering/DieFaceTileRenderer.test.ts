@@ -143,4 +143,27 @@ describe('drawDieFaceTile', () => {
         expect(context.fillText.mock.calls.length).toBe(1);
         expect(context.fillText.mock.calls[0][0]).toBe('12');
     });
+
+    it('draws a single padlock pip when locked using override count', () => {
+        const context = createMockContext();
+
+        drawDieFaceTile(ctx(context), {
+            x: 10,
+            y: 12,
+            die: { faceUp: 6, active: true, locked: true },
+            pipShape: 'padlock',
+            pipCountOverride: 1,
+            colors: {
+                fill: '#fff',
+                stroke: '#000',
+                text: '#111',
+            },
+            size: 80,
+        });
+
+        // One arc for lock shackle and one arc for keyhole circle.
+        expect(context.arc.mock.calls.length).toBe(2);
+        // Tile + lock body + keyhole stem rectangles.
+        expect(context.fillRect.mock.calls.length).toBeGreaterThanOrEqual(3);
+    });
 });

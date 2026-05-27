@@ -112,6 +112,7 @@ p {
   height: min(520px, calc(100vh - 96px));
   border-radius: 0 0 10px 10px;
   display: block;
+  cursor: pointer;
 }
 
 .counter-grid {
