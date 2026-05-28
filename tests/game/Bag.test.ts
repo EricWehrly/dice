@@ -95,4 +95,22 @@ describe('Bag', () => {
         bag.toggleLocked('d1');
         expect(d1.locked).toBe(false);
     });
+
+    it('raises BAG_CHANGED with bag on event payload', () => {
+        const callback = vi.fn();
+        const subscriptionId = Events.Subscribe(TrickEvents.BAG_CHANGED, callback);
+        const bag = new Bag([new Die({ faceCount: 6, id: 'd1' })]);
+
+        bag.toggleLocked('d1');
+
+        expect(callback).toHaveBeenCalledTimes(1);
+        const event = callback.mock.calls[0][0];
+        expect(event.bag).toBeDefined();
+        expect(event.bag).toBe(bag);
+        expect(Array.isArray(event.bag.getActiveDice())).toBe(true);
+
+        if (subscriptionId) {
+            Events.Unsubscribe(subscriptionId);
+        }
+    });
 });

@@ -12,6 +12,10 @@ export interface BagRolledEvent extends GameEvent {
     rollHistory: RecordHistory<readonly DieFaceResult[]>;
 }
 
+export interface BagChangedEvent extends GameEvent {
+    readonly bag: Readonly<Bag>;
+}
+
 export class Bag {
     readonly dice: ModifiedDie[];
     readonly rollHistory: RecordHistory<readonly DieFaceResult[]>;
@@ -46,7 +50,7 @@ export class Bag {
 
     addDie(die: ModifiedDie): void {
         this.dice.push(die);
-        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+        this.raiseBagChanged();
     }
 
     removeDie(id: string): void {
@@ -57,7 +61,7 @@ export class Bag {
 
         this.dice.splice(index, 1);
         this.rollHistory.clear();
-        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+        this.raiseBagChanged();
     }
 
     getActiveDice(): Die[] {
@@ -72,7 +76,7 @@ export class Bag {
 
         die.active = !die.active;
         this.rollHistory.clear();
-        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+        this.raiseBagChanged();
     }
 
     toggleLocked(id: string): void {
@@ -82,6 +86,17 @@ export class Bag {
         }
 
         die.locked = !die.locked;
-        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+        this.raiseBagChanged();
+    }
+
+    private raiseBagChanged(): void {
+        // TODO: deep freeze inside the RaiseEvent layer
+        const frozenBag = Object.freeze({
+            ...this,
+            dice: Object.freeze([...this.dice]),
+        });
+        Events.RaiseEvent<BagChangedEvent>(TrickEvents.BAG_CHANGED, {
+            bag: frozenBag,
+        });
     }
 }
