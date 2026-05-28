@@ -10,6 +10,7 @@
 
 body {
   margin: 0;
+  height: 100vh;
   background:
     radial-gradient(circle at 12% 8%, var(--color-page-glow) 0%, transparent 35%),
     radial-gradient(circle at 88% 16%, color-mix(in srgb, var(--color-page-glow) 78%, black 22%) 0%, transparent 32%),
@@ -36,6 +37,7 @@ body::before {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 10px;
+  height: 100%;
 }
 
 .panel {
@@ -68,6 +70,8 @@ p {
   flex-direction: column;
   padding: 0;
   overflow: hidden;
+  height: 100%;
+  min-height: 400px;
 }
 
 .play-screen.is-hidden {
@@ -78,6 +82,10 @@ p {
   width: 100%;
   flex: 1;
   position: relative;
+}
+
+#roll-3d-screen canvas {
+  display: block;
 }
 
 #roll-btn {
