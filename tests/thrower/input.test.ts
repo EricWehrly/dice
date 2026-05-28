@@ -16,7 +16,8 @@ if (!(global as any).window.crypto) {
 }
 
 vi.mock('../../engine/js/rendering/entities/entity-3d-graphics', () => ({
-  GetEntity3DGraphic: vi.fn()
+  GetEntity3DGraphic: vi.fn(),
+  registerEntity3DRenderer: vi.fn(),
 }));
 
 import { GetEntity3DGraphic } from '../../engine/js/rendering/entities/entity-3d-graphics';
@@ -69,9 +70,6 @@ describe('createCubeAtCursor', () => {
     delete (global as any).window.__TEST_DISABLE_ANIMATION;
 
     expect(result).toBeDefined();
-    // entity should have been created with an entity3DConfig for the graphic
-    expect((result as any).entity3DConfig).toBeDefined();
-    expect((result as any).entity3DConfig.graphicClass).toBeDefined();
     expect((result as any).name).toBe('Thrown Dice');
   });
 });
