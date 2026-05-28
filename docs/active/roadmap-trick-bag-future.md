@@ -115,3 +115,16 @@ Low priority, interesting design space:
 - Swappable RNG engine (pluggable random source per die)
 
 The swappable RNG architecture should be scaffolded in TB-05/M5.1 so it's injectable later without a refactor.
+
+---
+
+## FP-9 — Modification Panel Polish
+
+**When**: After the TB-05 install flow is stable and the core transition animation feels settled.
+
+This is the deferred UI polish from the redesigned mod panel work, kept separate from the mode-transition decision itself.
+
+**Planned polish ideas**:
+- Add a distinct visual treatment for intermediate, not-yet-confirmed panel states.
+- Add a pulsing selector or similar emphasis when the target face changes in expanded mode.
+- Revisit small hover and confirmation animations once the panel flow has real playtest feedback.

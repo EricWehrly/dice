@@ -3,7 +3,7 @@
 Branch: pivot-screen-architecture-plan
 Purpose: build 4 presentation-agnostic screens and implement them through existing engine frameworks (Events, render contexts, UIElement/Menu, RenderLayer controls), not app-level DOM overlays.
 
-Feature docs: [F05](../features/F05-die-face-up-probability-model.md), [F06](../features/F06-dice-rolling-screen.md), [F07](../features/F07-dice-upgrading-screen.md), [F08](../features/F08-dice-details-screen.md), [F09](../features/F09-trick-list-screen.md), [F10](../features/F10-screen-shell-navigation.md)
+Feature docs: [F05](../features/F05-die-face-up-probability-model.md), [F06](../features/F06-dice-rolling-screen.md), [F07](../features/F07-dice-upgrading-screen.md), [F08](../features/F08-dice-details-screen.md), [F09](../features/F09-trick-list-screen.md), [F10](../features/F10-screen-shell-navigation.md), [F12](../features/F12-die-material-and-texture-pipeline.md)
 Related context: [F03 - Inspector Selection and Deferred UI](../features/F03-inspector-selection.md)
 
 ## Architecture Principle
@@ -40,12 +40,14 @@ Target screens:
 4. 🔮 [F07 - Dice Upgrading Screen](../features/F07-dice-upgrading-screen.md) (screen implementation)
 5. 🔮 [F08 - Dice Details Screen](../features/F08-dice-details-screen.md) (screen implementation)
 6. 🔮 [F09 - Trick List Screen](../features/F09-trick-list-screen.md) (screen implementation)
+7. 🔮 [F12 - Die Material and Texture Pipeline](../features/F12-die-material-and-texture-pipeline.md) (visual rendering track)
 
 ## Status Summary
 
 - Existing throw flow and scene rendering provide a usable base for Dice Rolling.
 - Inspector concepts overlap strongly with Dice Details, but prior implementation was deferred.
 - Probability-of-up per face is a new model requirement.
+- 3D dice currently rely on solid material + separate pip geometry; texture/material work is an explicit follow-up track.
 - Screens should be presentation-agnostic; presentation strategy (screen switch vs modal) is applied by shell, not built into screens.
 
 ## Dependency Flow

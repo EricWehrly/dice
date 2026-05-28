@@ -68,7 +68,7 @@ screenManager.register('roll-3d',
     [document.getElementById('roll-3d-mode-btn')!]
 );
 
-screenManager.switchTo('mod');
+screenManager.switchTo('roll-3d');
 
 const trickCounterPanel = new TrickCounterPanel();
 trickCounterPanel.render();
