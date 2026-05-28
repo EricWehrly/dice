@@ -14,20 +14,25 @@ import ThreeJSRenderContext from '../engine/js/rendering/contexts/ThreeJS.Render
 import './rendering/DiceGraphic';  // Import for class initialization and event wiring
 
 // TODO: handle in managed UI instead
-function wireRollButton(bag: Bag) {
-    const rollButton = document.getElementById('roll-btn') as HTMLButtonElement | null;
+function wireRollButtons(bag: Bag) {
+    const rollButtons = [
+        document.getElementById('roll-btn') as HTMLButtonElement | null,
+        document.getElementById('roll-3d-btn') as HTMLButtonElement | null,
+    ];
 
-    if (!rollButton) {
+    if (rollButtons.some((button) => !button)) {
         throw new Error('Missing required TB-01 DOM elements');
     }
 
-    rollButton.addEventListener('click', () => {
-        bag.rollAll();
+    rollButtons.forEach((button) => {
+        button!.addEventListener('click', () => {
+            bag.rollAll();
+        });
     });
 }
 
 const bag = new Bag();
-wireRollButton(bag);
+wireRollButtons(bag);
 new DiceCanvasRenderer(bag);
 
 const scoreTracker = new ScoreProgressionTracker(bag);

@@ -88,7 +88,7 @@ p {
   display: block;
 }
 
-#roll-btn {
+.roll-button {
   position: absolute;
   bottom: 24px;
   left: 50%;
@@ -107,11 +107,11 @@ p {
   cursor: pointer;
 }
 
-#roll-btn:hover {
+.roll-button:hover {
   filter: brightness(1.05);
 }
 
-#roll-btn.is-hidden {
+.roll-button.is-hidden {
   display: none;
 }
 
