@@ -1,0 +1,84 @@
+.roll3d-debug-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  border: 1px solid color-mix(in srgb, var(--color-gold-trim) 72%, black 28%);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-button-text);
+  background: linear-gradient(135deg, var(--color-button-grad-start), var(--color-button-grad-end));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 4px 14px rgba(20, 10, 31, 0.48);
+  cursor: pointer;
+}
+
+.roll3d-debug-toggle:hover {
+  filter: brightness(1.05);
+}
+
+.roll3d-debug-panel {
+  position: absolute;
+  top: 52px;
+  right: 12px;
+  z-index: 5;
+  width: 220px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--color-panel-border);
+  background: color-mix(in srgb, var(--color-panel-bg) 92%, black 8%);
+  box-shadow: 0 12px 28px rgba(12, 6, 22, 0.46);
+}
+
+.roll3d-debug-panel.is-hidden {
+  display: none;
+}
+
+.roll3d-debug-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.roll3d-debug-fields {
+  display: grid;
+  gap: 6px;
+}
+
+.roll3d-debug-row {
+  display: grid;
+  grid-template-columns: 1fr 88px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.roll3d-debug-input {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--color-counter-border) 60%, transparent 40%);
+  background: color-mix(in srgb, var(--color-counter-bg) 90%, black 10%);
+  color: var(--color-text-primary);
+  padding: 5px 6px;
+}
+
+.roll3d-debug-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.roll3d-debug-action {
+  flex: 1;
+  border: 1px solid color-mix(in srgb, var(--color-gold-trim) 62%, black 38%);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-button-text);
+  background: linear-gradient(135deg, var(--color-button-grad-start), var(--color-button-grad-end));
+  cursor: pointer;
+}

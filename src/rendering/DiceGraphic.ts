@@ -16,7 +16,7 @@ import { createStandardDieMaterial } from './materials/StandardDieMaterial';
 // TODO: Split into physics-based material with texture vs legacy geometry+material path
 export class DiceGraphic extends EntityGraphicThree {
     private static readonly ALLOWED_FACE_COUNTS = [4, 6, 8, 12, 20];
-    private static readonly SCENE_POSITION_SCALE = 8;
+    private static readonly SCENE_POSITION_SCALE = 2;
     private static readonly D6_TEXTURE_FACE_SIZE = 256;
     
     private diceConfig: DiceConfig;

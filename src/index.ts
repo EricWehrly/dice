@@ -1,4 +1,5 @@
 import { Bag } from './game/Bag';
+import { initializeRoll3DCamera } from './camera';
 import { ScoreProgressionTracker } from './game/score/ScoreProgressionTracker';
 import { TrickEvaluator } from './game/tricks/TrickEvaluator';
 import { DiceCanvasRenderer } from './rendering/2d/DiceCanvasRenderer';
@@ -10,7 +11,6 @@ import { ScreenManager } from './utils/ScreenManager';
 import { init as initThrower } from './thrower/index';
 import { initializeGameResources } from './game/resources/GameResources';
 import Events from '../engine/js/events';
-import ThreeJSRenderContext from '../engine/js/rendering/contexts/ThreeJS.RenderContext';
 import './rendering/DiceGraphic';  // Import for class initialization and event wiring
 
 // TODO: handle in managed UI instead
@@ -61,12 +61,9 @@ screenManager.register('mod',
     [document.getElementById('mod-mode-btn')!]
 );
 
-// Mount 3D viewport: configure render context to use the container.
-// ResizeObserver will automatically size the renderer when the container becomes visible.
 const roll3dScreen = document.getElementById('roll-3d-screen')!;
-ThreeJSRenderContext.configure({
-    parentElement: roll3dScreen,
-});
+initializeRoll3DCamera(roll3dScreen);
+
 initThrower();
 
 screenManager.register('roll-3d',
