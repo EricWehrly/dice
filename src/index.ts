@@ -2,7 +2,6 @@ import { Bag } from './game/Bag';
 import { ScoreProgressionTracker } from './game/score/ScoreProgressionTracker';
 import { TrickEvaluator } from './game/tricks/TrickEvaluator';
 import { DiceCanvasRenderer } from './rendering/2d/DiceCanvasRenderer';
-import { ScorePanel } from './ui/ScorePanel';
 import { DieModificationPanel } from './ui';
 import { RollHistoryPanel } from './ui/RollHistoryPanel';
 import { TrickCounterPanel } from './ui/TrickCounterPanel';
@@ -35,11 +34,8 @@ const bag = new Bag();
 wireRollButtons(bag);
 new DiceCanvasRenderer(bag);
 
-const scoreTracker = new ScoreProgressionTracker(bag);
+new ScoreProgressionTracker(bag);
 new TrickEvaluator();
-
-const scorePanel = new ScorePanel(scoreTracker.getHighScore());
-scorePanel.render();
 
 const dieModificationPanel = new DieModificationPanel(bag.dice);
 dieModificationPanel.render();

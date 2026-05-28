@@ -1,4 +1,5 @@
 import Events, { type GameEvent } from '../../../engine/js/events';
+import Resource from '../../../engine/js/entities/resource';
 import { Bag, type BagRolledEvent } from '../Bag';
 import { TrickEvents } from '../contracts/TrickContracts';
 import { ModifiedDie } from '../ModifiedDie';
@@ -12,12 +13,15 @@ export interface ScoreUpdatedEvent extends GameEvent {
 export class ScoreProgressionTracker {
     private readonly bag: Bag;
     private readonly unlockedMagnitudeFloor: number;
-    private highScore: number;
 
     constructor(bag: Bag, options: { unlockedMagnitudeFloor?: number } = {}) {
         this.bag = bag;
         this.unlockedMagnitudeFloor = options.unlockedMagnitudeFloor ?? 2;
-        this.highScore = this.calculateBagMaxRoll();
+        const initialHighScore = this.calculateBagMaxRoll();
+
+        if (!Resource.Get('high_score')) {
+            new Resource({ name: 'high_score', value: initialHighScore });
+        }
 
         Events.Subscribe<BagRolledEvent>(
             TrickEvents.BAG_ROLLED,
@@ -33,27 +37,28 @@ export class ScoreProgressionTracker {
     }
 
     getHighScore(): number {
-        return this.highScore;
+        return Resource.Get('high_score')?.value ?? 0;
     }
 
     observeRoll(faces: readonly number[]): void {
         const rollScore = faces.reduce((sum, face) => sum + face, 0);
-        const previousHighScore = this.highScore;
+        const previousHighScore = this.getHighScore();
 
         if (rollScore <= previousHighScore) {
             return;
         }
 
-        this.highScore = rollScore;
+        Resource.Get('high_score')!.value = rollScore;
+        const highScore = this.getHighScore();
 
         Events.RaiseEvent<ScoreUpdatedEvent>(TrickEvents.SCORE_UPDATED, {
             rollScore,
-            highScore: this.highScore,
+            highScore,
             previousHighScore,
         });
 
         const fromMagnitude = Math.max(this.getDecimalMagnitude(previousHighScore), this.unlockedMagnitudeFloor);
-        const toMagnitude = Math.max(this.getDecimalMagnitude(this.highScore), this.unlockedMagnitudeFloor);
+        const toMagnitude = Math.max(this.getDecimalMagnitude(highScore), this.unlockedMagnitudeFloor);
 
         if (toMagnitude <= fromMagnitude) {
             return;
