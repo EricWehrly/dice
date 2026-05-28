@@ -4,6 +4,7 @@ import { initThrowPathFollower } from './ThrowPathFollower';
 import { attachContextMenuListener } from '../ui/GameObjectInspector';
 import { InputManager } from '../controls/InputManager';
 import ThreeJSRenderContext from '../../engine/js/rendering/contexts/ThreeJS.RenderContext';
+import { ensureDiceLighting } from '../rendering/lighting';
 
 export function init() {
   console.log('game start!');
@@ -11,6 +12,9 @@ export function init() {
   const renderContext = ThreeJSRenderContext.Instance;
   const canvas = renderContext.canvas;
   const camera = renderContext.camera as THREE.PerspectiveCamera;
+  const scene = renderContext.scene as unknown as THREE.Scene;
+  // TODO: move scene-lighting ownership to a rendering bootstrap module.
+  ensureDiceLighting(scene);
   initThrowPathFollower();
 
   // Handle throws only when the mouseup target is the 3D viewport canvas.
@@ -34,7 +38,7 @@ export function init() {
     }
   });
 
-  attachContextMenuListener(camera, renderContext.scene as unknown as THREE.Scene, canvas);
+  attachContextMenuListener(camera, scene, canvas);
 
   // Throw path follower updates entity positions through the engine render loop.
 }
