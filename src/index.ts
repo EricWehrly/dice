@@ -9,6 +9,7 @@ import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
 import { ScreenManager } from './utils/ScreenManager';
 import { init as initThrower } from './thrower/index';
+import Events from '../engine/js/events';
 import ThreeJSRenderContext from '../engine/js/rendering/contexts/ThreeJS.RenderContext';
 
 // TODO: handle in managed UI instead
@@ -48,11 +49,13 @@ screenManager.register('mod',
     [document.getElementById('mod-mode-btn')!]
 );
 
-// Mount 3D viewport: init thrower (creates ThreeJSRenderContext canvas appended to body),
-// then re-parent the canvas into the roll-3d screen container so it stays mounted on tab switch.
+// Mount 3D viewport: configure render context to use the container.
+// ResizeObserver will automatically size the renderer when the container becomes visible.
 const roll3dScreen = document.getElementById('roll-3d-screen')!;
+ThreeJSRenderContext.configure({
+    parentElement: roll3dScreen,
+});
 initThrower();
-roll3dScreen.appendChild(ThreeJSRenderContext.Instance.canvas);
 
 screenManager.register('roll-3d',
     roll3dScreen,
@@ -69,3 +72,7 @@ trickPanel.render();
 
 const rollHistoryPanel = new RollHistoryPanel(bag);
 rollHistoryPanel.render();
+
+if (!Events.EventHasFired(Events.List.GameStart)) {
+    Events.RaiseEvent(Events.List.GameStart, null, { finalFire: true });
+}
