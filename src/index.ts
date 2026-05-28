@@ -11,6 +11,7 @@ import { ScreenManager } from './utils/ScreenManager';
 import { init as initThrower } from './thrower/index';
 import Events from '../engine/js/events';
 import ThreeJSRenderContext from '../engine/js/rendering/contexts/ThreeJS.RenderContext';
+import './rendering/DiceGraphic';  // Import for class initialization and event wiring
 
 // TODO: handle in managed UI instead
 function wireRollButton(bag: Bag) {

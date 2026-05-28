@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { Colors } from '../utils/colors';
-import { DiceGraphic } from '../rendering/DiceGraphic';
 import { createEntity } from '../../engine/js/entities/character/EntityBuilder';
 import Entity from '../../engine/js/entities/character/Entity';
 import { enqueueThrowPath } from './ThrowPathFollower';
@@ -25,12 +24,6 @@ export function createCubeAtCursor(event: MouseEvent, camera: THREE.PerspectiveC
       backColor: Colors.antiquewhite
     })
     .build();
-
-  (diceEntity as any).entity3DConfig = {
-    graphicClass: DiceGraphic,
-    visible: true,
-    offset: { x: 0, y: 0, z: 0 }
-  };
 
   enqueueThrowPath(
     diceEntity,

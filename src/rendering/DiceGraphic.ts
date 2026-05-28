@@ -1,9 +1,11 @@
 import * as THREE from 'three';
 import { EntityGraphicThree } from '../../engine/js/rendering/entities/EntityGraphicThree';
 import Entity from '../../engine/js/entities/character/Entity';
+import { registerEntity3DRenderer } from '../../engine/js/rendering/entities/entity-3d-graphics';
 import { getDiceConfig, DiceConfig } from '../game/Dice';
 import { PipUtils } from './util/PipUtils';
 import { registerEntityMesh } from './EntityMeshRegistry';
+import { Die } from '../game/Die';
 
 /**
  * 3D graphics handler for Dice entities
@@ -14,6 +16,10 @@ export class DiceGraphic extends EntityGraphicThree {
     
     private diceConfig: DiceConfig;
     private mesh!: THREE.Mesh;
+
+    static {
+        registerEntity3DRenderer(Die, DiceGraphic);
+    }
     
     constructor(entity: Entity) {
         super(entity);
@@ -79,17 +85,8 @@ export class DiceGraphic extends EntityGraphicThree {
     }
 
     update(deltaTime: number): void {
-        const entity3DConfig = (this.entity as {
-            entity3DConfig?: { offset?: { x: number, y: number, z: number } };
-        }).entity3DConfig;
-        const offset = entity3DConfig?.offset ?? { x: 0, y: 0, z: 0 };
-
-        this.graphic.position.x = this.entity.position.x + offset.x;
-        this.graphic.position.y = (this.entity.position.y || 0) + offset.y;
-        this.graphic.position.z = (this.entity.position.z || 0) + offset.z;
-
-        // Add idle rotation or animation here if desired.
-        // this.mesh.rotation.y += 0.001 * deltaTime;
-        void deltaTime;
+        this.graphic.position.x = this.entity.position.x || 0;
+        this.graphic.position.y = this.entity.position.y || 0;
+        this.graphic.position.z = this.entity.position.z || 0;
     }
 }
