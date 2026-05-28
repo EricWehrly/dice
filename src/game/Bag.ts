@@ -25,16 +25,21 @@ export class Bag {
     constructor(initialDice: ModifiedDie[] = [new ModifiedDie(), new ModifiedDie(), new ModifiedDie()]) {
         this.dice = [...initialDice];
         this.rollHistory = new RecordHistory<readonly DieFaceResult[]>(20);
+        this.applyLaneOrdering();
+
+        if (this.dice.length > 0) {
+            this.raiseBagChanged();
+        }
     }
 
     rollAll(): number[] {
         const activeDice = this.getActiveDice();
         const unlockedActiveDice = activeDice.filter((die) => !die.locked);
-        unlockedActiveDice
-            .forEach((die, index) => {
-                die.position.update(new Coordinate3D(index, die.position.y, die.position.z));
-                die.roll();
-            });
+        this.applyLaneOrdering();
+
+        unlockedActiveDice.forEach((die) => {
+            die.roll();
+        });
 
         const faceResults = Object.freeze(activeDice.map((die) => new DieFaceResult(die.faceUp, { rolled: !die.locked })));
         const faces = faceResults.map((faceResult) => faceResult.computed_value);
@@ -53,6 +58,7 @@ export class Bag {
 
     addDie(die: ModifiedDie): void {
         this.dice.push(die);
+        this.applyLaneOrdering();
         this.raiseBagChanged();
     }
 
@@ -64,6 +70,7 @@ export class Bag {
 
         this.dice.splice(index, 1);
         this.rollHistory.clear();
+        this.applyLaneOrdering();
         this.raiseBagChanged();
     }
 
@@ -79,6 +86,7 @@ export class Bag {
 
         die.active = !die.active;
         this.rollHistory.clear();
+        this.applyLaneOrdering();
         this.raiseBagChanged();
     }
 
@@ -89,6 +97,7 @@ export class Bag {
         }
 
         die.locked = !die.locked;
+        this.applyLaneOrdering();
         this.raiseBagChanged();
     }
 
@@ -100,6 +109,17 @@ export class Bag {
         });
         Events.RaiseEvent<BagChangedEvent>(TrickEvents.BAG_CHANGED, {
             bag: frozenBag,
+        });
+    }
+
+    private applyLaneOrdering(): void {
+        const activeDice = this.getActiveDice();
+        const lockedActiveDice = activeDice.filter((die) => die.locked);
+        const unlockedActiveDice = activeDice.filter((die) => !die.locked);
+
+        // Locked dice stay in front of unlocked dice so they keep their lane priority.
+        [...lockedActiveDice, ...unlockedActiveDice].forEach((die, index) => {
+            die.position.update(new Coordinate3D(index, die.position.y, die.position.z));
         });
     }
 }

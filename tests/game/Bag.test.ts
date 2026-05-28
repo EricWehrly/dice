@@ -57,6 +57,19 @@ describe('Bag', () => {
         }
     });
 
+    it('raises BAG_CHANGED from the constructor when initialized with dice', () => {
+        const callback = vi.fn();
+        const subscriptionId = Events.Subscribe(TrickEvents.BAG_CHANGED, callback);
+
+        new Bag([new Die({ faceCount: 6, id: 'd1' })]);
+
+        expect(callback).toHaveBeenCalledTimes(1);
+
+        if (subscriptionId) {
+            Events.Unsubscribe(subscriptionId);
+        }
+    });
+
     it('stores roll history entries with face result fields needed by tricks', () => {
         const lockedDie = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.8 });
         const rolledDie = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.8 });
@@ -91,6 +104,47 @@ describe('Bag', () => {
         expect(d1.position.z).toBe(7);
         expect(d2.position.z).toBe(8);
         expect(d3.position.z).toBe(9);
+    });
+
+    it('sets x position to the next lane index when adding a die', () => {
+        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
+        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
+        const bag = new Bag([d1, d2]);
+        const d3 = new Die({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
+
+        bag.addDie(d3);
+
+        expect(d1.position.x).toBe(0);
+        expect(d2.position.x).toBe(1);
+        expect(d3.position.x).toBe(2);
+        expect(d3.position.y).toBe(5);
+        expect(d3.position.z).toBe(9);
+    });
+
+    it('compacts lane positions when removing a die', () => {
+        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
+        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
+        const d3 = new Die({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
+        const bag = new Bag([d1, d2, d3]);
+
+        bag.removeDie('d2');
+
+        expect(d1.position.x).toBe(0);
+        expect(d3.position.x).toBe(1);
+    });
+
+    it('assigns locked dice to earlier lane indexes than unlocked dice', () => {
+        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
+        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
+        const d3 = new Die({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
+        d3.locked = true;
+        const bag = new Bag([d1, d2, d3]);
+
+        bag.rollAll();
+
+        expect(d3.position.x).toBe(0);
+        expect(d1.position.x).toBe(1);
+        expect(d2.position.x).toBe(2);
     });
 
     it('toggles active flag by id', () => {
