@@ -62,4 +62,26 @@ describe('DiceGraphic', () => {
             expect(((mesh as unknown) as THREE.Mesh).geometry).toBeDefined();
         }
     });
+
+    it('multiplies entity position by scene scale during update', async () => {
+        const { createEntity } = (await import('../../../engine/js/entities/character/EntityBuilder')) as any;
+        const { DiceGraphic } = (await import('../../rendering/DiceGraphic')) as any;
+        const Coordinate3D = (await import('../../../engine/js/coordinates/Coordinate3D')).default as any;
+
+        const entity = createEntity().withOptions({
+            name: 'scaled-position-entity',
+            position: { x: 2, y: -1, z: 0.5 },
+            dice: { faceCount: 6, foreColor: '#000000', backColor: '#ffffff' },
+        }).build();
+
+        (entity as any).position.update(new Coordinate3D(2, -1, 0.5));
+
+        const graphic = new DiceGraphic(entity);
+        graphic.update(16);
+
+        const mesh = graphic.getGraphic();
+        expect(mesh.position.x).toBeCloseTo(16);
+        expect(mesh.position.y).toBeCloseTo(-8);
+        expect(mesh.position.z).toBeCloseTo(4);
+    });
 });

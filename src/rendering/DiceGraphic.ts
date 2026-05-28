@@ -13,6 +13,7 @@ import { Die } from '../game/Die';
  */
 export class DiceGraphic extends EntityGraphicThree {
     private static readonly ALLOWED_FACE_COUNTS = [4, 6, 8, 12, 20];
+    private static readonly SCENE_POSITION_SCALE = 8;
     
     private diceConfig: DiceConfig;
     private mesh!: THREE.Mesh;
@@ -85,8 +86,8 @@ export class DiceGraphic extends EntityGraphicThree {
     }
 
     update(deltaTime: number): void {
-        this.graphic.position.x = this.entity.position.x || 0;
-        this.graphic.position.y = this.entity.position.y || 0;
-        this.graphic.position.z = this.entity.position.z || 0;
+        this.graphic.position.x = (this.entity.position.x || 0) * DiceGraphic.SCENE_POSITION_SCALE;
+        this.graphic.position.y = (this.entity.position.y || 0) * DiceGraphic.SCENE_POSITION_SCALE;
+        this.graphic.position.z = (this.entity.position.z || 0) * DiceGraphic.SCENE_POSITION_SCALE;
     }
 }

@@ -4,6 +4,7 @@ import { Die } from './Die';
 import { DieFaceResult } from './DieFaceResult';
 import { ModifiedDie } from './ModifiedDie';
 import { RecordHistory } from './RecordHistory';
+import Coordinate3D from '../../engine/js/coordinates/Coordinate3D';
 
 export interface BagRolledEvent extends GameEvent {
     faces: number[];
@@ -16,6 +17,7 @@ export interface BagChangedEvent extends GameEvent {
     readonly bag: Readonly<Bag>;
 }
 
+// if we go to multiplayer, I think Bag either needs to be Listed or associated with player
 export class Bag {
     readonly dice: ModifiedDie[];
     readonly rollHistory: RecordHistory<readonly DieFaceResult[]>;
@@ -29,7 +31,8 @@ export class Bag {
         const activeDice = this.getActiveDice();
         const unlockedActiveDice = activeDice.filter((die) => !die.locked);
         unlockedActiveDice
-            .forEach((die) => {
+            .forEach((die, index) => {
+                die.position.update(new Coordinate3D(index, die.position.y, die.position.z));
                 die.roll();
             });
 

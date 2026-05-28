@@ -74,6 +74,25 @@ describe('Bag', () => {
         expect(record[1].computed_value).toBe(5);
     });
 
+    it('sets x position to lane index on roll', () => {
+        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
+        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
+        const d3 = new Die({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
+        const bag = new Bag([d1, d2, d3]);
+
+        bag.rollAll();
+
+        expect(d1.position.x).toBe(0);
+        expect(d2.position.x).toBe(1);
+        expect(d3.position.x).toBe(2);
+        expect(d1.position.y).toBe(3);
+        expect(d2.position.y).toBe(4);
+        expect(d3.position.y).toBe(5);
+        expect(d1.position.z).toBe(7);
+        expect(d2.position.z).toBe(8);
+        expect(d3.position.z).toBe(9);
+    });
+
     it('toggles active flag by id', () => {
         const d1 = new Die({ faceCount: 6, id: 'd1' });
         const bag = new Bag([d1]);
