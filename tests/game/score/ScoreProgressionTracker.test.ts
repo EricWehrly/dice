@@ -3,10 +3,13 @@ import Events from '../../../engine/js/events';
 import { Bag } from '../../../src/game/Bag';
 import { TrickEvents } from '../../../src/game/contracts/TrickContracts';
 import { ScoreProgressionTracker } from '../../../src/game/score/ScoreProgressionTracker';
+import { initializeGameResources } from '../../../src/game/resources/GameResources';
 
 describe('ScoreProgressionTracker', () => {
     it('emits score updates only when a new high score is reached', () => {
         const bag = new Bag();
+        const initialHighScore = bag.getActiveDice().reduce((sum, die) => sum + die.faceCount, 0);
+        initializeGameResources(initialHighScore);
         const tracker = new ScoreProgressionTracker(bag);
         const scoreCallback = vi.fn();
         const scoreSubscription = Events.Subscribe(TrickEvents.SCORE_UPDATED, scoreCallback);
@@ -25,6 +28,8 @@ describe('ScoreProgressionTracker', () => {
 
     it('does not add dice for 10s/100s tiers and adds one die at 1000s tier', () => {
         const bag = new Bag();
+        const initialHighScore = bag.getActiveDice().reduce((sum, die) => sum + die.faceCount, 0);
+        initializeGameResources(initialHighScore);
         const tracker = new ScoreProgressionTracker(bag);
         const scoreCallback = vi.fn();
 

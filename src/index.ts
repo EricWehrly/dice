@@ -8,6 +8,7 @@ import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
 import { ScreenManager } from './utils/ScreenManager';
 import { init as initThrower } from './thrower/index';
+import { initializeGameResources } from './game/resources/GameResources';
 import Events from '../engine/js/events';
 import ThreeJSRenderContext from '../engine/js/rendering/contexts/ThreeJS.RenderContext';
 import './rendering/DiceGraphic';  // Import for class initialization and event wiring
@@ -30,9 +31,18 @@ function wireRollButtons(bag: Bag) {
     });
 }
 
+function calculateBagMaxRoll(bag: Bag): number {
+    const activeDice = bag.getActiveDice();
+    return activeDice.reduce((sum, die) => sum + die.faceCount, 0);
+}
+
 const bag = new Bag();
 wireRollButtons(bag);
 new DiceCanvasRenderer(bag);
+
+// Initialize all game resources once before creating systems that depend on them
+const initialHighScore = calculateBagMaxRoll(bag);
+initializeGameResources(initialHighScore);
 
 new ScoreProgressionTracker(bag);
 new TrickEvaluator();

@@ -6,6 +6,7 @@ import { Ascending } from '../../../src/game/tricks/Ascending';
 import { OfAKind } from '../../../src/game/tricks/OfAKind';
 import { Primes } from '../../../src/game/tricks/Primes';
 import { TrickEvaluator, type EvaluationResult, type RollEvaluatedEvent } from '../../../src/game/tricks/TrickEvaluator';
+import { initializeGameResources } from '../../../src/game/resources/GameResources';
 
 function createTricks() {
     return [new OfAKind(), new Ascending(), new Primes()];
@@ -17,6 +18,7 @@ function faceResults(values: number[]): readonly DieFaceResult[] {
 
 describe('TrickEvaluator', () => {
     it('raises trick discovered event on first completion only', () => {
+        initializeGameResources(0);
         const tricks = createTricks();
         const evaluator = new TrickEvaluator(tricks);
         const callback = vi.fn();
@@ -35,6 +37,7 @@ describe('TrickEvaluator', () => {
     });
 
     it('raises trick high-score event for post-unlock high-score improvement', () => {
+        initializeGameResources(0);
         const tricks = createTricks();
         const evaluator = new TrickEvaluator(tricks);
         const callback = vi.fn();
@@ -59,6 +62,7 @@ describe('TrickEvaluator', () => {
     });
 
     it('detects prime-distinct only for distinct prime faces', () => {
+        initializeGameResources(0);
         const tricks = createTricks();
         const evaluator = new TrickEvaluator(tricks);
         const capturedResults: EvaluationResult[][] = [];

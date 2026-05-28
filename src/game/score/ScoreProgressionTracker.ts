@@ -3,6 +3,7 @@ import Resource from '../../../engine/js/entities/resource';
 import { Bag, type BagRolledEvent } from '../Bag';
 import { TrickEvents } from '../contracts/TrickContracts';
 import { ModifiedDie } from '../ModifiedDie';
+import { ResourceNames } from '../resources/GameResources';
 
 export interface ScoreUpdatedEvent extends GameEvent {
     rollScore: number;
@@ -17,11 +18,6 @@ export class ScoreProgressionTracker {
     constructor(bag: Bag, options: { unlockedMagnitudeFloor?: number } = {}) {
         this.bag = bag;
         this.unlockedMagnitudeFloor = options.unlockedMagnitudeFloor ?? 2;
-        const initialHighScore = this.calculateBagMaxRoll();
-
-        if (!Resource.Get('high_score')) {
-            new Resource({ name: 'high_score', value: initialHighScore });
-        }
 
         Events.Subscribe<BagRolledEvent>(
             TrickEvents.BAG_ROLLED,
@@ -37,7 +33,7 @@ export class ScoreProgressionTracker {
     }
 
     getHighScore(): number {
-        return Resource.Get('high_score')?.value ?? 0;
+        return Resource.Get(ResourceNames.highScore)?.value ?? 0;
     }
 
     observeRoll(faces: readonly number[]): void {
@@ -48,7 +44,7 @@ export class ScoreProgressionTracker {
             return;
         }
 
-        Resource.Get('high_score')!.value = rollScore;
+        Resource.Get(ResourceNames.highScore)!.value = rollScore;
         const highScore = this.getHighScore();
 
         Events.RaiseEvent<ScoreUpdatedEvent>(TrickEvents.SCORE_UPDATED, {

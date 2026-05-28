@@ -3,6 +3,7 @@ import type { GameEvent } from '../../../engine/js/events';
 import Resource from '../../../engine/js/entities/resource';
 import type { BagRolledEvent } from '../Bag';
 import { TrickEvents } from '../contracts/TrickContracts';
+import { ResourceNames } from '../resources/GameResources';
 import { Trick } from './index';
 import type { TrickEvaluationContext } from './Trick';
 
@@ -32,12 +33,6 @@ export class TrickEvaluator {
 
     constructor(tricks?: Trick[]) {
         this.tricks = tricks || Trick.GetAll<Trick>();
-        if (!Resource.Get('mods')) {
-            new Resource({ name: 'mods', value: 0 });
-        }
-        if (!Resource.Get('cosmetics')) {
-            new Resource({ name: 'cosmetics', value: 0 });
-        }
 
         Events.Subscribe<BagRolledEvent>(
             TrickEvents.BAG_ROLLED,
@@ -81,12 +76,12 @@ export class TrickEvaluator {
             }
 
             if (isFirstCompletion) {
-                Resource.Get('mods')!.value += 1;
+                Resource.Get(ResourceNames.mods)!.value += 1;
                 Events.RaiseEvent<TrickDiscoveredEvent>(TrickEvents.TRICK_DISCOVERED, { trickId: trick.id });
             }
 
             if (isNewHighScore) {
-                Resource.Get('cosmetics')!.value += 1;
+                Resource.Get(ResourceNames.cosmetics)!.value += 1;
                 Events.RaiseEvent<TrickHighScoreEvent>(TrickEvents.TRICK_HIGH_SCORE, {
                     trickId: trick.id,
                     score,
