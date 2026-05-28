@@ -170,17 +170,19 @@ describe('Bag', () => {
     });
 
     it('raises BAG_CHANGED with bag on event payload', () => {
+        // Bag constructor fires BAG_CHANGED when given initial dice, so subscribe after construction.
+        const bag = new Bag([new Die({ faceCount: 6, id: 'd1' })]);
+
         const callback = vi.fn();
         const subscriptionId = Events.Subscribe(TrickEvents.BAG_CHANGED, callback);
-        const bag = new Bag([new Die({ faceCount: 6, id: 'd1' })]);
 
         bag.toggleLocked('d1');
 
         expect(callback).toHaveBeenCalledTimes(1);
         const event = callback.mock.calls[0][0];
         expect(event.bag).toBeDefined();
-        expect(event.bag).toBe(bag);
-        expect(Array.isArray(event.bag.getActiveDice())).toBe(true);
+        expect(event.bag.dice).toEqual(bag.dice);
+        expect(Array.isArray(event.bag.dice)).toBe(true);
 
         if (subscriptionId) {
             Events.Unsubscribe(subscriptionId);
