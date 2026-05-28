@@ -115,4 +115,20 @@ describe('DiceGraphic', () => {
         expect(mesh.position.y).toBeCloseTo(-8);
         expect(mesh.position.z).toBeCloseTo(4);
     });
+
+    it('orients d6 mesh so faceUp appears on top', async () => {
+        const { DiceGraphic } = (await import('../../rendering/DiceGraphic')) as any;
+        const { ModifiedDie } = (await import('../../game/ModifiedDie')) as any;
+
+        const entity = new ModifiedDie({ faceCount: 6 });
+        entity.faceUp = 2;
+
+        const graphic = new DiceGraphic(entity);
+        graphic.update(16);
+
+        const mesh = graphic.getGraphic();
+        // Empirical display correction maps faceUp=2 through the d6 remap table.
+        expect(mesh.rotation.x).toBeCloseTo(0);
+        expect(mesh.rotation.z).toBeCloseTo(-Math.PI / 2);
+    });
 });

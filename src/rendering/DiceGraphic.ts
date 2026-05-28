@@ -13,13 +13,13 @@ import { createStandardDieMaterial } from './materials/StandardDieMaterial';
  * 3D graphics handler for Dice entities
  * Manages the Three.js representation of dice in the game world
  */
+// TODO: Split into physics-based material with texture vs legacy geometry+material path
 export class DiceGraphic extends EntityGraphicThree {
     private static readonly ALLOWED_FACE_COUNTS = [4, 6, 8, 12, 20];
     private static readonly SCENE_POSITION_SCALE = 8;
     private static readonly D6_TEXTURE_FACE_SIZE = 256;
     
     private diceConfig: DiceConfig;
-    private mesh!: THREE.Mesh;
 
     static {
         registerEntity3DRenderer(Die, DiceGraphic);
@@ -49,15 +49,17 @@ export class DiceGraphic extends EntityGraphicThree {
         const geometry = this.createGeometry(faceCount);
         const meshMaterial = this.createMaterial(cfg, faceCount, geometry);
 
-        this.mesh = new THREE.Mesh(geometry, meshMaterial);
+        const mesh = new THREE.Mesh(geometry, meshMaterial);
 
-        registerEntityMesh(this.mesh, this.entity);
+        registerEntityMesh(mesh, this.entity);
 
         if (!(meshMaterial instanceof THREE.MeshPhysicalMaterial)) {
-            this.addPips(this.mesh, faceCount, cfg.foreColor);
+            this.addPips(mesh, faceCount, cfg.foreColor);
         }
+
+        this.applyFaceUpOrientation(faceCount, mesh);
         
-        return this.mesh;
+        return mesh;
     }
 
     private createMaterial(cfg: DiceConfig, faceCount: number, geometry: THREE.BufferGeometry): THREE.Material {
@@ -103,5 +105,56 @@ export class DiceGraphic extends EntityGraphicThree {
         this.graphic.position.x = (this.entity.position.x || 0) * DiceGraphic.SCENE_POSITION_SCALE;
         this.graphic.position.y = (this.entity.position.y || 0) * DiceGraphic.SCENE_POSITION_SCALE;
         this.graphic.position.z = (this.entity.position.z || 0) * DiceGraphic.SCENE_POSITION_SCALE;
+        this.applyFaceUpOrientation(this.diceConfig.faceCount ?? 6, this.graphic as THREE.Mesh);
+    }
+
+    private applyFaceUpOrientation(faceCount: number, mesh: THREE.Mesh): void {
+        if (faceCount !== 6 || !mesh) {
+            return;
+        }
+
+        const faceUp = (this.entity as unknown as { faceUp?: number }).faceUp;
+        if (!Number.isInteger(faceUp)) {
+            return;
+        }
+
+        // Empirical runtime correction: rendered top face currently maps as
+        // 1->5, 2->4, 3->2, 4->6, 5->1, 6->3. Invert that mapping so the
+        // visual face shown on top matches the logical faceUp value.
+        const visualFixMap: Record<number, number> = {
+            1: 5,
+            2: 3,
+            3: 6,
+            4: 2,
+            5: 1,
+            6: 4,
+        };
+        const correctedFaceUp = visualFixMap[faceUp] ?? faceUp;
+
+        // Rotation mapping derived from D6_FACE_ORDER in DieFaceTextureAtlas.ts:
+        // Geometry face → value: +X=3, -X=4, +Y=1, -Y=6, +Z=2, -Z=5
+        // To show face N on top (+Y), rotate that face to face +Y.
+        switch (correctedFaceUp) {
+            case 1: // +Y is already top
+                mesh.rotation.set(0, 0, 0);
+                break;
+            case 2: // +Z → rotate -90° around X so +Z faces up
+                mesh.rotation.set(-Math.PI / 2, 0, 0);
+                break;
+            case 3: // +X → rotate +90° around Z so +X faces up
+                mesh.rotation.set(0, 0, -Math.PI / 2);
+                break;
+            case 4: // -X → rotate -90° around Z so -X faces up
+                mesh.rotation.set(0, 0, Math.PI / 2);
+                break;
+            case 5: // -Z → rotate +90° around X so -Z faces up
+                mesh.rotation.set(Math.PI / 2, 0, 0);
+                break;
+            case 6: // -Y → rotate 180° around X so -Y faces up
+                mesh.rotation.set(Math.PI, 0, 0);
+                break;
+            default:
+                break;
+        }
     }
 }
