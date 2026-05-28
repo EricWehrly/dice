@@ -23,7 +23,7 @@ vi.mock('../../engine/js/rendering/contexts/ThreeJS.RenderContext', () => {
     default: {
       Instance: {
         camera: {},
-        scene: {},
+        scene: { getObjectByName: vi.fn().mockReturnValue(null), add: vi.fn() },
         canvas
       }
     }
