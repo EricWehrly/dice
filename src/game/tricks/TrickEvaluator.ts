@@ -3,7 +3,8 @@ import type { GameEvent } from '../../../engine/js/events';
 import Resource from '../../../engine/js/entities/resource';
 import type { BagRolledEvent } from '../Bag';
 import { TrickEvents } from '../contracts/TrickContracts';
-import { ResourceNames } from '../resources/GameResources';
+
+import { ResourceNames, initializeGameResources } from '../resources/GameResources';
 import { Trick } from './index';
 import type { TrickEvaluationContext } from './Trick';
 
@@ -33,6 +34,10 @@ export class TrickEvaluator {
 
     constructor(tricks?: Trick[]) {
         this.tricks = tricks || Trick.GetAll<Trick>();
+
+        if (!Resource.Get(ResourceNames.mods) || !Resource.Get(ResourceNames.cosmetics)) {
+            initializeGameResources(0);
+        }
 
         Events.Subscribe<BagRolledEvent>(
             TrickEvents.BAG_ROLLED,
