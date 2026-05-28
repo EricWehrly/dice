@@ -1,35 +1,70 @@
+// NOTE: ModifiedDie implements DieEquipped inline (not via mixin) because it uses 'new' construction.
+// Migrate to DieEquippedMixin via factory pattern when M8.1 EntityBuilder migration lands.
+// See engine/docs/EQUIPMENT_GENERALIZATION_ROADMAP.md and docs/features/TB-08-die-mixin-equipped-refactor.md
+
 import { Die, type DieOptions } from './Die';
 import { FACE_STAT_KEYS, type DieStatKey, type FaceStatKey } from './DieStatKeys';
 import Events from '../../engine/js/events';
 import { TrickEvents } from './contracts/TrickContracts';
+import type { DieEquipment } from './DieEquipmentTypes';
+import { DieSlotType } from './DieEquipmentTypes';
+import { DieWeightMod } from './mods/DieWeightMod';
+
+export { DieWeightMod } from './mods/DieWeightMod';
 
 export type DieStats = Record<string, number>;
-
-export interface DieWeightMod {
-    id?: string;
-    faceIndex: number;
-    grams: number;
-}
 
 export interface ModifiedDieOptions extends DieOptions {
     stats?: DieStats;
     faceStats?: DieStats[];
-    mod?: DieWeightMod | null;
+    mod?: { id?: string; faceIndex: number; grams: number } | null;
 }
+
+type SlotCollection = Partial<Record<DieSlotType, DieEquipment>>;
 
 export class ModifiedDie extends Die {
     readonly stats: DieStats;
-    mod: DieWeightMod | null;
     private readonly faceStats: DieStats[];
+    private _slots: SlotCollection = {};
+
+    // Backward-compat getter: returns the installed weight mod, or null.
+    get mod(): DieWeightMod | null {
+        const equipped = this._slots[DieSlotType.MOD];
+        return equipped instanceof DieWeightMod ? equipped : null;
+    }
+
+    // DieEquipped interface — inline implementation pending mixin migration
+    getEquipped(slotType: DieSlotType): DieEquipment | null {
+        return this._slots[slotType] ?? null;
+    }
+
+    hasEquipped(slotType: DieSlotType): boolean {
+        return this._slots[slotType] !== undefined;
+    }
+
+    install(item: DieEquipment): void {
+        if (item instanceof DieWeightMod) {
+            this._applyWeightMod(item);
+        } else {
+            this._slots[item.type] = item;
+        }
+    }
+
+    uninstall(slotType: DieSlotType): void {
+        if (slotType === DieSlotType.MOD) {
+            this._clearWeightMod(true);
+        } else {
+            delete this._slots[slotType];
+        }
+    }
 
     constructor({ stats = {}, faceStats = [], mod = null, ...dieOptions }: ModifiedDieOptions = {}) {
         super(dieOptions);
         this.stats = { ...stats };
         this.faceStats = Array.from({ length: this.faceCount }, (_, index) => ({ ...(faceStats[index] ?? {}) }));
-        this.mod = null;
 
-        if (this.isValidInitialMod(mod)) {
-            this.setInstalledMod(mod, false);
+        if (mod && this._isValidInitialMod(mod)) {
+            this._applyWeightMod(new DieWeightMod(mod), false);
         }
     }
 
@@ -53,11 +88,11 @@ export class ModifiedDie extends Die {
             return;
         }
 
-        this.setInstalledMod({
+        this.install(new DieWeightMod({
             id: id ?? `weight-${grams.toFixed(1)}g`,
             faceIndex,
             grams,
-        }, true);
+        }));
     }
 
     addCoreMod(id: string): void {
@@ -66,7 +101,7 @@ export class ModifiedDie extends Die {
     }
 
     installMod(modId: string, targetFaceIndex: number): boolean {
-        const grams = this.resolveModGrams(modId);
+        const grams = this._resolveModGrams(modId);
         if (grams === null) {
             return false;
         }
@@ -74,11 +109,7 @@ export class ModifiedDie extends Die {
             return false;
         }
 
-        this.setInstalledMod({
-            id: modId,
-            faceIndex: targetFaceIndex,
-            grams,
-        }, true);
+        this.install(new DieWeightMod({ id: modId, faceIndex: targetFaceIndex, grams }));
         return true;
     }
 
@@ -89,10 +120,9 @@ export class ModifiedDie extends Die {
 
         void modId;
 
-        this.clearInstalledMod(true);
+        this.uninstall(DieSlotType.MOD);
         return true;
     }
-
     getInstalledModFaceIndex(modId?: string): number | null {
         if (!this.mod) {
             return null;
@@ -105,7 +135,7 @@ export class ModifiedDie extends Die {
     }
 
     getInstalledWeightModId(): string | null {
-        return this.getInstalledModId();
+        return this.mod?.id ?? null;
     }
 
     getInstalledModId(): string | null {
@@ -152,35 +182,33 @@ export class ModifiedDie extends Die {
         this.setFaceStat(faceIndex, stat, next);
     }
 
-    private clearInstalledMod(emitEvent: boolean): void {
-        if (!this.mod) {
+    private _clearWeightMod(emitEvent: boolean): void {
+        const current = this.mod;
+        if (!current) {
             return;
         }
 
-        this.addFaceStat(this.mod.faceIndex, FACE_STAT_KEYS.WEIGHT, -this.mod.grams);
-        this.mod = null;
+        this.addFaceStat(current.faceIndex, FACE_STAT_KEYS.WEIGHT, -current.grams);
+        delete this._slots[DieSlotType.MOD];
         if (emitEvent) {
             Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
         }
     }
 
-    private setInstalledMod(mod: DieWeightMod, emitEvent: boolean): void {
-        if (this.mod) {
-            this.addFaceStat(this.mod.faceIndex, FACE_STAT_KEYS.WEIGHT, -this.mod.grams);
+    private _applyWeightMod(mod: DieWeightMod, emitEvent = true): void {
+        const current = this.mod;
+        if (current) {
+            this.addFaceStat(current.faceIndex, FACE_STAT_KEYS.WEIGHT, -current.grams);
         }
 
-        this.mod = {
-            id: mod.id,
-            faceIndex: mod.faceIndex,
-            grams: mod.grams,
-        };
+        this._slots[DieSlotType.MOD] = mod;
         this.addFaceStat(mod.faceIndex, FACE_STAT_KEYS.WEIGHT, mod.grams);
         if (emitEvent) {
             Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
         }
     }
 
-    private resolveModGrams(modId: string): number | null {
+    private _resolveModGrams(modId: string): number | null {
         if (this.mod?.id === modId) {
             return this.mod.grams;
         }
@@ -194,7 +222,7 @@ export class ModifiedDie extends Die {
         return Number.isFinite(grams) && grams > 0 ? grams : null;
     }
 
-    private isValidInitialMod(mod: DieWeightMod | null | undefined): mod is DieWeightMod {
+    private _isValidInitialMod(mod: { faceIndex: number; grams: number } | null | undefined): mod is { faceIndex: number; grams: number } {
         return Boolean(
             mod
             && Number.isInteger(mod.faceIndex)

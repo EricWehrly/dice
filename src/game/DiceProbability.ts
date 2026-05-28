@@ -6,7 +6,7 @@
  */
 
 import { AVAILABLE_MODS, type AvailableModValue } from '../ui/DieModificationTypes';
-import type { DieWeightMod } from './ModifiedDie';
+import type { DieWeightModData } from './mods/DieWeightMod';
 
 const BASE_FACE_WEIGHT = 1;
 const WEIGHT_FACTOR = 0.12;
@@ -21,8 +21,8 @@ const OPPOSITE_DISTANCE_FACTOR = 0.6;
 
 export type DiceModel = {
     faceCount: number;
-    mod?: DieWeightMod | null;
-    mods?: DieWeightMod[];
+    mod?: DieWeightModData | null;
+    mods?: DieWeightModData[];
 };
 
 function getInstalledWeightGrams(die: DiceModel, faceIndex: number): number {
@@ -95,10 +95,10 @@ export function getModGrams(modValue: AvailableModValue): number {
  * - Weighted face and adjacent faces trend down in face-up chance
  * - Opposite face trends up in face-up chance
  */
-export function getFaceChances(die: DiceModel, extraMods: DieWeightMod[] = []): number[] {
+export function getFaceChances(die: DiceModel, extraMods: DieWeightModData[] = []): number[] {
     const weights = Array.from({ length: die.faceCount }, () => BASE_FACE_WEIGHT);
 
-    const allMods: DieWeightMod[] = [];
+    const allMods: DieWeightModData[] = [];
     for (let faceIndex = 0; faceIndex < die.faceCount; faceIndex += 1) {
         const grams = getInstalledWeightGrams(die, faceIndex);
         if (grams > 0) {
@@ -137,7 +137,7 @@ export function getPreviewChances(die: DiceModel, draftFaceMods: AvailableModVal
         desiredGramsByFace[faceIndex] = getModGrams(draftFaceMods[faceIndex]);
     }
 
-    const previewMods: DieWeightMod[] = [];
+    const previewMods: DieWeightModData[] = [];
     for (let faceIndex = 0; faceIndex < desiredGramsByFace.length; faceIndex += 1) {
         const grams = desiredGramsByFace[faceIndex];
         if (grams > 0) {
