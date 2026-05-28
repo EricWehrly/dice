@@ -5,6 +5,7 @@
 
 /** Generic equippable item contract — will align with engine Equippable<TSlotKey> */
 export interface Equippable<TSlotKey extends string> {
+    id: string;
     name: string;
     type: TSlotKey;
 }
