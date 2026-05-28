@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { vi } from 'vitest';
 
 // Some engine modules reference `window` during module initialization. Ensure minimal globals
 if (typeof (global as any).window === 'undefined') {
@@ -17,8 +18,32 @@ if (!(global as any).window.crypto) {
     } as Crypto;
 }
 
+const mockCanvasContext = {
+    clearRect: vi.fn(),
+    fillRect: vi.fn(),
+    strokeRect: vi.fn(),
+    beginPath: vi.fn(),
+    arc: vi.fn(),
+    fill: vi.fn(),
+    shadowColor: 'transparent',
+    shadowBlur: 0,
+    shadowOffsetY: 0,
+    fillStyle: '#000000',
+    strokeStyle: '#000000',
+    lineWidth: 0,
+};
+
+if (typeof HTMLCanvasElement !== 'undefined') {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((contextId: string) => {
+        if (contextId === '2d') {
+            return mockCanvasContext as unknown as CanvasRenderingContext2D;
+        }
+        return null;
+    });
+}
+
 describe('DiceGraphic', () => {
-    it('does not throw when entity lacks dice config and still creates a graphic with pips', async () => {
+    it('does not throw when entity lacks dice config and still creates a graphic', async () => {
         // Import after globals are present
         const { createEntity } = (await import('../../../engine/js/entities/character/EntityBuilder')) as any;
         const { DiceGraphic } = (await import('../../rendering/DiceGraphic')) as any;
@@ -34,33 +59,39 @@ describe('DiceGraphic', () => {
         const mesh = graphic.getGraphic();
 
         expect(mesh).toBeDefined();
-        // Expect geometry to exist (cast to Mesh)
         expect((mesh as THREE.Mesh).geometry).toBeDefined();
-        // Expect pips/groups to be attached (pip utility adds a Group)
-        expect(mesh.children.length).toBeGreaterThanOrEqual(0);
+        expect((mesh as THREE.Mesh).material).toBeDefined();
     });
 
-    it('creates appropriate geometry for faceCount (6 -> BoxGeometry)', async () => {
+    it('creates textured physical materials for a d6', async () => {
         const { createEntity } = (await import('../../../engine/js/entities/character/EntityBuilder')) as any;
         const { DiceGraphic } = (await import('../../rendering/DiceGraphic')) as any;
 
         const diceConfig = { faceCount: 6, foreColor: '#000000', backColor: '#ffffff' };
         const entity = createEntity().withOptions({ name: 'dice-entity', dice: diceConfig }).build();
-        // Some engine code may not copy arbitrary options onto the instance, so ensure it's present
-        (entity as any).dice = diceConfig;
+        Object.assign(entity as object, diceConfig);
 
         const graphic = new DiceGraphic(entity);
         const mesh = graphic.getGraphic();
 
-        // BoxGeometry should have been constructed (mocked BoxGeometry called)
         expect(((mesh as unknown) as THREE.Mesh).geometry).toBeDefined();
-        // If we're using a mock, it should have recorded calls; otherwise the geometry existence check above is sufficient
-        const boxGeom: any = (THREE as any).BoxGeometry;
-        if (boxGeom && boxGeom.mock) {
-            expect(boxGeom.mock.calls.length).toBeGreaterThan(0);
-        } else {
-            expect(((mesh as unknown) as THREE.Mesh).geometry).toBeDefined();
-        }
+        expect((mesh as THREE.Mesh).material).toBeInstanceOf(THREE.MeshPhysicalMaterial);
+        expect(mesh.children).toHaveLength(0);
+    });
+
+    it('falls back to legacy pip geometry for non-d6 dice', async () => {
+        const { createEntity } = (await import('../../../engine/js/entities/character/EntityBuilder')) as any;
+        const { DiceGraphic } = (await import('../../rendering/DiceGraphic')) as any;
+
+        const diceConfig = { faceCount: 8, foreColor: '#000000', backColor: '#ffffff' };
+        const entity = createEntity().withOptions({ name: 'd8-entity', dice: diceConfig }).build();
+        Object.assign(entity as object, diceConfig);
+
+        const graphic = new DiceGraphic(entity);
+        const mesh = graphic.getGraphic();
+
+        expect((mesh as THREE.Mesh).material).toBeInstanceOf(THREE.MeshStandardMaterial);
+        expect(mesh.children.length).toBeGreaterThan(0);
     });
 
     it('multiplies entity position by scene scale during update', async () => {

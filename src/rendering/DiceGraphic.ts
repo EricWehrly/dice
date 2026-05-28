@@ -6,6 +6,8 @@ import { getDiceConfig, DiceConfig } from '../game/Dice';
 import { PipUtils } from './util/PipUtils';
 import { registerEntityMesh } from './EntityMeshRegistry';
 import { Die } from '../game/Die';
+import { createPhysicalD6Material } from './materials/PhysicalD6Material';
+import { createStandardDieMaterial } from './materials/StandardDieMaterial';
 
 /**
  * 3D graphics handler for Dice entities
@@ -14,6 +16,7 @@ import { Die } from '../game/Die';
 export class DiceGraphic extends EntityGraphicThree {
     private static readonly ALLOWED_FACE_COUNTS = [4, 6, 8, 12, 20];
     private static readonly SCENE_POSITION_SCALE = 8;
+    private static readonly D6_TEXTURE_FACE_SIZE = 256;
     
     private diceConfig: DiceConfig;
     private mesh!: THREE.Mesh;
@@ -32,13 +35,11 @@ export class DiceGraphic extends EntityGraphicThree {
     }
 
     createGraphic(): THREE.Object3D {
-        console.log('DiceGraphic.createGraphic() called for entity:', this.entity);
         // Use the entity at runtime to obtain configuration (createGraphic may be called
         // during super() before the derived constructor body runs). This keeps createGraphic
         // resilient when subclass initialization hasn't completed yet.
         const cfg = this.diceConfig ?? getDiceConfig(this.entity);
         const faceCount = cfg?.faceCount ?? 6;
-        console.log('DiceGraphic config:', cfg, 'faceCount:', faceCount);
 
         if (!DiceGraphic.ALLOWED_FACE_COUNTS.includes(faceCount)) {
             throw new Error(`Invalid faceCount: ${faceCount}. Allowed values are ${DiceGraphic.ALLOWED_FACE_COUNTS.join(', ')}`);
@@ -46,21 +47,34 @@ export class DiceGraphic extends EntityGraphicThree {
 
         // Create geometry based on face count
         const geometry = this.createGeometry(faceCount);
-        const material = new THREE.MeshStandardMaterial({
-            color: cfg.backColor,
-            roughness: 0.7,
-            metalness: 0.1
-        });
+        const meshMaterial = this.createMaterial(cfg, faceCount, geometry);
 
-        this.mesh = new THREE.Mesh(geometry, material);
-        console.log('Created dice mesh:', this.mesh);
+        this.mesh = new THREE.Mesh(geometry, meshMaterial);
 
         registerEntityMesh(this.mesh, this.entity);
 
-        // Add pips asynchronously (PipUtils is synchronous in current implementation)
-        this.addPips(this.mesh, faceCount, cfg.foreColor);
+        if (!(meshMaterial instanceof THREE.MeshPhysicalMaterial)) {
+            this.addPips(this.mesh, faceCount, cfg.foreColor);
+        }
         
         return this.mesh;
+    }
+
+    private createMaterial(cfg: DiceConfig, faceCount: number, geometry: THREE.BufferGeometry): THREE.Material {
+        if (faceCount === 6) {
+            try {
+                return createPhysicalD6Material({
+                    backgroundColor: cfg.backColor,
+                    pipColor: cfg.foreColor,
+                    geometry: geometry as THREE.BoxGeometry,
+                    textureFaceSize: DiceGraphic.D6_TEXTURE_FACE_SIZE,
+                });
+            } catch (error) {
+                console.warn('Falling back to legacy d6 material path', error);
+            }
+        }
+
+        return createStandardDieMaterial({ backColor: cfg.backColor });
     }
 
     private createGeometry(faceCount: number): THREE.BufferGeometry {

@@ -1,217 +1,170 @@
 # F12 - Die Material and Texture Pipeline
 
-Status: 🔮 Planned
+Status: 🔄 In Progress
 
 ## Goal
-Move the 3D die presentation from geometry-added pips toward texture-driven materials so the rolling screen can support faster visual iteration, richer material looks, and a cleaner path to premium dice styles.
+Move the 3D die presentation from geometry-added pips toward texture-driven materials, with `MeshPhysicalMaterial` as the primary rendering target and a lower-risk fallback path when the physical-material slice is not stable enough yet.
 
 ## Current Anchors
-- The 3D roll screen exists as `#roll-3d-screen` in `src/index.html`.
-- `src/index.ts` already initializes the 3D throw scene.
-- `src/rendering/DiceGraphic.ts` currently creates a `MeshStandardMaterial` and then adds pips as separate geometry via `PipUtils.addPips(...)`.
+- `src/rendering/DiceGraphic.ts` currently creates a `MeshStandardMaterial` and then adds pip geometry via `PipUtils.addPips(...)`.
+- The current 3D scene already has basic lighting, so material changes will be visible immediately.
+- d6 is the correct first target because cube faces are easy to address independently.
 
-## Why Texture-Driven Faces
-- Face appearance becomes data-driven instead of mesh-composition-driven.
-- Pip shape, color, engraving, wear, glow, and novelty styles can all come from the same authoring pipeline.
-- Texture generation can be shared between 2D previews, mod panels, and 3D rendering.
-- Materials can evolve from simple painted plastic to polished resin, translucent, metallic, or enchanted looks without rewriting die geometry code.
+## Working Direction
+We are intentionally trying `MeshPhysicalMaterial` first.
 
-## Rendering Choices
+That does not mean doing the fanciest version first. It means:
+- use the physical-material API now
+- keep the first texture payload extremely simple
+- fall back quickly if the first slice is unstable
 
-### Option A: Keep pip geometry, improve materials
-Use the existing pip mesh approach and add better lighting/material tuning.
+This keeps the implementation aligned with the long-term rendering target without forcing us to solve every surface-detail problem up front.
 
-Pros:
-- Lowest implementation risk
-- Works with current geometry immediately
-- Good for quick visual improvement
+## Rendering Strategy Decision
 
-Cons:
-- Pip style iteration stays slower
-- Harder to share with 2D renderer
-- More awkward for engraved/printed/symbol-heavy face variants
+### Primary target
+`MeshPhysicalMaterial` on d6 with generated face textures.
 
-### Option B: Texture-driven face atlas on `MeshStandardMaterial`
-Generate a canvas texture atlas for die faces and feed it into material maps.
+Why:
+- it keeps the material contract aligned with the premium end-state
+- it lets us layer in clearcoat, transmission, and other richer features later
+- it avoids doing a full `MeshStandardMaterial` texture pass and then reworking that material contract again
 
-Pros:
-- Fastest real path to textured dice
-- Supports painted pips and printed symbols well
-- Compatible with physically based lighting through `MeshStandardMaterial`
-- Good balance of speed and future flexibility
+### Fallback path
+If the physical-material slice throws, renders incorrectly, or proves too unstable for the current scene, fall back to:
+1. `MeshStandardMaterial` with the existing solid-color setup
+2. existing pip geometry rendering
 
-Cons:
-- UV work is straightforward for d6, less trivial for d8/d12/d20
-- Engraved depth is only faked unless paired with bump/normal data
+This fallback is gameplay-first. The roll scene must remain usable even if the texture/material experiment is incomplete.
 
-### Option C: Texture-driven face atlas on `MeshPhysicalMaterial`
-Same texture pipeline as Option B, but target more advanced physical material features.
+## Implementation Shape
 
-Pros:
-- Best path for premium-looking dice
-- Supports clearcoat, transmission, sheen, iridescence, specular tuning, attenuation
-- Better long-term path for resin, lacquer, glassy, magical, or metallic dice
+### Simplest first
+Build the smallest d6-only slice that proves the pipeline.
 
-Cons:
-- More tuning complexity
-- Higher runtime/rendering cost than standard material
-- Still needs a fallback/basic mode for quick iteration
+Scope:
+- generate one texture per d6 face using canvas
+- apply those textures to cube-face materials
+- use `MeshPhysicalMaterial` with conservative values
+- skip bump, normal, roughness, and env-map work for now
+- keep non-d6 dice on the current pip-geometry path
 
-### Option D: Custom shader pipeline
-Own the entire surface response and pip projection path.
+Success criteria:
+- the d6 visibly renders texture-driven pips
+- the scene still rolls correctly
+- the new path can fail back to the old one without breaking gameplay
 
-Pros:
-- Maximum visual control
-- Best long-term ceiling
+### Achievable next
+Once the base d6 texture path is stable, add the first material-detail features that are still realistically implementable in the current scene.
 
-Cons:
-- Too far above current needs
-- Highest implementation and debugging cost
-- Not the right first texture milestone
+Scope:
+- extract texture generation into reusable types/options
+- add bump or normal support derived from the same face drawing data
+- add roughness tuning or roughness maps
+- introduce a small preset layer such as `plastic`, `glossy`, `engraved`
+- optionally fall back from `MeshPhysicalMaterial` to `MeshStandardMaterial` while keeping the same generated textures if physical-material tuning is the only unstable piece
 
-## Recommendation
+Success criteria:
+- the same texture pipeline feeds multiple material properties
+- surface response changes are visible under current lighting
+- the renderer contract remains d6-first and does not destabilize other dice
 
-### Quick path to ship soon
-Start with Option B on d6 only:
-- Generate a face atlas with `CanvasTexture`
-- Feed that atlas into `MeshStandardMaterial.map`
-- Keep current `MeshStandardMaterial` lighting flow
-- Add an optional bump map generated from the same face atlas
-- Keep pip geometry as fallback for non-d6 dice until UV/material support is ready
+### Fancy last
+After the simpler texture/material path is proven, move into premium rendering work.
 
-This gets a visible texture onto the die quickly while preserving the current throw flow.
+Scope:
+- environment/reflection tuning
+- clearcoat and clearcoat roughness presets
+- transmission / attenuation experiments for resin or glass-like dice
+- iridescence, emissive accents, or novelty presets
+- non-d6 texture strategies where geometry and UV constraints justify the effort
 
-### Best long-term visual target
-Design the pipeline so materials can graduate to `MeshPhysicalMaterial` without redoing texture generation.
+Success criteria:
+- at least one premium preset looks materially better than the baseline physical-material pass
+- premium rendering remains optional, not required for the default rolling scene
 
-That means the texture/model layer should think in terms of:
-- `baseColor` / diffuse
-- `normal` or `bump`
-- `roughness`
-- optional `metalness`
-- optional `ao`
-- optional `emissive`
-- optional physical extensions such as `clearcoat`, `transmission`, `iridescence`
+## How We Should Proceed
 
-If we do that, we can start simple and later offer:
-- painted plastic dice
-- glossy casino dice
-- engraved stone dice
-- translucent resin dice
-- metallic or arcane novelty dice
+1. Implement one d6-only material path in code.
+2. Validate that it builds and renders without disturbing roll behavior.
+3. Keep explicit fallback behavior in the renderer rather than spreading failure handling across the rest of the app.
+4. Only after that is stable, extract more reusable texture/preset abstractions.
+5. Only after those are stable, spend time on premium-lighting/material polish.
 
-## Material Feature Matrix
-
-### Basic useful set
-- `map` (`baseColor` / diffuse)
-- `bumpMap` or `normalMap`
-- `roughness`
-
-### Strong medium-term set
-- `map`
-- `normalMap`
-- `roughnessMap`
-- `aoMap`
-- environment map / scene reflections
-
-### Premium set
-- `MeshPhysicalMaterial`
-- clearcoat + clearcoat roughness
-- transmission / attenuation for translucent dice
-- iridescence or sheen for stylized fantasy looks
-- environment lighting tuned for dice closeups
-
-## Important Geometry/UV Constraint
-The quick path should explicitly target d6 first.
-
-Reason:
-- Cube UV mapping and per-face texture assignment are simple and predictable.
-- d8/d12/d20 support should be planned, but not required for the first textured milestone.
-- For non-d6 dice, keep the current pip-geometry or solid-color material path until face texturing is designed per geometry.
+The constraint is simple: no fancy material work before we have one small texture-driven d6 actually surviving the current rolling screen.
 
 ## Implementation Milestones
 
-### Milestone 1: Texture generation foundation
-Goal: create a reusable face-texture generator independent from Three.js material wiring.
+### Milestone 1: d6 physical-material proof of life
+Goal: prove that texture-driven d6 rendering works at all using `MeshPhysicalMaterial`.
 
 Deliverables:
-- New texture-generation module for die face atlases
-- Config model for face count, fore/background colors, pip style, optional bevel/engrave settings
-- Output format suitable for both 2D preview and Three.js texture upload
+- d6 face texture generator
+- per-face material assignment for cube geometry
+- `MeshPhysicalMaterial` baseline values
+- explicit fallback to the current solid-material + pip path
 
 Acceptance criteria:
-- A generated atlas can render d6 face pips into a canvas/image source
-- Pip style can be changed without changing die mesh code
+- d6 renders from generated textures
+- non-d6 dice remain on the current path
+- failures do not break the rolling screen
 
-### Milestone 2: Basic textured d6 material
-Goal: apply generated textures to the 3D d6 using current lighting.
+### Milestone 2: reusable texture/material contracts
+Goal: make the first slice maintainable instead of one-off.
 
 Deliverables:
-- `CanvasTexture` or equivalent upload path
-- `MeshStandardMaterial.map` integration on d6
-- Keep current non-d6 fallback intact
+- typed texture-generation options
+- reusable material preset/options model
+- clearer separation between face drawing and material assembly
 
 Acceptance criteria:
-- d6 shows texture-driven pips instead of geometry-added pips
-- Roll scene still renders and lights correctly
+- texture generation can evolve without rewriting `DiceGraphic`
+- material tuning is data-driven enough to iterate safely
 
-### Milestone 3: Surface detail maps
-Goal: add tactile surface response so the die reads as a real object, not a flat decal.
+### Milestone 3: first surface-detail pass
+Goal: move from flat printed faces toward surface response.
 
 Deliverables:
-- Bump or normal-map generation path from pip/engrave data
-- Roughness tuning or roughness map support
-- Material presets such as `plastic`, `polished`, `engraved`
+- bump or normal-map generation
+- roughness tuning or roughness map support
+- first preset comparisons under current lighting
 
 Acceptance criteria:
-- Lighting visibly reacts to surface treatment differences
-- Pip engraving/embossing reads under directional light
+- pips read as more than flat paint
+- lighting changes produce visible material differences
 
-### Milestone 4: Material preset system
-Goal: make style choices a game feature instead of hardcoded rendering tweaks.
+### Milestone 4: premium rendering track
+Goal: unlock the high-end looks that justify `MeshPhysicalMaterial`.
 
 Deliverables:
-- Material preset model shared with upgrade/customization flows
-- Presets for at least `plastic`, `matte`, and `glossy`
-- Hooks for novelty styles later
+- clearcoat-based glossy presets
+- transmission/resin experiments
+- env-map or reflection strategy where it materially improves the result
 
 Acceptance criteria:
-- Die appearance can change through data/config rather than direct material edits
-- 2D/3D preview language stays aligned
-
-### Milestone 5: Premium physical rendering track
-Goal: enable best-looking dice for closeups and premium styles.
-
-Deliverables:
-- Optional `MeshPhysicalMaterial` path
-- Env-map/reflection tuning
-- Optional translucent or lacquered material experiments
-
-Acceptance criteria:
-- At least one premium preset clearly exceeds the baseline look
-- The advanced path remains optional and does not block basic gameplay rendering
+- at least one preset clearly outperforms the simpler baseline visually
+- premium looks remain optional and isolated from baseline gameplay rendering
 
 ## Suggested File/Module Shape
 - `src/rendering/textures/DieFaceTextureAtlas.ts`
 - `src/rendering/textures/DieMaterialPreset.ts`
 - `src/rendering/textures/DieTextureTypes.ts`
-- `src/rendering/DiceGraphic.ts` updated to choose material strategy
-- Optional: shared drawing primitives extracted from existing pip/tile renderers
+- `src/rendering/DiceGraphic.ts`
 
 ## Risks
-- Non-cube dice will need geometry-specific UV and face-orientation handling.
-- Bump maps can look weak if face contrast/shading data is not authored carefully.
-- Texture resolution can become blurry if the atlas size is too small for close camera shots.
-- Physical materials look bad without stronger environment lighting than the current scene provides.
+- `MeshPhysicalMaterial` may not look better than the current path until lighting and surface maps improve.
+- d6 is straightforward, but non-d6 support should not be forced into the first slice.
+- Canvas texture quality will depend on enough resolution and consistent face drawing.
+- Fallback behavior must stay local to the renderer so this feature cannot break throw gameplay.
 
-## Proposed Build Order
-1. d6 face-atlas generator
-2. textured d6 on `MeshStandardMaterial`
-3. bump/roughness support
-4. preset system
-5. optional `MeshPhysicalMaterial` upgrade path
+## Current Implementation Order
+1. d6-only `MeshPhysicalMaterial` proof of life
+2. reusable texture/material contracts
+3. bump/roughness surface detail
+4. premium lighting/material features
 
 ## Acceptance Summary
-- The d6 can render from generated textures.
-- The texture pipeline supports more than color alone.
-- The architecture leaves room for richer physical-material rendering later.
+- The renderer tries `MeshPhysicalMaterial` first.
+- d6 can render from generated textures.
+- Failures fall back to the current path.
+- The implementation order stays simplest first, achievable next, fancy last.
