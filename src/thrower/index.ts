@@ -34,7 +34,7 @@ export function init() {
     }
   });
 
-  attachContextMenuListener(camera, renderContext.scene as unknown as THREE.Scene);
+  attachContextMenuListener(camera, renderContext.scene as unknown as THREE.Scene, canvas);
 
   // Throw path follower updates entity positions through the engine render loop.
 }

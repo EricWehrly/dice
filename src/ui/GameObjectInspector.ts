@@ -33,8 +33,8 @@ export function handleContextMenu(event: MouseEvent, camera: THREE.Camera, scene
   });
 }
 
-export function attachContextMenuListener(camera: THREE.Camera, scene: THREE.Scene) {
-  window.addEventListener('contextmenu', (event) => {
+export function attachContextMenuListener(camera: THREE.Camera, scene: THREE.Scene, targetElement: HTMLElement) {
+  targetElement.addEventListener('contextmenu', (event) => {
     handleContextMenu(event, camera, scene);
   });
 }
