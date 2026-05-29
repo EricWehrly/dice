@@ -29,7 +29,7 @@ function makeEntity(): Entity & DieEquipped {
 }
 
 function makeItem(name: string, slotType: DieSlotType): DieEquipment {
-    return { name, type: slotType };
+    return { id: name, name, type: slotType };
 }
 
 // ---------------------------------------------------------------------------
