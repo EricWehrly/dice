@@ -15,6 +15,13 @@ import './rendering/DiceGraphic';  // Import for class initialization and event 
 import { MakeDieCharacter } from './game/DieCharacterFactory';
 import { DieEquippedMixin } from './game/DieEquippedMixin';
 
+declare global {
+    interface Window {
+        addTestDie: () => number;
+        addDie: () => number;
+    }
+}
+
 // TODO: handle in managed UI instead
 function wireRollButtons(bag: Bag) {
     const rollButtons = [
@@ -43,6 +50,14 @@ bag.addDie(MakeDieCharacter([DieEquippedMixin]));
 bag.addDie(MakeDieCharacter([DieEquippedMixin]));
 bag.addDie(MakeDieCharacter([DieEquippedMixin]));
 
+const addTestDie = (): number => {
+    bag.addDie(MakeDieCharacter([DieEquippedMixin]));
+    return bag.getActiveDice().length;
+};
+
+window.addTestDie = addTestDie;
+window.addDie = addTestDie;
+
 wireRollButtons(bag);
 new DiceCanvasRenderer(bag);
 
@@ -68,7 +83,7 @@ screenManager.register('mod',
 );
 
 const roll3dScreen = document.getElementById('roll-3d-screen')!;
-initializeRoll3DCamera(roll3dScreen);
+initializeRoll3DCamera(roll3dScreen, bag);
 
 initThrower();
 

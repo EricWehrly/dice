@@ -2,6 +2,14 @@ import * as THREE from 'three';
 import { CameraType, ThreeCam } from '../engine/js/rendering/Threecam';
 import ThreeJSRenderContext from '../engine/js/rendering/contexts/ThreeJS.RenderContext';
 import { ensureDiceLighting } from './rendering/lighting';
+import Events from '../engine/js/events';
+import { Bag, type BagChangedEvent } from './game/Bag';
+import { TrickEvents } from './game/contracts/TrickContracts';
+import { Die } from './game/Die';
+import { IsDieEquipped } from './game/DieEquippedMixin';
+import { GetEntity3DGraphic } from '../engine/js/rendering/entities/entity-3d-graphics';
+import { CameraAnimator } from './camera/CameraAnimator';
+import { calculateCameraForBounds } from './camera/FramingCalculator';
 
 export function createCameraDebugOverlay(container: HTMLElement, cameraRig: ThreeCam): void {
     const lookTarget = new THREE.Vector3(0, 0, 0);
@@ -138,7 +146,115 @@ export function createCameraDebugOverlay(container: HTMLElement, cameraRig: Thre
     syncFromCamera();
 }
 
-export function initializeRoll3DCamera(roll3dScreen: HTMLElement): ThreeCam {
+function getAspectRatio(camera: THREE.PerspectiveCamera): number {
+    return camera.aspect > 0 ? camera.aspect : Math.max(window.innerWidth, 1) / Math.max(window.innerHeight, 1);
+}
+
+function getVisibleDiceBounds(bag: Bag): THREE.Box3 | null {
+    const activeDice = bag.getActiveDice().filter((die) => die.active && IsDieEquipped(die));
+    if (activeDice.length === 0) {
+        return null;
+    }
+
+    const bounds = new THREE.Box3();
+    let hasAny = false;
+
+    activeDice.forEach((die: Die) => {
+        const graphic = GetEntity3DGraphic(die);
+        if (!graphic) {
+            return;
+        }
+
+        const graphicBounds = new THREE.Box3().setFromObject(graphic);
+        if (graphicBounds.isEmpty()) {
+            return;
+        }
+
+        bounds.union(graphicBounds);
+        hasAny = true;
+    });
+
+    return hasAny ? bounds : null;
+}
+
+function applyCameraState(cameraRig: ThreeCam, state: { position: THREE.Vector3; target: THREE.Vector3; fov?: number }): void {
+    const camera = cameraRig.camera;
+    camera.position.copy(state.position);
+    cameraRig.lookAt(state.target);
+
+    if (cameraRig.controls) {
+        cameraRig.controls.target.copy(state.target);
+        cameraRig.controls.update(0);
+    }
+
+    if (camera instanceof THREE.PerspectiveCamera && typeof state.fov === 'number') {
+        camera.fov = state.fov;
+        camera.updateProjectionMatrix();
+    }
+}
+
+function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag): void {
+    const camera = cameraRig.camera;
+    if (!(camera instanceof THREE.PerspectiveCamera)) {
+        return;
+    }
+
+    const animator = new CameraAnimator(cameraRig);
+    let pendingFrame = false;
+    let pendingAnimated = false;
+
+    const frameCamera = (animated: boolean): void => {
+        const bounds = getVisibleDiceBounds(bag);
+        if (!bounds) {
+            return;
+        }
+
+        const nextState = calculateCameraForBounds(bounds, {
+            fovDegrees: camera.fov,
+            aspectRatio: getAspectRatio(camera),
+        });
+
+        if (animated) {
+            animator.animateCameraTo(nextState, 400);
+            return;
+        }
+
+        applyCameraState(cameraRig, nextState);
+    };
+
+    const scheduleFrame = (animated: boolean): void => {
+        pendingAnimated = pendingAnimated || animated;
+        if (pendingFrame) {
+            return;
+        }
+
+        pendingFrame = true;
+        window.requestAnimationFrame(() => {
+            pendingFrame = false;
+            const useAnimation = pendingAnimated;
+            pendingAnimated = false;
+            frameCamera(useAnimation);
+        });
+    };
+
+    if (Events.EventHasFired(Events.List.GameStart)) {
+        scheduleFrame(false);
+    } else {
+        Events.Subscribe(Events.List.GameStart, () => {
+            scheduleFrame(false);
+        }, { oneTime: true });
+    }
+
+    Events.Subscribe<BagChangedEvent>(TrickEvents.BAG_CHANGED, () => {
+        scheduleFrame(true);
+    });
+
+    Events.Subscribe('RendererResized', () => {
+        scheduleFrame(false);
+    });
+}
+
+export function initializeRoll3DCamera(roll3dScreen: HTMLElement, bag: Bag): ThreeCam {
     ThreeJSRenderContext.configure({
         parentElement: roll3dScreen,
     });
@@ -156,6 +272,7 @@ export function initializeRoll3DCamera(roll3dScreen: HTMLElement): ThreeCam {
         far: 1000,
     });
 
+    initializeDynamicFraming(diceMainCamera, bag);
     createCameraDebugOverlay(roll3dScreen, diceMainCamera);
 
     return diceMainCamera;
