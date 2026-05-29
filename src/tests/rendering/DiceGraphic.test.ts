@@ -111,16 +111,16 @@ describe('DiceGraphic', () => {
         graphic.update(16);
 
         const mesh = graphic.getGraphic();
-        expect(mesh.position.x).toBeCloseTo(16);
-        expect(mesh.position.y).toBeCloseTo(-8);
-        expect(mesh.position.z).toBeCloseTo(4);
+        expect(mesh.position.x).toBeCloseTo(4);
+        expect(mesh.position.y).toBeCloseTo(-2);
+        expect(mesh.position.z).toBeCloseTo(1);
     });
 
     it('orients d6 mesh so faceUp appears on top', async () => {
         const { DiceGraphic } = (await import('../../rendering/DiceGraphic')) as any;
-        const { ModifiedDie } = (await import('../../game/ModifiedDie')) as any;
+        const { Die } = (await import('../../game/Die')) as any;
 
-        const entity = new ModifiedDie({ faceCount: 6 });
+        const entity = new Die({ faceCount: 6 });
         entity.faceUp = 2;
 
         const graphic = new DiceGraphic(entity);

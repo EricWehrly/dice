@@ -1,0 +1,111 @@
+import * as THREE from 'three';
+
+import { createD6FaceAtlasMaterialTexture } from '../../rendering/textures/DieFaceTextureAtlas';
+
+const mockCanvasContext = {
+    clearRect: () => {},
+    fillRect: () => {},
+    strokeRect: () => {},
+    beginPath: () => {},
+    arc: () => {},
+    fill: () => {},
+    shadowColor: 'transparent',
+    shadowBlur: 0,
+    shadowOffsetY: 0,
+    fillStyle: '#000000',
+    strokeStyle: '#000000',
+    lineWidth: 0,
+};
+
+if (typeof HTMLCanvasElement !== 'undefined') {
+    Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+        configurable: true,
+        value: (contextId: string) => {
+            if (contextId === '2d') {
+                return mockCanvasContext as unknown as CanvasRenderingContext2D;
+            }
+
+            return null;
+        },
+    });
+}
+
+function cloneUvArray(geometry: THREE.BoxGeometry): Float32Array {
+    const uvAttribute = geometry.getAttribute('uv') as THREE.BufferAttribute;
+    return new Float32Array(uvAttribute.array as ArrayLike<number>);
+}
+
+describe('DieFaceTextureAtlas UV mapping', () => {
+    it('is stable across repeated atlas remaps on the same geometry', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const before = cloneUvArray(geometry);
+
+        const firstTexture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: '#ffffff',
+            pipColor: '#000000',
+            faceSize: 64,
+        });
+        const afterFirst = cloneUvArray(geometry);
+
+        const secondTexture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: '#ffffff',
+            pipColor: '#000000',
+            faceSize: 64,
+        });
+        const afterSecond = cloneUvArray(geometry);
+
+        let anyDifferenceFromBase = false;
+        for (let index = 0; index < before.length; index += 1) {
+            if (Math.abs(before[index] - afterFirst[index]) > 1e-6) {
+                anyDifferenceFromBase = true;
+                break;
+            }
+        }
+
+        expect(anyDifferenceFromBase).toBe(true);
+
+        for (let index = 0; index < afterFirst.length; index += 1) {
+            expect(afterSecond[index]).toBeCloseTo(afterFirst[index], 6);
+        }
+
+        firstTexture.dispose();
+        secondTexture.dispose();
+        geometry.dispose();
+    });
+
+    it('keeps each remapped face spanning a meaningful UV area', () => {
+        const faceSize = 64;
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: '#ffffff',
+            pipColor: '#000000',
+            faceSize,
+        });
+
+        const uv = geometry.getAttribute('uv') as THREE.BufferAttribute;
+
+        for (let faceIndex = 0; faceIndex < 6; faceIndex += 1) {
+            const uValues: number[] = [];
+            const vValues: number[] = [];
+
+            for (let vertexIndex = 0; vertexIndex < 4; vertexIndex += 1) {
+                const uvIndex = (faceIndex * 4) + vertexIndex;
+                uValues.push(uv.getX(uvIndex));
+                vValues.push(uv.getY(uvIndex));
+            }
+
+            const uSpan = Math.max(...uValues) - Math.min(...uValues);
+            const vSpan = Math.max(...vValues) - Math.min(...vValues);
+
+            expect(uSpan).toBeGreaterThan(0.2);
+            expect(vSpan).toBeGreaterThan(0.2);
+        }
+
+        texture.dispose();
+        geometry.dispose();
+    });
+});

@@ -15,13 +15,15 @@ const ATLAS_COLUMNS = 3;
 const ATLAS_ROWS = 2;
 const ATLAS_GAP_RATIO = 0.05;
 const D6_FACE_ORDER = [3, 4, 1, 6, 2, 5] as const;
+// % of face size to place (center of) pip
+// so left is 24%, and so on
 const PIP_GRID_POSITIONS = {
-    left: 0.28,
+    left: 0.24,
     center: 0.5,
-    right: 0.72,
-    top: 0.28,
+    right: 0.76,
+    top: 0.24,
     middle: 0.5,
-    bottom: 0.72,
+    bottom: 0.76,
 } as const;
 
 const D6_PIP_LAYOUTS: Record<number, ReadonlyArray<readonly [number, number]>> = {
@@ -118,6 +120,7 @@ function applyD6AtlasUvs(geometry: THREE.BoxGeometry, faceSize: number): void {
     }
 
     const uv = uvAttribute as THREE.BufferAttribute;
+    const baseUv = getOrInitBaseUv(geometry, uv);
     const tileRect = (index: number) => {
         const column = index % ATLAS_COLUMNS;
         const row = Math.floor(index / ATLAS_COLUMNS);
@@ -131,8 +134,8 @@ function applyD6AtlasUvs(geometry: THREE.BoxGeometry, faceSize: number): void {
         const rect = tileRect(faceIndex);
         for (let vertexIndex = 0; vertexIndex < 4; vertexIndex += 1) {
             const uvIndex = (faceIndex * 4) + vertexIndex;
-            const existingU = uv.getX(uvIndex);
-            const existingV = uv.getY(uvIndex);
+            const existingU = baseUv[(uvIndex * 2) + 0];
+            const existingV = baseUv[(uvIndex * 2) + 1];
             uv.setXY(
                 uvIndex,
                 (rect.x + existingU * faceSize) / atlasWidth,
@@ -169,13 +172,13 @@ function drawFacePips(
     faceValue: number,
     pipColor: string,
 ): void {
-    const pipRadius = faceSize * 0.085;
+    const pipRadius = faceSize * 0.062;
     const highlightColor = mixHexColors(pipColor, '#ffffff', 0.35);
 
     context.fillStyle = pipColor;
     context.shadowColor = 'rgba(0, 0, 0, 0.28)';
-    context.shadowBlur = faceSize * 0.03;
-    context.shadowOffsetY = faceSize * 0.012;
+    context.shadowBlur = faceSize * 0.018;
+    context.shadowOffsetY = faceSize * 0.008;
 
     for (const [normalizedX, normalizedY] of D6_PIP_LAYOUTS[faceValue]) {
         const centerX = x + (normalizedX * faceSize);
@@ -220,4 +223,13 @@ function parseHexColor(color: string): [number, number, number] {
         parseInt(normalized.slice(2, 4), 16),
         parseInt(normalized.slice(4, 6), 16),
     ];
+}
+
+function getOrInitBaseUv(geometry: THREE.BoxGeometry, uv: THREE.BufferAttribute): Float32Array {
+    const userData = geometry.userData as { d6BaseUv?: Float32Array };
+    if (!userData.d6BaseUv || userData.d6BaseUv.length !== uv.array.length) {
+        userData.d6BaseUv = new Float32Array(uv.array as ArrayLike<number>);
+    }
+
+    return userData.d6BaseUv;
 }
