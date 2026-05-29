@@ -1,10 +1,14 @@
 # TB-03 — Bag Management
 
 **Phase**: 3  
-**Status**: 🔮 Not started  
+**Status**: � In Progress  
 **Depends on**: TB-01 (Die, Bag), TB-02 (Trick interface, for wiring Decimal Milestone reward)  
 
-**Progress note (2026-05-27)**: Die identity (id, label, active) already exists. The bag model is already live, and Decimal Milestone dice awards are wired through `ScoreProgressionTracker` rather than `GameLoop`. The current direction is to defer a visible bag UI until the roll screen becomes crowded, then introduce a dedicated horde screen for collection management, filters, and bag swaps. Persistence and scaling to large die counts are now explicit roadmap concerns.
+**Progress (2026-05-29)**:
+- ✅ **M3.1 Die Identity**: `id`, `label`, `active` all implemented on `Die`. `DieSnapshot` serialization type still absent — model fields exist but `toJSON()`/`fromJSON()` stubs not yet added.
+- ✅ **M3.3 Earning Dice**: Decimal Milestone die awards wired through `ScoreProgressionTracker`.
+- 🔄 **M3.4 Die Selection**: Toggle affordance exists inside `DieModificationPanel` but not as a first-class UI on the roll screen.
+- 🔮 **M3.2 Bag UI**: Dedicated bag panel not yet built. Direction has shifted toward a "horde screen" (collection grid + filters) rather than an inline bag panel — deferred until the roll screen becomes crowded.
 
 ## Goal
 

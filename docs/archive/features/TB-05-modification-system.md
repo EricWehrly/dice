@@ -1,13 +1,16 @@
 # TB-05 — Modification System
 
 **Phase**: 5  
-**Status**: 🔮 Queued to start  
+**Status**: ✅ Complete  
 **Depends on**: TB-03 (Die identity, face count) ✅, TB-04 (tricks fire before mods earned) ✅  
 **Blocks**: TB-06 loosely (discovery is independent)
 
-## Goal
-
-Players can inspect a die, see each face's current chance of being up, preview how a modification changes those chances, and then install that modification. The first delivery slice is UI-first and read-only; the rest of the system can land in later commits once the interaction shape is proven.
+**Completed (2026-05-29)**: Full modification UI and probability model implemented.
+- `src/game/DiceProbability.ts` — pure probability calculation with weight-mod influence (distance-based model: target face / adjacent / opposite). Used for both live display and preview.
+- `src/game/mods/DieWeightMod.ts` — weight modification implementing `DieEquipment`, stored on die via `DieEquippedMixin`.
+- `src/ui/DieModificationPanel.ts` — full two-mode panel (collapsed: core mod + style selection; expanded: face-targeted install with face selector). Includes probability inspector readout per face, before/after preview on mod selection, and install/uninstall flow.
+- `src/game/DiceModel` and related types provide the data contract for tests and display.
+- Body and pip material selectors with 11 materials wired (plastic, wood, stone, ceramic, resin, brass, steel, obsidian, jade, glass, crystal).
 
 ---
 

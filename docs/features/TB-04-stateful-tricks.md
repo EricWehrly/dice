@@ -1,12 +1,14 @@
 # TB-04 — Stateful Tricks & Combos
 
 **Phase**: 4  
-**Status**: 🔮 Not started  
+**Status**: � In Progress  
 **Depends on**: TB-02 (Trick interface), TB-03 (Die serialization stubs)
 
-## Goal
-
-Add tricks that require history across multiple rolls: streaks (same result N times in a row), Decimal Milestone (cumulative trick count), and combo tricks (patterns that combine simpler tricks across rolls).
+**Progress (2026-05-29)**:
+- ✅ **M4.1 Roll History**: Implemented as `RecordHistory<readonly DieFaceResult[]>` in `src/game/RecordHistory.ts`. Owned by `Bag`, passed to `TrickEvaluator` via `BAG_ROLLED` event. Capped at 20 records; immutable record storage.
+- ✅ **M4.2 Streak Tricks**: `InARow` trick in `src/game/tricks/InARow.ts` — evaluates streak length from roll history. Fires from `TrickEvaluator` on each roll.
+- ✅ **M4.3 Decimal Milestone**: `ScoreProgressionTracker` in `src/game/score/ScoreProgressionTracker.ts` handles cumulative roll scoring and magnitude unlock, integrated with `ScoreUpdatedEvent`. (Note: implementation is through score tracking rather than a pure trick-count counter — design evolved during implementation.)
+- 🔮 **Combo tricks**: Not yet started.
 
 ---
 

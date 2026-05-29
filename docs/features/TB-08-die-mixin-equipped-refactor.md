@@ -1,11 +1,14 @@
 # TB-08 — Die Mixin + Equipped Refactor
 
-**Status**: 🔮 Future  
+**Status**: � In Progress  
 **Depends on**: current `ModifiedDie` behavior, TB-05 panel flow, and engine mixin patterns (especially `Equipped`)
 
----
+**Progress (2026-05-29)**:
+- ✅ `DieEquippedMixin` implemented in `src/game/DieEquippedMixin.ts` — game-layer approximation of engine `Equippable`, with named slot types (`DieSlotType`), equipment install/uninstall, and `DieEquipmentChangedEvent` firing.
+- ✅ `ModifiedDie` retired — die equipment is now managed through `DieEquippedMixin` rather than ad-hoc slot state.
+- 🔄 `FACTORY_CREATED_SYMBOL` bypass still present in `Die.ts`. Die still imports and passes the symbol to bypass Entity's factory guard. Removing this properly requires routing Die construction through `EntityBuilder`.
 
-## Goal
+---
 
 Before TB-07 lock/style work, migrate die construction to use `EntityBuilder` properly (removing the symbol bypass hack) and introduce explicit named equipment slots as a die-specific mixin.
 

@@ -1,9 +1,11 @@
 # TB-01 — Foundation
 
 **Phase**: 1  
-**Status**: 🔮 Not started  
+**Status**: ✅ Complete  
 **Depends on**: nothing (first feature)  
 **Blocks**: TB-02, TB-03
+
+**Completed**: All milestones implemented. Die and Bag models are fully wired. Canvas 2D renders each die as a tile. Roll button fires `BAG_ROLLED` event. Bootstrap cleanup done — engine Events system is active without 3D context initialization forcing the 3D route (3D exists as an optional screen, not required for game loop). See `src/game/Die.ts`, `src/game/Bag.ts`, and `src/rendering/2d/` for implementation.
 
 ## Goal
 
