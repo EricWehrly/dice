@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CameraType, ThreeCam } from '../engine/js/rendering/Threecam';
 import ThreeJSRenderContext from '../engine/js/rendering/contexts/ThreeJS.RenderContext';
+import { ensureDiceLighting } from './rendering/lighting';
 
 export function createCameraDebugOverlay(container: HTMLElement, cameraRig: ThreeCam): void {
     const lookTarget = new THREE.Vector3(0, 0, 0);
@@ -141,11 +142,13 @@ export function initializeRoll3DCamera(roll3dScreen: HTMLElement): ThreeCam {
     ThreeJSRenderContext.configure({
         parentElement: roll3dScreen,
     });
+    
+    ensureDiceLighting(ThreeJSRenderContext.Instance.scene);
 
     const diceMainCamera = new ThreeCam({
         name: 'dice-main',
         cameraType: CameraType.PERSPECTIVE,
-        enableControls: false,
+        enableControls: true,
         position: new THREE.Vector3(0.5, 5, 3),
         target: new THREE.Vector3(1, 0, 0),
         fov: 45,
