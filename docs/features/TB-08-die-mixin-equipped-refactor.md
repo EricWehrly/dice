@@ -116,6 +116,7 @@ Each slot holds exactly one value (or null). No stacking.
 ### M8.2 — Write DieSlotsMixin
 
 **Files**:
+- `src/game/DieEquipmentTypes.ts`
 - `src/game/DieSlotsMixin.ts` (new)
 - `src/game/ModifiedDie.ts`
 
