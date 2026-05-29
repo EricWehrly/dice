@@ -1,106 +1,84 @@
 # GitHub Copilot Instructions
 
-## Code Generation Guidelines
+## First Rule: Show The Existing Code Before Designing
 
-### Core Principles
+When asked to build or change anything non-trivial, start with a short "show around" pass:
 
-1. **Avoid Duplication**
-   - Search for existing implementations before generating new code
-   - Reuse utility functions and shared components
-   - Follow the DRY (Don't Repeat Yourself) principle
+1. Identify the runtime entrypoint and current behavior.
+2. Identify existing modules that already do part of the job.
+3. Propose the smallest change that reuses what exists.
 
-2. **Code Organization**
-   - Follow the established project structure
-   - Place new files in appropriate directories:
-     - `/src/core` for core game logic
-     - `/src/utils` for utilities
-     - `/src/components` for UI components
-     - `/src/types` for TypeScript interfaces and types
-     - `/tests` for test files
+Do not jump straight to new architecture when existing code already supports a minimal path.
 
-3. **Naming Conventions**
-   - Use PascalCase for classes and interfaces
-   - Use camelCase for methods and variables
-   - Use UPPER_SNAKE_CASE for constants
-   - Prefix interfaces with 'I' (e.g., IDice)
-   - Suffix test files with '.test.ts'
+## Codebase Orientation (Current)
 
-4. **Flow Control**
-   - Avoid using `return` or exceptions for flow control in methods
-   - Use conditional statements and loops to manage flow control
+- App entrypoint: `src/index.ts`
+- Main HTML shell: `src/index.html`
+- Throw flow: `src/thrower/*`
+- Input handling: `src/controls/InputManager.ts`
+- Dice graphics: `src/rendering/DiceGraphic.ts`
+- Game object UI: `src/ui/GameObjectInspector.ts`
+- Engine integration: `engine/js/*`
+- Tests: `tests/*` and `engine/test/*`
+- Active planning docs: `docs/active/roadmap.md`, `docs/active/roadmap-pivot.md`, `docs/features/*`
 
-### Best Practices
+If a task touches rendering, inspect both `src/*` and `engine/js/*` before coding.
 
-1. **Testing**
-   - Generate test files for new features
-   - Follow the pattern: Arrange, Act, Assert
-   - Include both positive and negative test cases
-   - Mock external dependencies appropriately
+## Current Product Direction
 
-2. **Code Quality**
-   - Prioritize readability over cleverness
-   - Keep functions focused and small
-   - Use meaningful variable and function names
-   - Include JSDoc comments for public APIs
+This branch is pivoting toward:
 
-3. **Avoid**
-   - Magic numbers (use named constants)
-   - Deep nesting (maximum 3 levels)
-   - Complex one-liners
-   - Redundant comments
-   - Anti-patterns like global state
+1. Screen-oriented flow (rolling, upgrading, details, trick list)
+2. Presentation-agnostic screen components
+3. Shell/router deciding display mode (switch vs modal)
+4. Derived die face up-probability model shared across screens
 
-### Examples
+Prefer changes that support this direction incrementally.
 
-Good:
-```typescript
-const MAX_DICE_COUNT = 6;
+## Implementation Bias
 
-function rollDice(count: number): number[] {
-    if (count > MAX_DICE_COUNT) {
-        throw new Error(`Cannot roll more than ${MAX_DICE_COUNT} dice`);
-    }
-    return Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1);
-}
-```
+- Simplest-first vertical slices over full framework builds
+- Reuse existing rendering/runtime setup before introducing abstractions
+- Add small adapter layers only when needed
+- Keep screens/data contracts explicit and narrow
 
-Bad:
-```typescript
-function roll(n) {
-    // rolls n dice
-    let r = [];
-    for(let i = 0; i < n; i++) r.push(Math.floor(Math.random()*6+1));
-    return r;
-}
-```
+## File Placement Guidance
 
-### Class Pattern with Default Options
+- Screen-related app code: `src/ui/` or `src/` near current entry usage
+- Throw/gameplay behavior: `src/thrower/`, `src/controls/`, `src/game/`
+- Rendering-specific code: `src/rendering/`
+- Engine-only changes: `engine/js/`
+- Planning/design docs: `docs/active/` and `docs/features/`
 
-When building classes that require default options, follow this pattern:
+Do not create parallel "new architecture" folders unless requested.
 
-1. **Define the Options Type**: Create a type that includes all possible options, marking optional and required fields appropriately.
-2. **Create a Defaults Class**: Implement a class that provides default values for the optional fields.
-3. **Constructor Implementation**: In the constructor, merge the provided options with the default options and pass them to the superclass.
+## TypeScript Guidelines
 
-Example:
+- Prefer explicit types at module boundaries
+- Keep interfaces close to usage unless shared broadly
+- Avoid `any`; if unavoidable, isolate and document the reason
+- Use immutable defaults and narrow function signatures
+- Functions/constructors with more than 2 parameters should prefer a single options interface instead
 
-```typescript
-import GameObject, { GameObjectOptions } from './GameObject';
+## Testing Expectations
 
-export type DiceOptions = GameObjectOptions & {
-    faceCount?: number;
-    foreColor: string;
-};
+## Build System & Package Management
 
-export class DiceOptionsDefaults implements Partial<DiceOptions> {
-    faceCount = 6;
-}
+- **Primary**: `yarn` (faster, more reliable lockfile, project standard)
+- **Commands**: Use `yarn build`, `yarn start`, `yarn test` instead of `npm run`
+- **Installation**: Use `yarn add` / `yarn add -D` instead of `npm install`
+- **Why**: Workspace has `package.json` configured for Yarn; consistency prevents build issues
 
-export class Dice extends GameObject {
-    constructor(options: DiceOptions) {
-        const defaultOptions = new DiceOptionsDefaults();
-        const diceOptions = ({ ...defaultOptions, ...options } as Required<DiceOptions>);
-        super(diceOptions);
-    }
-}
-```
+- For behavior changes, add/update focused tests in the nearest existing test folder
+- Prefer narrow tests around changed behavior over broad rewrites
+- When introducing adapters/contracts, add at least one contract-style test
+
+## PR / Change Quality Checklist
+
+Before finishing, ensure:
+
+1. Existing modules were searched and reused where possible
+2. Change is minimal and follows current branch direction
+3. TypeScript compiles
+4. Relevant tests run (or note why not)
+5. Docs/plans are updated if behavior or direction changed
