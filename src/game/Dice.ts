@@ -7,6 +7,8 @@ export interface DiceConfig extends EntityOptions {
     faceCount: number;
     foreColor: string;
     backColor: string;
+    bodyMaterial?: string;
+    surfaceFinish?: string;
     pipStyle?: string;
 }
 
@@ -17,6 +19,8 @@ export const DEFAULT_DICE_CONFIG: DiceConfig = {
     faceCount: 6,
     foreColor: '#000000',
     backColor: '#ffffff',
+    bodyMaterial: 'bone',
+    surfaceFinish: 'plain',
     pipStyle: ''
 };
 
@@ -31,6 +35,8 @@ export function getDiceConfig(entity: any): DiceConfig {
         faceCount: entity.faceCount ?? DEFAULT_DICE_CONFIG.faceCount,
         foreColor: entity.foreColor ?? DEFAULT_DICE_CONFIG.foreColor,
         backColor: entity.backColor ?? DEFAULT_DICE_CONFIG.backColor,
+        bodyMaterial: entity.bodyMaterial ?? DEFAULT_DICE_CONFIG.bodyMaterial,
+        surfaceFinish: entity.surfaceFinish ?? DEFAULT_DICE_CONFIG.surfaceFinish,
         pipStyle: entity.pipStyle ?? DEFAULT_DICE_CONFIG.pipStyle
     };
 }

@@ -20,10 +20,12 @@ import {
     type AvailableStyleValue,
 } from './DieModificationTypes';
 import { getPreviewChances } from '../game/DiceProbability';
-import { Bag } from '../game/Bag';
-import { DieEquipmentInstallOptions, DieEquipped, DieSlotType } from '../game/DieEquippedMixin';
 import { Die } from '../game/Die';
 import { DieWeightMod } from '../game/mods/DieWeightMod';
+import { DieSlotType } from '../game/DieEquipmentTypes';
+import Events from '../../engine/js/events';
+import { TrickEvents } from '../game/contracts/TrickContracts';
+import { type DieEquipped } from '../game/DieEquippedMixin';
 
 type PendingModAction = 'install' | 'uninstall' | 'none';
 
@@ -31,7 +33,7 @@ export class DieModificationPanel {
     private readonly root: HTMLElement | null;
     private readonly isometricRenderer = new DieIsometricRenderer();
     private readonly canvasRenderer = new DieModificationCanvasRenderer();
-    private readonly bag: Bag;
+    private readonly dice: Array<Die & DieEquipped>;
     
     // Die/face selection (persistent across modes)
     private selectedDieId: string;
@@ -50,10 +52,10 @@ export class DieModificationPanel {
     private isTargetFaceLeaving = false;
     private targetFaceLeaveTimeoutId: number | null = null;
 
-    constructor(bag: Bag) {
+    constructor(dice: Array<Die & DieEquipped>) {
         this.root = document.getElementById('die-mod-panel');
-        this.bag = bag;
-        this.selectedDieId = this.bag.getActiveDice()[0].id;
+        this.dice = dice;
+        this.selectedDieId = this.dice[0].id;
         this.resetDraftForSelectedDie();
     }
 
@@ -102,7 +104,7 @@ export class DieModificationPanel {
         const hasActualDeltas = deltas.some((delta) => Math.abs(delta) > 0.01);
 
         const templateData: DieModPanelData = {
-            dice: this.bag.getActiveDice(),
+            dice: this.dice,
             selectedDieId: this.selectedDieId,
             selectedFaceIndex: this.selectedFaceIndex,
             faceCount: die.faceCount,
@@ -125,11 +127,9 @@ export class DieModificationPanel {
 
         this.root.innerHTML = renderDieModPanel(templateData);
 
-        const installedMod = die.getEquipped(DieSlotType.MOD);
-        const installedCoreModId = installedMod?.id ?? null;
-        const installedCoreModFaceIndex = installedMod instanceof DieWeightMod
-            ? installedMod.faceIndex
-            : null;
+        const installedCoreMod = this.getInstalledWeightMod(die);
+        const installedCoreModId = installedCoreMod?.id ?? null;
+        const installedCoreModFaceIndex = installedCoreMod?.faceIndex ?? null;
 
         // Keep both viewports rendered so CSS can cross-fade between them.
         this.isometricRenderer.render({
@@ -182,7 +182,7 @@ export class DieModificationPanel {
 
             const wasModVisible = this.selectedCoreMod !== null && this.selectedCoreMod !== 'none';
             const nextCoreMod = modValue;
-            const willModBeVisible = nextCoreMod !== 'none';
+            const willModBeVisible = nextCoreMod !== null;
 
             this.selectedCoreMod = nextCoreMod;
 
@@ -196,10 +196,19 @@ export class DieModificationPanel {
         });
 
         // Collapsed mode: Style selector
+        const materialSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-material-selector');
+        materialSelector?.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            this.draftCoreMaterial = (target.value as AvailableMaterialValue) ?? 'bone';
+            this.applyCosmeticsToSelectedDie();
+            this.render();
+        });
+
         const styleSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-style-selector');
         styleSelector?.addEventListener('change', (event) => {
             const target = event.target as HTMLSelectElement;
             this.draftFaceStyles[0] = (target.value as AvailableStyleValue) ?? 'plain';
+            this.applyCosmeticsToSelectedDie();
             this.render();
         });
 
@@ -221,7 +230,7 @@ export class DieModificationPanel {
 
     /**
      * Handle Install button click: apply mod to die and collapse.
-     * Calls die.installMod(modId, targetFaceIndex) API.
+     * Uses equipment API directly (install/uninstall/getEquipped).
      */
     private handleInstall(): void {
         const die = this.getSelectedDie();
@@ -232,10 +241,11 @@ export class DieModificationPanel {
         }
 
         if (pendingAction === 'uninstall') {
-            const didUninstall = die.uninstall(DieSlotType.MOD);
-            if (didUninstall === false) {
+            if (!this.getInstalledWeightMod(die)) {
                 return;
             }
+
+            die.uninstall(DieSlotType.MOD);
 
             this.resetDraftForSelectedDie();
             this.render();
@@ -248,23 +258,16 @@ export class DieModificationPanel {
             return;
         }
 
-        const selectedModDef = AVAILABLE_MODS.find((mod) => mod.value === selectedCoreMod);
-        if (!selectedModDef || selectedModDef.grams <= 0) {
+        const selectedCoreModData = AVAILABLE_MODS.find((mod) => mod.value === selectedCoreMod);
+        if (!selectedCoreModData || selectedCoreModData.grams <= 0) {
             return;
         }
 
-        const installOptions: DieEquipmentInstallOptions = { faceIndex: selectedTargetFaceIndex };
-        const didInstall = die.install(
-            new DieWeightMod({
-                id: selectedCoreMod,
-                faceIndex: selectedTargetFaceIndex,
-                grams: selectedModDef.grams,
-            }),
-            installOptions,
-        );
-        if (didInstall === false) {
-            return;
-        }
+        die.install(new DieWeightMod({
+            id: selectedCoreMod,
+            faceIndex: selectedTargetFaceIndex,
+            grams: selectedCoreModData.grams,
+        }), {});
 
         this.resetDraftForSelectedDie();
 
@@ -274,9 +277,19 @@ export class DieModificationPanel {
         this.render();
     }
 
+    private handleCancel(): void {
+        this.selectedCoreMod = null;
+        this.selectedTargetFaceIndex = null;
+    }
+
+    private canInstallPendingChange(): boolean {
+        const die = this.getSelectedDie();
+        return this.getPendingAction(die) !== 'none';
+    }
+
     private getPendingAction(die: Die & DieEquipped): PendingModAction {
         const selectedCoreMod = this.selectedCoreMod;
-        const installedMod = die.getEquipped(DieSlotType.MOD);
+        const installedMod = this.getInstalledWeightMod(die);
 
         if (selectedCoreMod === null) {
             return 'none';
@@ -298,11 +311,7 @@ export class DieModificationPanel {
             return 'install';
         }
 
-        if (installedMod instanceof DieWeightMod && installedMod.faceIndex !== this.selectedTargetFaceIndex) {
-            return 'install';
-        }
-
-        if (!(installedMod instanceof DieWeightMod) && this.selectedTargetFaceIndex !== null) {
+        if (installedMod.faceIndex !== this.selectedTargetFaceIndex) {
             return 'install';
         }
 
@@ -353,15 +362,23 @@ export class DieModificationPanel {
     private resetDraftForSelectedDie(): void {
         const die = this.getSelectedDie();
         this.draftFaceMods = this.getDraftFaceModsFromDie(die);
-        this.draftFaceStyles = Array.from({ length: die.faceCount }, () => 'plain');
+        const finish = (die.surfaceFinish as AvailableStyleValue | undefined) ?? 'plain';
+        this.draftFaceStyles = Array.from({ length: die.faceCount }, () => finish);
         this.draftCoreMod = 'none';
-        this.draftCoreMaterial = 'bone';
+        this.draftCoreMaterial = (die.bodyMaterial as AvailableMaterialValue | undefined) ?? 'bone';
+    }
+
+    private applyCosmeticsToSelectedDie(): void {
+        const die = this.getSelectedDie();
+        die.bodyMaterial = this.draftCoreMaterial;
+        die.surfaceFinish = this.draftFaceStyles[0] ?? 'plain';
+        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 
     private getDraftFaceModsFromDie(die: Die & DieEquipped): AvailableModValue[] {
-        const installedMod = die.getEquipped(DieSlotType.MOD);
+        const installedMod = this.getInstalledWeightMod(die);
         const gramsByFace = Array.from({ length: die.faceCount }, (_, faceIndex) => {
-            if (installedMod instanceof DieWeightMod && installedMod.faceIndex === faceIndex) {
+            if (installedMod?.faceIndex === faceIndex) {
                 return Math.max(0, installedMod.grams);
             }
 
@@ -401,7 +418,12 @@ export class DieModificationPanel {
     }
 
     private getSelectedDie(): Die & DieEquipped {
-        return this.bag.getActiveDice().find((die) => die.id === this.selectedDieId) ?? this.bag.getActiveDice()[0];
+        return this.dice.find((die) => die.id === this.selectedDieId) ?? this.dice[0];
+    }
+
+    private getInstalledWeightMod(die: Die & DieEquipped): DieWeightMod | null {
+        const equipped = die.getEquipped(DieSlotType.MOD);
+        return equipped instanceof DieWeightMod ? equipped : null;
     }
 }
 

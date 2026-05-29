@@ -53,7 +53,7 @@ initializeGameResources(initialHighScore);
 new ScoreProgressionTracker(bag);
 new TrickEvaluator();
 
-const dieModificationPanel = new DieModificationPanel(bag);
+const dieModificationPanel = new DieModificationPanel(bag.getActiveDice());
 dieModificationPanel.render();
 
 // Initialize screen manager for play mode toggle
