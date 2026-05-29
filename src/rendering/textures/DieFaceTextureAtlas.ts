@@ -6,6 +6,7 @@ export interface DieFaceTextureOptions {
     readonly faceSize?: number;
     readonly backgroundColor: string;
     readonly pipColor: string;
+    readonly edgeRoundness?: number;
 }
 
 export interface D6AtlasMaterialOptions extends DieFaceTextureOptions {
@@ -24,6 +25,7 @@ export interface D6AtlasMaterialWithGeneratorOptions extends D6AtlasMaterialOpti
 }
 
 const DEFAULT_FACE_SIZE = 256;
+const DEFAULT_EDGE_ROUNDNESS = 0.32;
 const ATLAS_COLUMNS = 3;
 const ATLAS_ROWS = 2;
 const ATLAS_GAP_RATIO = 0.05;
@@ -75,6 +77,7 @@ const D6_PIP_LAYOUTS: Record<number, ReadonlyArray<readonly [number, number]>> =
 
 export function createD6FaceAtlasTexture(options: DieFaceTextureOptions): THREE.CanvasTexture {
     const faceSize = options.faceSize ?? DEFAULT_FACE_SIZE;
+    const edgeRoundness = clamp(options.edgeRoundness ?? DEFAULT_EDGE_ROUNDNESS, 0, 0.5);
     const gap = Math.max(4, Math.round(faceSize * ATLAS_GAP_RATIO));
     const atlasWidth = (ATLAS_COLUMNS * faceSize) + ((ATLAS_COLUMNS + 1) * gap);
     const atlasHeight = (ATLAS_ROWS * faceSize) + ((ATLAS_ROWS + 1) * gap);
@@ -97,7 +100,7 @@ export function createD6FaceAtlasTexture(options: DieFaceTextureOptions): THREE.
         const row = Math.floor(index / ATLAS_COLUMNS);
         const x = gap + column * (faceSize + gap);
         const y = gap + row * (faceSize + gap);
-        drawFaceBackground(context, x, y, faceSize, options.backgroundColor);
+        drawFaceBackground(context, x, y, faceSize, options.backgroundColor, edgeRoundness);
         drawFacePips(context, x, y, faceSize, faceValue, options.pipColor);
     });
 
@@ -126,6 +129,7 @@ export function createD6FaceAtlasMaterialTexture(input: D6AtlasMaterialWithGener
             pipColor: input.pipColor,
             surfaceFinish: input.surfaceFinish ?? 'plain',
             faceSize,
+            edgeRoundness: input.edgeRoundness,
         });
     }
     
@@ -134,6 +138,7 @@ export function createD6FaceAtlasMaterialTexture(input: D6AtlasMaterialWithGener
         backgroundColor: input.backgroundColor,
         pipColor: input.pipColor,
         faceSize,
+        edgeRoundness: input.edgeRoundness,
     });
 }
 
@@ -142,8 +147,9 @@ function applyD6AtlasUvs(geometry: THREE.BoxGeometry, faceSize: number): void {
     const atlasWidth = (ATLAS_COLUMNS * faceSize) + ((ATLAS_COLUMNS + 1) * gap);
     const atlasHeight = (ATLAS_ROWS * faceSize) + ((ATLAS_ROWS + 1) * gap);
     const uvAttribute = geometry.getAttribute('uv');
+    const positionAttribute = geometry.getAttribute('position');
 
-    if (!uvAttribute) {
+    if (!uvAttribute || !positionAttribute) {
         throw new Error('BoxGeometry is missing UVs required for the d6 atlas');
     }
 
@@ -158,18 +164,27 @@ function applyD6AtlasUvs(geometry: THREE.BoxGeometry, faceSize: number): void {
         };
     };
 
-    for (let faceIndex = 0; faceIndex < D6_FACE_ORDER.length; faceIndex += 1) {
+    const positions = positionAttribute.array as ArrayLike<number>;
+    const verticesPerFace = positions.length / (D6_FACE_ORDER.length * 3);
+
+    if (!Number.isFinite(verticesPerFace) || verticesPerFace <= 0) {
+        throw new Error('Unable to remap d6 atlas UVs for rounded box geometry');
+    }
+
+    for (let vertexIndex = 0; vertexIndex < uv.count; vertexIndex += 1) {
+        const faceIndex = Math.min(
+            D6_FACE_ORDER.length - 1,
+            Math.floor(vertexIndex / verticesPerFace),
+        );
         const rect = tileRect(faceIndex);
-        for (let vertexIndex = 0; vertexIndex < 4; vertexIndex += 1) {
-            const uvIndex = (faceIndex * 4) + vertexIndex;
-            const existingU = baseUv[(uvIndex * 2) + 0];
-            const existingV = baseUv[(uvIndex * 2) + 1];
-            uv.setXY(
-                uvIndex,
-                (rect.x + existingU * faceSize) / atlasWidth,
-                (rect.y + existingV * faceSize) / atlasHeight,
-            );
-        }
+        const existingU = baseUv[(vertexIndex * 2) + 0];
+        const existingV = baseUv[(vertexIndex * 2) + 1];
+
+        uv.setXY(
+            vertexIndex,
+            (rect.x + existingU * faceSize) / atlasWidth,
+            (rect.y + existingV * faceSize) / atlasHeight,
+        );
     }
 
     uv.needsUpdate = true;
@@ -181,15 +196,12 @@ function drawFaceBackground(
     y: number,
     faceSize: number,
     backgroundColor: string,
+    edgeRoundness: number,
 ): void {
     context.clearRect(x, y, faceSize, faceSize);
     context.fillStyle = backgroundColor;
     context.fillRect(x, y, faceSize, faceSize);
-
-    const borderWidth = faceSize * 0.04;
-    context.strokeStyle = mixHexColors(backgroundColor, '#000000', 0.22);
-    context.lineWidth = borderWidth;
-    context.strokeRect(x + (borderWidth / 2), y + (borderWidth / 2), faceSize - borderWidth, faceSize - borderWidth);
+    // Edge rounding is now handled by mesh geometry (chamfered box), not texture.
 }
 
 function drawFacePips(
@@ -251,6 +263,10 @@ function parseHexColor(color: string): [number, number, number] {
         parseInt(normalized.slice(2, 4), 16),
         parseInt(normalized.slice(4, 6), 16),
     ];
+}
+
+function clamp(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, value));
 }
 
 function getOrInitBaseUv(geometry: THREE.BoxGeometry, uv: THREE.BufferAttribute): Float32Array {

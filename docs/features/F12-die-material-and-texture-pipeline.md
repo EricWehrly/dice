@@ -6,8 +6,8 @@ Status: 🔄 In Progress
 Move the 3D die presentation from geometry-added pips toward texture-driven materials, with `MeshPhysicalMaterial` as the primary rendering target and a lower-risk fallback path when the physical-material slice is not stable enough yet.
 
 ## Current Anchors
-- `src/rendering/DiceGraphic.ts` currently creates a `MeshStandardMaterial` and then adds pip geometry via `PipUtils.addPips(...)`.
-- The current 3D scene already has basic lighting, so material changes will be visible immediately.
+- `src/rendering/DiceGraphic.ts` now resolves a material preset, applies generated d6 textures, and still falls back locally if the physical-material slice fails.
+- The current 3D scene already has basic lighting, so material and pip changes are visible immediately.
 - d6 is the correct first target because cube faces are easy to address independently.
 
 ## Working Direction
@@ -54,15 +54,21 @@ Success criteria:
 - the scene still rolls correctly
 - the new path can fail back to the old one without breaking gameplay
 
+### Current status
+
+- d6 texture-driven rendering is in place
+- body material and pip material can differ independently
+- the renderer has local fallback behavior for unstable material paths
+- reusable texture/material contracts are already extracted
+
 ### Achievable next
-Once the base d6 texture path is stable, add the first material-detail features that are still realistically implementable in the current scene.
+The next slice is the first surface-detail pass for the physical-material pipeline.
 
 Scope:
-- extract texture generation into reusable types/options
 - add bump or normal support derived from the same face drawing data
 - add roughness tuning or roughness maps
-- introduce a small preset layer such as `plastic`, `glossy`, `engraved`
-- optionally fall back from `MeshPhysicalMaterial` to `MeshStandardMaterial` while keeping the same generated textures if physical-material tuning is the only unstable piece
+- add a small preset layer for surface response, such as `plastic`, `glossy`, `engraved`
+- verify the same generated face data can drive more than just flat color textures
 
 Success criteria:
 - the same texture pipeline feeds multiple material properties
@@ -85,11 +91,10 @@ Success criteria:
 
 ## How We Should Proceed
 
-1. Implement one d6-only material path in code.
-2. Validate that it builds and renders without disturbing roll behavior.
+1. Keep the current d6 material path stable and observable.
+2. Add a first surface-detail layer that changes how the pips/faces read under lighting.
 3. Keep explicit fallback behavior in the renderer rather than spreading failure handling across the rest of the app.
-4. Only after that is stable, extract more reusable texture/preset abstractions.
-5. Only after those are stable, spend time on premium-lighting/material polish.
+4. Only after surface-detail is stable, spend time on premium-lighting/material polish.
 
 The constraint is simple: no fancy material work before we have one small texture-driven d6 actually surviving the current rolling screen.
 
@@ -121,8 +126,10 @@ Acceptance criteria:
 - texture generation can evolve without rewriting `DiceGraphic`
 - material tuning is data-driven enough to iterate safely
 
+Status: ✅ complete
+
 ### Milestone 3: first surface-detail pass
-Goal: move from flat printed faces toward surface response.
+Goal: move from flat printed faces toward visible surface response.
 
 Deliverables:
 - bump or normal-map generation
@@ -132,6 +139,8 @@ Deliverables:
 Acceptance criteria:
 - pips read as more than flat paint
 - lighting changes produce visible material differences
+
+Status: 🔮 next
 
 ### Milestone 4: premium rendering track
 Goal: unlock the high-end looks that justify `MeshPhysicalMaterial`.

@@ -10,6 +10,7 @@ export interface PhysicalD6MaterialConfig {
     textureFaceSize?: number;
     bodyMaterial?: string;
     surfaceFinish?: string;
+    edgeRoundness?: number;
 }
 
 /**
@@ -32,6 +33,7 @@ export function createPhysicalD6Material(config: PhysicalD6MaterialConfig): THRE
         backgroundColor: preset.backgroundColor,
         pipColor,
         faceSize: config.textureFaceSize,
+        edgeRoundness: config.edgeRoundness,
         bodyMaterial: config.bodyMaterial as DieBodyMaterial | undefined,
         surfaceFinish: config.surfaceFinish as DieSurfaceFinish | undefined,
     });

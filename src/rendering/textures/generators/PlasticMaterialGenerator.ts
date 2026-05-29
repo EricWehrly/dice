@@ -23,6 +23,7 @@ export const PlasticMaterialGenerator: MaterialTextureGenerator = {
             backgroundColor: options.backgroundColor,
             pipColor: options.pipColor,
             faceSize: options.faceSize,
+            edgeRoundness: options.edgeRoundness,
         });
     },
 };

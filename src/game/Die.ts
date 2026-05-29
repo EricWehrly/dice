@@ -2,11 +2,13 @@ import Entity from '../../engine/js/entities/character/Entity';
 import type { EntityOptions } from '../../engine/js/entities/character/EntityOptions';
 import { FACTORY_CREATED_SYMBOL } from '../../engine/js/entities/character/EntityBuilder';
 import { generateId } from '../../engine/js/util/javascript-extensions';
+import { DEFAULT_DICE_CONFIG } from './Dice';
 
 export interface DieOptions extends EntityOptions {
     faceCount?: number;
     id?: string;
     randomizer?: () => number;
+    edgeRoundness?: number;
 }
 
 export class Die extends Entity {
@@ -18,8 +20,15 @@ export class Die extends Entity {
     bodyMaterial: string;
     pipMaterial: string;
     surfaceFinish: string;
+    edgeRoundness: number;
 
-    constructor({ faceCount = 6, id = generateId(), randomizer = Math.random, ...entityOptions }: DieOptions = {}) {
+    constructor({
+        faceCount = 6,
+        id = generateId(),
+        randomizer = Math.random,
+        edgeRoundness = DEFAULT_DICE_CONFIG.edgeRoundness ?? 0.16,
+        ...entityOptions
+    }: DieOptions = {}) {
         if (!Number.isInteger(faceCount) || faceCount < 2) {
             throw new Error('faceCount must be an integer >= 2');
         }
@@ -41,6 +50,7 @@ export class Die extends Entity {
         this.bodyMaterial = 'plastic';
         this.pipMaterial = 'plastic';
         this.surfaceFinish = 'plain';
+        this.edgeRoundness = edgeRoundness;
     }
 
     roll(): number {

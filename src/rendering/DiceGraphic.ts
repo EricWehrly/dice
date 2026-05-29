@@ -11,6 +11,7 @@ import { createStandardDieMaterial } from './materials/StandardDieMaterial';
 import { resolveDieMaterialPreset } from './textures/DieMaterialPreset';
 import { MaterialTextureRegistry } from './textures/MaterialTextureRegistry';
 import { PlasticMaterialGenerator } from './textures/generators/PlasticMaterialGenerator';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry';
 
 /**
  * 3D graphics handler for Dice entities
@@ -106,6 +107,7 @@ export class DiceGraphic extends EntityGraphicThree {
                     textureFaceSize: DiceGraphic.D6_TEXTURE_FACE_SIZE,
                     bodyMaterial: config.bodyMaterial,
                     surfaceFinish: config.surfaceFinish,
+                    edgeRoundness: config.edgeRoundness,
                 });
             } catch (error) {
                 console.warn('Falling back to legacy d6 material path', error);
@@ -121,11 +123,13 @@ export class DiceGraphic extends EntityGraphicThree {
 
     private createGeometry(faceCount: number): THREE.BufferGeometry {
         const size = 1.0; // Keep the die readable without blowing up the face texture
+        const edgeRoundness = this.diceConfig?.edgeRoundness ?? 0.32;
+        
         switch (faceCount) {
             case 4:
                 return new THREE.TetrahedronGeometry(size);
             case 6:
-                return new THREE.BoxGeometry(size, size, size);
+                return new RoundedBoxGeometry(size, size, size, 4, Math.max(0.01, (size * edgeRoundness) / 2));
             case 8:
                 return new THREE.OctahedronGeometry(size);
             case 12:
@@ -185,6 +189,7 @@ export class DiceGraphic extends EntityGraphicThree {
             config.bodyMaterial ?? '',
             config.pipMaterial ?? '',
             config.surfaceFinish ?? '',
+            config.edgeRoundness ?? '',
         ].join('|');
     }
 
@@ -208,7 +213,9 @@ export class DiceGraphic extends EntityGraphicThree {
 
     private disposeMaterial(material: THREE.Material | THREE.Material[]): void {
         const materials = Array.isArray(material) ? material : [material];
-        materials.forEach((item) => item.dispose());
+        materials
+            .filter((item): item is THREE.Material => Boolean(item))
+            .forEach((item) => item.dispose());
     }
 
     private applyFaceUpOrientation(faceCount: number, mesh: THREE.Mesh): void {

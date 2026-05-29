@@ -12,6 +12,7 @@ export interface MaterialTextureGeneratorOptions {
     readonly pipColor: string;
     readonly surfaceFinish: DieSurfaceFinish;
     readonly faceSize: number;
+    readonly edgeRoundness?: number;
 }
 
 /**
