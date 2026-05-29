@@ -25,10 +25,17 @@ export const AVAILABLE_CORE_MODS = [
 ] as const;
 
 export const AVAILABLE_MATERIALS = [
-    { value: 'bone', label: 'Bone' },
-    { value: 'brass', label: 'Brass' },
+    { value: 'plastic', label: 'Plastic' },
     { value: 'wood', label: 'Wood' },
+    { value: 'stone', label: 'Stone' },
+    { value: 'ceramic', label: 'Ceramic' },
+    { value: 'resin', label: 'Resin' },
+    { value: 'brass', label: 'Brass' },
+    { value: 'steel', label: 'Steel' },
     { value: 'obsidian', label: 'Obsidian' },
+    { value: 'jade', label: 'Jade' },
+    { value: 'glass', label: 'Glass' },
+    { value: 'crystal', label: 'Crystal' },
 ] as const;
 
 export const AVAILABLE_STYLES = [

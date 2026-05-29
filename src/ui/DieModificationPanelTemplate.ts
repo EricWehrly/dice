@@ -24,6 +24,7 @@ export interface DieModPanelData {
     draftFaceMods: AvailableModValue[];
     draftCoreMod: AvailableCoreModValue;
     draftCoreMaterial: AvailableMaterialValue;
+    draftPipMaterial: AvailableMaterialValue;
     draftFaceStyles: AvailableStyleValue[];
     preview: number[];
     deltas: number[];
@@ -89,7 +90,27 @@ export function renderDieModPanel(data: DieModPanelData): string {
 
             <!-- Style selector -->
             <label class="die-mod-setting-field">
-                <span class="die-mod-setting-label">style</span>
+                <span class="die-mod-setting-label">body material</span>
+                <select class="die-mod-setting-select die-mod-material-selector">
+                    ${AVAILABLE_MATERIALS.map(
+                        (material) =>
+                            `<option value="${material.value}" ${material.value === data.draftCoreMaterial ? 'selected' : ''}>${material.label}</option>`
+                    ).join('')}
+                </select>
+            </label>
+
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">pip material</span>
+                <select class="die-mod-setting-select die-mod-pip-material-selector">
+                    ${AVAILABLE_MATERIALS.map(
+                        (material) =>
+                            `<option value="${material.value}" ${material.value === data.draftPipMaterial ? 'selected' : ''}>${material.label}</option>`
+                    ).join('')}
+                </select>
+            </label>
+
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">finish</span>
                 <select class="die-mod-setting-select die-mod-style-selector">
                     ${AVAILABLE_STYLES.map(
                         (style) =>

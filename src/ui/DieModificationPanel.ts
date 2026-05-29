@@ -42,7 +42,8 @@ export class DieModificationPanel {
     // Legacy draft state (for face mods in future phases)
     private draftFaceMods: AvailableModValue[] = [];
     private draftCoreMod: AvailableCoreModValue = 'none';
-    private draftCoreMaterial: AvailableMaterialValue = 'bone';
+    private draftCoreMaterial: AvailableMaterialValue = 'plastic';
+    private draftPipMaterial: AvailableMaterialValue = 'plastic';
     private draftFaceStyles: AvailableStyleValue[] = [];
     
     // Core mod install state
@@ -111,6 +112,7 @@ export class DieModificationPanel {
             draftFaceMods: this.draftFaceMods,
             draftCoreMod: this.draftCoreMod,
             draftCoreMaterial: this.draftCoreMaterial,
+            draftPipMaterial: this.draftPipMaterial,
             draftFaceStyles: this.draftFaceStyles,
             preview,
             deltas,
@@ -199,7 +201,15 @@ export class DieModificationPanel {
         const materialSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-material-selector');
         materialSelector?.addEventListener('change', (event) => {
             const target = event.target as HTMLSelectElement;
-            this.draftCoreMaterial = (target.value as AvailableMaterialValue) ?? 'bone';
+            this.draftCoreMaterial = (target.value as AvailableMaterialValue) ?? 'plastic';
+            this.applyCosmeticsToSelectedDie();
+            this.render();
+        });
+
+        const pipMaterialSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-pip-material-selector');
+        pipMaterialSelector?.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            this.draftPipMaterial = (target.value as AvailableMaterialValue) ?? 'plastic';
             this.applyCosmeticsToSelectedDie();
             this.render();
         });
@@ -365,12 +375,14 @@ export class DieModificationPanel {
         const finish = (die.surfaceFinish as AvailableStyleValue | undefined) ?? 'plain';
         this.draftFaceStyles = Array.from({ length: die.faceCount }, () => finish);
         this.draftCoreMod = 'none';
-        this.draftCoreMaterial = (die.bodyMaterial as AvailableMaterialValue | undefined) ?? 'bone';
+        this.draftCoreMaterial = (die.bodyMaterial as AvailableMaterialValue | undefined) ?? 'plastic';
+        this.draftPipMaterial = (die.pipMaterial as AvailableMaterialValue | undefined) ?? 'plastic';
     }
 
     private applyCosmeticsToSelectedDie(): void {
         const die = this.getSelectedDie();
         die.bodyMaterial = this.draftCoreMaterial;
+        die.pipMaterial = this.draftPipMaterial;
         die.surfaceFinish = this.draftFaceStyles[0] ?? 'plain';
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }

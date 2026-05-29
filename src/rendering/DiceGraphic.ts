@@ -9,6 +9,8 @@ import { Die } from '../game/Die';
 import { createPhysicalD6Material } from './materials/PhysicalD6Material';
 import { createStandardDieMaterial } from './materials/StandardDieMaterial';
 import { resolveDieMaterialPreset } from './textures/DieMaterialPreset';
+import { MaterialTextureRegistry } from './textures/MaterialTextureRegistry';
+import { PlasticMaterialGenerator } from './textures/generators/PlasticMaterialGenerator';
 
 /**
  * 3D graphics handler for Dice entities
@@ -25,6 +27,8 @@ export class DiceGraphic extends EntityGraphicThree {
 
     static {
         registerEntity3DRenderer(Die, DiceGraphic);
+        // Initialize material texture generators
+        MaterialTextureRegistry.register(PlasticMaterialGenerator);
     }
     
     constructor(entity: Entity) {
@@ -42,6 +46,7 @@ export class DiceGraphic extends EntityGraphicThree {
         // resilient when subclass initialization hasn't completed yet.
         const config = this.diceConfig ?? getDiceConfig(this.entity);
         const faceCount = config?.faceCount ?? 6;
+        const materialColors = this.resolveMaterialColors(config);
 
         if (!DiceGraphic.ALLOWED_FACE_COUNTS.includes(faceCount)) {
             throw new Error(`Invalid faceCount: ${faceCount}. Allowed values are ${DiceGraphic.ALLOWED_FACE_COUNTS.join(', ')}`);
@@ -49,7 +54,7 @@ export class DiceGraphic extends EntityGraphicThree {
 
         // Create geometry based on face count
         const geometry = this.createGeometry(faceCount);
-        const meshMaterial = this.createMaterial(config, faceCount, geometry);
+        const meshMaterial = this.createMaterial(config, faceCount, geometry, materialColors);
 
         const mesh = new THREE.Mesh(geometry, meshMaterial);
         this.materialSignature = this.getMaterialSignature(config);
@@ -57,7 +62,7 @@ export class DiceGraphic extends EntityGraphicThree {
         registerEntityMesh(mesh, this.entity);
 
         if (!(meshMaterial instanceof THREE.MeshPhysicalMaterial)) {
-            this.addPips(mesh, faceCount, config.foreColor);
+            this.addPips(mesh, faceCount, materialColors.pipColor);
         }
 
         this.applyFaceUpOrientation(faceCount, mesh);
@@ -65,19 +70,38 @@ export class DiceGraphic extends EntityGraphicThree {
         return mesh;
     }
 
-    private createMaterial(config: DiceConfig, faceCount: number, geometry: THREE.BufferGeometry): THREE.Material {
-        const preset = resolveDieMaterialPreset({
+    private resolveMaterialColors(config: DiceConfig): { bodyPreset: ReturnType<typeof resolveDieMaterialPreset>; pipColor: string } {
+        const bodyPreset = resolveDieMaterialPreset({
             bodyMaterial: config.bodyMaterial,
             surfaceFinish: config.surfaceFinish,
-            fallbackBackgroundColor: config.backColor,
-            fallbackPipColor: config.foreColor,
         });
+
+        // Determine pip color: if pipMaterial differs from bodyMaterial, use its pip accent color
+        let pipColor = bodyPreset.pipColor;
+        if (config.pipMaterial && config.pipMaterial !== config.bodyMaterial) {
+            const pipPreset = resolveDieMaterialPreset({
+                bodyMaterial: config.pipMaterial,
+                surfaceFinish: config.surfaceFinish,
+            });
+            pipColor = pipPreset.pipColor;
+        }
+
+        return { bodyPreset, pipColor };
+    }
+
+    private createMaterial(
+        config: DiceConfig,
+        faceCount: number,
+        geometry: THREE.BufferGeometry,
+        materialColors: { bodyPreset: ReturnType<typeof resolveDieMaterialPreset>; pipColor: string },
+    ): THREE.Material {
+        const { bodyPreset, pipColor } = materialColors;
 
         if (faceCount === 6) {
             try {
                 return createPhysicalD6Material({
-                    backgroundColor: preset.backgroundColor,
-                    pipColor: preset.pipColor,
+                    backgroundColor: bodyPreset.backgroundColor,
+                    pipColor: pipColor,
                     geometry: geometry as THREE.BoxGeometry,
                     textureFaceSize: DiceGraphic.D6_TEXTURE_FACE_SIZE,
                     bodyMaterial: config.bodyMaterial,
@@ -89,9 +113,9 @@ export class DiceGraphic extends EntityGraphicThree {
         }
 
         return createStandardDieMaterial({
-            backColor: preset.backgroundColor,
-            roughness: preset.surface.roughness,
-            metalness: preset.surface.metalness,
+            backColor: bodyPreset.backgroundColor,
+            roughness: bodyPreset.surface.roughness,
+            metalness: bodyPreset.surface.metalness,
         });
     }
 
@@ -133,14 +157,20 @@ export class DiceGraphic extends EntityGraphicThree {
             return;
         }
 
-        const nextMaterial = this.createMaterial(nextConfig, nextConfig.faceCount, mesh.geometry as THREE.BufferGeometry);
+        const nextMaterialColors = this.resolveMaterialColors(nextConfig);
+        const nextMaterial = this.createMaterial(
+            nextConfig,
+            nextConfig.faceCount,
+            mesh.geometry as THREE.BufferGeometry,
+            nextMaterialColors,
+        );
 
         this.disposeMaterial(mesh.material);
         mesh.material = nextMaterial;
         this.clearPipChildren(mesh);
 
         if (!(nextMaterial instanceof THREE.MeshPhysicalMaterial)) {
-            this.addPips(mesh, nextConfig.faceCount, nextConfig.foreColor);
+            this.addPips(mesh, nextConfig.faceCount, nextMaterialColors.pipColor);
         }
 
         this.diceConfig = nextConfig;
@@ -153,6 +183,7 @@ export class DiceGraphic extends EntityGraphicThree {
             config.foreColor,
             config.backColor,
             config.bodyMaterial ?? '',
+            config.pipMaterial ?? '',
             config.surfaceFinish ?? '',
         ].join('|');
     }

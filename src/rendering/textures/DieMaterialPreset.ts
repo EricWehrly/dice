@@ -7,16 +7,29 @@ import {
     type ResolveDieMaterialPresetInput,
 } from './DieTextureTypes';
 
+/**
+ * Map of material types to their body + pip colors.
+ * All 11 materials have distinct colors for visual verification during testing.
+ */
 const BODY_COLORS: Record<DieBodyMaterial, { backgroundColor: string; pipColor: string }> = {
-    bone: { backgroundColor: '#f3e8d2', pipColor: '#2e2016' },
-    wood: { backgroundColor: '#a57544', pipColor: '#22170f' },
-    stone: { backgroundColor: '#c8c8c8', pipColor: '#1f1f1f' },
-    ceramic: { backgroundColor: '#f5f5f2', pipColor: '#1f2c35' },
-    brass: { backgroundColor: '#c89a2d', pipColor: '#2b1d05' },
-    steel: { backgroundColor: '#b8c0c8', pipColor: '#1f2a33' },
-    obsidian: { backgroundColor: '#1c1c22', pipColor: '#f0f0f2' },
-    resin: { backgroundColor: '#d9e9ff', pipColor: '#162438' },
+    plastic: { backgroundColor: '#f5f5f2', pipColor: '#1f2c35' },
+    wood: { backgroundColor: '#8b6f47', pipColor: '#2a1810' },
+    stone: { backgroundColor: '#a0a0a0', pipColor: '#3a3a3a' },
+    ceramic: { backgroundColor: '#f0e5d8', pipColor: '#4a3c32' },
+    resin: { backgroundColor: '#e8d5c4', pipColor: '#2a2a2a' },
+    brass: { backgroundColor: '#d4a574', pipColor: '#3d3d2d' },
+    steel: { backgroundColor: '#d0d0d0', pipColor: '#1a1a1a' },
+    obsidian: { backgroundColor: '#1f1f1f', pipColor: '#e8e8e8' },
+    jade: { backgroundColor: '#3a6a4a', pipColor: '#d8e8d0' },
+    glass: { backgroundColor: '#e8f0f8', pipColor: '#2a2a3a' },
+    crystal: { backgroundColor: '#f0f8ff', pipColor: '#3a4a5a' },
 };
+
+/**
+ * Fallback color for unknown/unregistered materials.
+ * Bright magenta (#ff00ff) makes failures immediately obvious during testing.
+ */
+const FALLBACK_COLOR = { backgroundColor: '#ff00ff', pipColor: '#00ff00' };
 
 const FINISH_PROFILES: Record<DieSurfaceFinish, DieMaterialPreset['surface']> = {
     plain: {
@@ -62,17 +75,23 @@ function isSurfaceFinish(value: string | undefined): value is DieSurfaceFinish {
 }
 
 export function resolveDieMaterialPreset(input: ResolveDieMaterialPresetInput): DieMaterialPreset {
-    const bodyMaterial: DieBodyMaterial = isBodyMaterial(input.bodyMaterial) ? input.bodyMaterial : 'bone';
+    const bodyMaterial: DieBodyMaterial = isBodyMaterial(input.bodyMaterial) ? input.bodyMaterial : 'plastic';
     const surfaceFinish: DieSurfaceFinish = isSurfaceFinish(input.surfaceFinish) ? input.surfaceFinish : 'plain';
 
-    const base = BODY_COLORS[bodyMaterial];
+    // Get color palette for this material, or use fallback if missing
+    let base = BODY_COLORS[bodyMaterial];
+    if (!base) {
+        console.warn(`Material color palette missing for '${bodyMaterial}', using fallback debug color (magenta)`);
+        base = FALLBACK_COLOR;
+    }
+
     const surface = FINISH_PROFILES[surfaceFinish];
 
     return {
         bodyMaterial,
         surfaceFinish,
-        backgroundColor: input.fallbackBackgroundColor || base.backgroundColor,
-        pipColor: input.fallbackPipColor || base.pipColor,
+        backgroundColor: input.fallbackBackgroundColor ?? base.backgroundColor,
+        pipColor: input.fallbackPipColor ?? base.pipColor,
         surface,
     };
 }

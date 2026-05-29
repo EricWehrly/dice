@@ -1,12 +1,15 @@
 export const DIE_BODY_MATERIALS = [
-    'bone',
+    'plastic',
     'wood',
     'stone',
     'ceramic',
+    'resin',
     'brass',
     'steel',
     'obsidian',
-    'resin',
+    'jade',
+    'glass',
+    'crystal',
 ] as const;
 
 export const DIE_SURFACE_FINISHES = [
@@ -37,6 +40,6 @@ export interface DieMaterialPreset {
 export interface ResolveDieMaterialPresetInput {
     readonly bodyMaterial?: string;
     readonly surfaceFinish?: string;
-    readonly fallbackBackgroundColor: string;
-    readonly fallbackPipColor: string;
+    readonly fallbackBackgroundColor?: string;
+    readonly fallbackPipColor?: string;
 }

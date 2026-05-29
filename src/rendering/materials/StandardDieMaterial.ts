@@ -2,6 +2,8 @@ import * as THREE from 'three';
 
 export interface StandardDieMaterialConfig {
     backColor: string;
+    roughness?: number;
+    metalness?: number;
 }
 
 /**
@@ -15,7 +17,7 @@ export interface StandardDieMaterialConfig {
 export function createStandardDieMaterial(config: StandardDieMaterialConfig): THREE.MeshStandardMaterial {
     return new THREE.MeshStandardMaterial({
         color: config.backColor,
-        roughness: 0.7,
-        metalness: 0.1,
+        roughness: config.roughness ?? 0.7,
+        metalness: config.metalness ?? 0.1,
     });
 }

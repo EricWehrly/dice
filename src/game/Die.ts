@@ -15,6 +15,9 @@ export class Die extends Entity {
     faceUp: number;
     active: boolean;
     locked: boolean;
+    bodyMaterial: string;
+    pipMaterial: string;
+    surfaceFinish: string;
 
     constructor({ faceCount = 6, id = generateId(), randomizer = Math.random, ...entityOptions }: DieOptions = {}) {
         if (!Number.isInteger(faceCount) || faceCount < 2) {
@@ -35,6 +38,9 @@ export class Die extends Entity {
         this.faceUp = 1;
         this.active = true;
         this.locked = false;
+        this.bodyMaterial = 'plastic';
+        this.pipMaterial = 'plastic';
+        this.surfaceFinish = 'plain';
     }
 
     roll(): number {

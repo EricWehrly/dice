@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { type DieBodyMaterial, type DieSurfaceFinish } from './DieTextureTypes';
+import { MaterialTextureRegistry } from './MaterialTextureRegistry';
 
 export interface DieFaceTextureOptions {
     readonly faceSize?: number;
@@ -8,6 +10,17 @@ export interface DieFaceTextureOptions {
 
 export interface D6AtlasMaterialOptions extends DieFaceTextureOptions {
     readonly geometry: THREE.BoxGeometry;
+}
+
+/**
+ * Options for texture generation using the material registry.
+ * 
+ * Includes material and finish information to allow material-specific
+ * texture generators to provide appropriate textures.
+ */
+export interface D6AtlasMaterialWithGeneratorOptions extends D6AtlasMaterialOptions {
+    readonly bodyMaterial?: DieBodyMaterial;
+    readonly surfaceFinish?: DieSurfaceFinish;
 }
 
 const DEFAULT_FACE_SIZE = 256;
@@ -99,9 +112,24 @@ export function createD6FaceAtlasTexture(options: DieFaceTextureOptions): THREE.
     return texture;
 }
 
-export function createD6FaceAtlasMaterialTexture(input: D6AtlasMaterialOptions): THREE.CanvasTexture {
+export function createD6FaceAtlasMaterialTexture(input: D6AtlasMaterialWithGeneratorOptions): THREE.CanvasTexture {
     const faceSize = input.faceSize ?? DEFAULT_FACE_SIZE;
     applyD6AtlasUvs(input.geometry, faceSize);
+    
+    // Check if a material texture generator is registered for this material
+    const generatorMaterial = input.bodyMaterial ?? 'plastic';
+    const generator = MaterialTextureRegistry.get(generatorMaterial);
+    
+    if (generator) {
+        return generator.generateTexture({
+            backgroundColor: input.backgroundColor,
+            pipColor: input.pipColor,
+            surfaceFinish: input.surfaceFinish ?? 'plain',
+            faceSize,
+        });
+    }
+    
+    // Fallback to color-based rendering if no generator registered
     return createD6FaceAtlasTexture({
         backgroundColor: input.backgroundColor,
         pipColor: input.pipColor,
