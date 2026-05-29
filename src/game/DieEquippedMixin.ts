@@ -10,6 +10,7 @@ import { EntityMixin, MixinBase } from '../../engine/js/entities/character/Entit
 import Events, { GameEvent } from '../../engine/js/events';
 import type { DieEquipment } from './DieEquipmentTypes';
 import { DieSlotType } from './DieEquipmentTypes';
+import { DieWeightMod } from './mods/DieWeightMod';
 
 export { DieSlotType } from './DieEquipmentTypes';
 export type { DieEquipment } from './DieEquipmentTypes';
@@ -21,9 +22,14 @@ export type { DieEquipment } from './DieEquipmentTypes';
 Events.List.DieEquipmentChanged = 'DieEquipmentChanged';
 
 export interface DieEquipmentChangedEvent extends GameEvent {
+    entity: Entity & DieEquipped;
     slotType: DieSlotType;
     previous: DieEquipment | null;
     current: DieEquipment | null;
+}
+
+export interface DieEquipmentInstallOptions {
+    faceIndex?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -32,8 +38,8 @@ export interface DieEquipmentChangedEvent extends GameEvent {
 
 export interface DieEquipped {
     getEquipped(slotType: DieSlotType): DieEquipment | null;
-    install(item: DieEquipment): void;
-    uninstall(slotType: DieSlotType): void;
+    install(item: DieEquipment, options: DieEquipmentInstallOptions): boolean;
+    uninstall(slotType: DieSlotType): boolean;
     hasEquipped(slotType: DieSlotType): boolean;
 }
 
@@ -58,6 +64,14 @@ export function IsDieEquipped(obj: Entity): obj is Entity & DieEquipped {
 // ---------------------------------------------------------------------------
 
 type SlotCollection = Partial<Record<DieSlotType, DieEquipment>>;
+
+interface WeightAdjustableDie {
+    adjustFaceWeight(faceIndex: number, delta: number): void;
+}
+
+function isWeightAdjustableDie(entity: unknown): entity is WeightAdjustableDie {
+    return typeof (entity as WeightAdjustableDie)?.adjustFaceWeight === 'function';
+}
 
 export const DieEquippedMixin: EntityMixin<DieEquipped> = {
     name: 'DieEquipped',
@@ -90,30 +104,48 @@ export const DieEquippedMixin: EntityMixin<DieEquipped> = {
                 return this._slots[slotType] !== undefined;
             }
 
-            install(item: DieEquipment): void {
+            install(item: DieEquipment, options: DieEquipmentInstallOptions = {}): boolean {
                 const previous = this._slots[item.type] ?? null;
+
+                if (item.type === DieSlotType.MOD && isWeightAdjustableDie(this)) {
+                    if (previous instanceof DieWeightMod) {
+                        this.adjustFaceWeight(previous.faceIndex, -previous.grams);
+                    }
+                    if (item instanceof DieWeightMod) {
+                        this.adjustFaceWeight(item.faceIndex, item.grams);
+                    }
+                }
+
                 this._slots[item.type] = item;
 
                 const event: DieEquipmentChangedEvent = {
+                    entity: this as unknown as Entity & DieEquipped,
                     slotType: item.type,
                     previous,
                     current: item,
                 };
                 Events.RaiseEvent(Events.List.DieEquipmentChanged, event);
+                return true;
             }
 
-            uninstall(slotType: DieSlotType): void {
+            uninstall(slotType: DieSlotType): boolean {
                 const previous = this._slots[slotType] ?? null;
-                if (!previous) return;
+                if (!previous) return false;
+
+                if (slotType === DieSlotType.MOD && isWeightAdjustableDie(this) && previous instanceof DieWeightMod) {
+                    this.adjustFaceWeight(previous.faceIndex, -previous.grams);
+                }
 
                 delete this._slots[slotType];
 
                 const event: DieEquipmentChangedEvent = {
+                    entity: this as unknown as Entity & DieEquipped,
                     slotType,
                     previous,
                     current: null,
                 };
                 Events.RaiseEvent(Events.List.DieEquipmentChanged, event);
+                return true;
             }
 
         } as unknown as MixinBase<InstanceType<TBase> & DieEquipped>;
@@ -129,8 +161,8 @@ export const DieEquippedMixin: EntityMixin<DieEquipped> = {
             } else {
                 for (let i = 0; i < dieOptions.equipped.length; i++) {
                     const item = dieOptions.equipped[i];
-                    if (!item || typeof item.name !== 'string' || !item.type) {
-                        errors.push(`equipped[${i}] must satisfy Equippable<DieSlotType>: name (string) and type (DieSlotType)`);
+                    if (!item || typeof item.id !== 'string' || typeof item.name !== 'string' || !item.type) {
+                        errors.push(`equipped[${i}] must satisfy Equippable<DieSlotType>: id (string), name (string), and type (DieSlotType)`);
                     }
                 }
             }

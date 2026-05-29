@@ -12,6 +12,8 @@ import { init as initThrower } from './thrower/index';
 import { initializeGameResources } from './game/resources/GameResources';
 import Events from '../engine/js/events';
 import './rendering/DiceGraphic';  // Import for class initialization and event wiring
+import { MakeDieCharacter } from './game/DieCharacterFactory';
+import { DieEquippedMixin } from './game/DieEquippedMixin';
 
 // TODO: handle in managed UI instead
 function wireRollButtons(bag: Bag) {
@@ -37,6 +39,10 @@ function calculateBagMaxRoll(bag: Bag): number {
 }
 
 const bag = new Bag();
+bag.addDie(MakeDieCharacter([DieEquippedMixin]));
+bag.addDie(MakeDieCharacter([DieEquippedMixin]));
+bag.addDie(MakeDieCharacter([DieEquippedMixin]));
+
 wireRollButtons(bag);
 new DiceCanvasRenderer(bag);
 
@@ -47,7 +53,7 @@ initializeGameResources(initialHighScore);
 new ScoreProgressionTracker(bag);
 new TrickEvaluator();
 
-const dieModificationPanel = new DieModificationPanel(bag.dice);
+const dieModificationPanel = new DieModificationPanel(bag);
 dieModificationPanel.render();
 
 // Initialize screen manager for play mode toggle

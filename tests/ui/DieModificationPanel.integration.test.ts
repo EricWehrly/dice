@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import Events from '../../engine/js/events';
-import { ModifiedDie } from '../../src/game/ModifiedDie';
-import { TrickEvents } from '../../src/game/contracts/TrickContracts';
+import { Bag } from '../../src/game/Bag';
+import { DieSlotType, type DieEquipped, DieEquippedMixin } from '../../src/game/DieEquippedMixin';
+import { MakeDieCharacter } from '../../src/game/DieCharacterFactory';
+import { DieWeightMod } from '../../src/game/mods/DieWeightMod';
 import { DieModificationPanel } from '../../src/ui/DieModificationPanel';
 
 function installCanvasMocks(): void {
@@ -71,10 +72,10 @@ describe('DieModificationPanel integration', () => {
     });
 
     it('installs and replaces weight mod target through panel install flow', () => {
-        const die = new ModifiedDie({ id: 'die-1', faceCount: 6 });
-        const panel = new DieModificationPanel([die]);
-        const bagChangedSpy = vi.fn();
-        const subscriptionId = Events.Subscribe(TrickEvents.BAG_CHANGED, bagChangedSpy);
+        const bag = new Bag();
+        const die = MakeDieCharacter([DieEquippedMixin], { id: 'die-1', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
+        bag.addDie(die);
+        const panel = new DieModificationPanel(bag);
 
         panel.render();
 
@@ -89,7 +90,9 @@ describe('DieModificationPanel integration', () => {
         let installBtn = getRequired<HTMLButtonElement>('.die-mod-install-btn');
         installBtn.click();
 
-        expect(die.mod).toMatchObject({ faceIndex: 2, grams: 1.5, id: 'weight-1.5' });
+        const installedAfterFirstInstall = die.getEquipped(DieSlotType.MOD);
+        expect(installedAfterFirstInstall).toBeInstanceOf(DieWeightMod);
+        expect(installedAfterFirstInstall).toMatchObject({ faceIndex: 2, grams: 1.5, id: 'weight-1.5' });
 
         targetSelector = getRequired<HTMLSelectElement>('.die-mod-target-face-selector');
         targetSelector.value = '4';
@@ -98,19 +101,16 @@ describe('DieModificationPanel integration', () => {
         installBtn = getRequired<HTMLButtonElement>('.die-mod-install-btn');
         installBtn.click();
 
-        expect(die.mod).toMatchObject({ faceIndex: 4, grams: 1.5, id: 'weight-1.5' });
-        expect(bagChangedSpy).toHaveBeenCalledTimes(2);
-
-        if (subscriptionId) {
-            Events.Unsubscribe(subscriptionId);
-        }
+        const installedAfterSecondInstall = die.getEquipped(DieSlotType.MOD);
+        expect(installedAfterSecondInstall).toBeInstanceOf(DieWeightMod);
+        expect(installedAfterSecondInstall).toMatchObject({ faceIndex: 4, grams: 1.5, id: 'weight-1.5' });
     });
 
     it('uninstalls when selecting none and clears pending selection state', () => {
-        const die = new ModifiedDie({ id: 'die-2', faceCount: 6 });
-        const panel = new DieModificationPanel([die]);
-        const bagChangedSpy = vi.fn();
-        const subscriptionId = Events.Subscribe(TrickEvents.BAG_CHANGED, bagChangedSpy);
+        const bag = new Bag();
+        const die = MakeDieCharacter([DieEquippedMixin], { id: 'die-2', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
+        bag.addDie(die);
+        const panel = new DieModificationPanel(bag);
 
         panel.render();
 
@@ -123,7 +123,7 @@ describe('DieModificationPanel integration', () => {
         targetSelector.dispatchEvent(new Event('change', { bubbles: true }));
 
         getRequired<HTMLButtonElement>('.die-mod-install-btn').click();
-        expect(die.mod).not.toBeNull();
+        expect(die.getEquipped(DieSlotType.MOD)).not.toBeNull();
 
         const refreshedCoreSelector = getRequired<HTMLSelectElement>('.die-mod-core-mod-selector');
         refreshedCoreSelector.value = 'none';
@@ -139,22 +139,17 @@ describe('DieModificationPanel integration', () => {
 
         const finalInstallBtn = getRequired<HTMLButtonElement>('.die-mod-install-btn');
 
-        expect(die.mod).toBeNull();
+        expect(die.getEquipped(DieSlotType.MOD)).toBeNull();
         expect(refreshedTargetSelector.disabled).toBe(true);
         expect(finalInstallBtn.disabled).toBe(true);
         expect(finalInstallBtn.textContent?.trim()).toBe('Install');
-        expect(bagChangedSpy).toHaveBeenCalledTimes(2);
-
-        if (subscriptionId) {
-            Events.Unsubscribe(subscriptionId);
-        }
     });
 
     it('clears pending selection without changing die state when none selected before install', () => {
-        const die = new ModifiedDie({ id: 'die-3', faceCount: 6 });
-        const panel = new DieModificationPanel([die]);
-        const bagChangedSpy = vi.fn();
-        const subscriptionId = Events.Subscribe(TrickEvents.BAG_CHANGED, bagChangedSpy);
+        const bag = new Bag();
+        const die = MakeDieCharacter([DieEquippedMixin], { id: 'die-3', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
+        bag.addDie(die);
+        const panel = new DieModificationPanel(bag);
 
         panel.render();
 
@@ -173,14 +168,10 @@ describe('DieModificationPanel integration', () => {
         const refreshedTargetSelector = getRequired<HTMLSelectElement>('.die-mod-target-face-selector');
         const refreshedInstallBtn = getRequired<HTMLButtonElement>('.die-mod-install-btn');
 
-        expect(die.mod).toBeNull();
+        expect(die.getEquipped(DieSlotType.MOD)).toBeNull();
         expect(refreshedTargetSelector.disabled).toBe(true);
         expect(refreshedInstallBtn.disabled).toBe(true);
         expect(refreshedInstallBtn.textContent?.trim()).toBe('Install');
-        expect(bagChangedSpy).not.toHaveBeenCalled();
-
-        if (subscriptionId) {
-            Events.Unsubscribe(subscriptionId);
-        }
     });
+
 });

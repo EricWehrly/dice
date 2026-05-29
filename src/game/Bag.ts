@@ -2,9 +2,9 @@ import Events, { type GameEvent } from '../../engine/js/events';
 import { TrickEvents } from './contracts/TrickContracts';
 import { Die } from './Die';
 import { DieFaceResult } from './DieFaceResult';
-import { ModifiedDie } from './ModifiedDie';
 import { RecordHistory } from './RecordHistory';
 import Coordinate3D from '../../engine/js/coordinates/Coordinate3D';
+import { DieEquipped, IsDieEquipped } from './DieEquippedMixin';
 
 export interface BagRolledEvent extends GameEvent {
     faces: number[];
@@ -19,11 +19,11 @@ export interface BagChangedEvent extends GameEvent {
 
 // if we go to multiplayer, I think Bag either needs to be Listed or associated with player
 export class Bag {
-    readonly dice: ModifiedDie[];
+    readonly dice: Die[];
     readonly rollHistory: RecordHistory<readonly DieFaceResult[]>;
 
-    constructor(initialDice: ModifiedDie[] = [new ModifiedDie(), new ModifiedDie(), new ModifiedDie()]) {
-        this.dice = [...initialDice];
+    constructor() {
+        this.dice = [];
         this.rollHistory = new RecordHistory<readonly DieFaceResult[]>(20);
         this.applyLaneOrdering();
 
@@ -56,7 +56,7 @@ export class Bag {
         return faces;
     }
 
-    addDie(die: ModifiedDie): void {
+    addDie(die: Die): void {
         this.dice.push(die);
         this.applyLaneOrdering();
         this.raiseBagChanged();
@@ -74,8 +74,8 @@ export class Bag {
         this.raiseBagChanged();
     }
 
-    getActiveDice(): Die[] {
-        return this.dice.filter((die) => die.active);
+    getActiveDice(): (Die & DieEquipped)[] {
+        return this.dice.filter((die): die is Die & DieEquipped => die.active && IsDieEquipped(die));
     }
 
     toggleActive(id: string): void {

@@ -2,13 +2,25 @@ import { describe, expect, it, vi } from 'vitest';
 import Events from '../../engine/js/events';
 import { Bag } from '../../src/game/Bag';
 import { TrickEvents } from '../../src/game/contracts/TrickContracts';
-import { ModifiedDie as Die } from '../../src/game/ModifiedDie';
+import { Die } from '../../src/game/Die';
+import { MakeDieCharacter } from '../../src/game/DieCharacterFactory';
+import { DieEquippedMixin } from '../../src/game/DieEquippedMixin';
+
+function makeDie(options: ConstructorParameters<typeof Die>[0] = {}): Die {
+    return MakeDieCharacter([DieEquippedMixin], options);
+}
+
+function makeBag(...dice: Die[]): Bag {
+    const bag = new Bag();
+    dice.forEach((die) => bag.addDie(die));
+    return bag;
+}
 
 describe('Bag', () => {
     it('rollAll rolls every active die', () => {
-        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.5 });
-        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.5 });
-        const bag = new Bag([d1, d2]);
+        const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.5 });
+        const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.5 });
+        const bag = makeBag(d1, d2);
 
         const results = bag.rollAll();
 
@@ -18,10 +30,10 @@ describe('Bag', () => {
     });
 
     it('does not roll inactive dice', () => {
-        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2 });
-        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.2 });
+        const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.2 });
+        const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.2 });
         d2.active = false;
-        const bag = new Bag([d1, d2]);
+        const bag = makeBag(d1, d2);
 
         const results = bag.rollAll();
 
@@ -31,11 +43,11 @@ describe('Bag', () => {
     });
 
     it('does not reroll locked dice and still returns all active faces', () => {
-        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.8 });
-        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.8 });
+        const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.8 });
+        const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.8 });
         d1.faceUp = 2;
         d1.locked = true;
-        const bag = new Bag([d1, d2]);
+        const bag = makeBag(d1, d2);
 
         const results = bag.rollAll();
 
@@ -47,7 +59,7 @@ describe('Bag', () => {
     it('raises bag rolled event', () => {
         const callback = vi.fn();
         const subscriptionId = Events.Subscribe(TrickEvents.BAG_ROLLED, callback);
-        const bag = new Bag([new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2 })]);
+        const bag = makeBag(makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.2 }));
 
         bag.rollAll();
 
@@ -57,11 +69,12 @@ describe('Bag', () => {
         }
     });
 
-    it('raises BAG_CHANGED from the constructor when initialized with dice', () => {
+    it('raises BAG_CHANGED when adding a die', () => {
         const callback = vi.fn();
         const subscriptionId = Events.Subscribe(TrickEvents.BAG_CHANGED, callback);
+        const bag = new Bag();
 
-        new Bag([new Die({ faceCount: 6, id: 'd1' })]);
+        bag.addDie(makeDie({ faceCount: 6, id: 'd1' }));
 
         expect(callback).toHaveBeenCalledTimes(1);
 
@@ -71,11 +84,11 @@ describe('Bag', () => {
     });
 
     it('stores roll history entries with face result fields needed by tricks', () => {
-        const lockedDie = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.8 });
-        const rolledDie = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.8 });
+        const lockedDie = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.8 });
+        const rolledDie = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.8 });
         lockedDie.faceUp = 2;
         lockedDie.locked = true;
-        const bag = new Bag([lockedDie, rolledDie]);
+        const bag = makeBag(lockedDie, rolledDie);
 
         bag.rollAll();
 
@@ -88,10 +101,10 @@ describe('Bag', () => {
     });
 
     it('sets x position to lane index on roll', () => {
-        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
-        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
-        const d3 = new Die({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
-        const bag = new Bag([d1, d2, d3]);
+        const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
+        const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
+        const d3 = makeDie({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
+        const bag = makeBag(d1, d2, d3);
 
         bag.rollAll();
 
@@ -107,10 +120,10 @@ describe('Bag', () => {
     });
 
     it('sets x position to the next lane index when adding a die', () => {
-        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
-        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
-        const bag = new Bag([d1, d2]);
-        const d3 = new Die({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
+        const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
+        const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
+        const bag = makeBag(d1, d2);
+        const d3 = makeDie({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
 
         bag.addDie(d3);
 
@@ -122,10 +135,10 @@ describe('Bag', () => {
     });
 
     it('compacts lane positions when removing a die', () => {
-        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
-        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
-        const d3 = new Die({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
-        const bag = new Bag([d1, d2, d3]);
+        const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
+        const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
+        const d3 = makeDie({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
+        const bag = makeBag(d1, d2, d3);
 
         bag.removeDie('d2');
 
@@ -134,11 +147,11 @@ describe('Bag', () => {
     });
 
     it('assigns locked dice to earlier lane indexes than unlocked dice', () => {
-        const d1 = new Die({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
-        const d2 = new Die({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
-        const d3 = new Die({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
+        const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
+        const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
+        const d3 = makeDie({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
         d3.locked = true;
-        const bag = new Bag([d1, d2, d3]);
+        const bag = makeBag(d1, d2, d3);
 
         bag.rollAll();
 
@@ -148,8 +161,8 @@ describe('Bag', () => {
     });
 
     it('toggles active flag by id', () => {
-        const d1 = new Die({ faceCount: 6, id: 'd1' });
-        const bag = new Bag([d1]);
+        const d1 = makeDie({ faceCount: 6, id: 'd1' });
+        const bag = makeBag(d1);
 
         expect(d1.active).toBe(true);
         bag.toggleActive('d1');
@@ -159,8 +172,8 @@ describe('Bag', () => {
     });
 
     it('toggles locked flag by id', () => {
-        const d1 = new Die({ faceCount: 6, id: 'd1' });
-        const bag = new Bag([d1]);
+        const d1 = makeDie({ faceCount: 6, id: 'd1' });
+        const bag = makeBag(d1);
 
         expect(d1.locked).toBe(false);
         bag.toggleLocked('d1');
@@ -170,8 +183,7 @@ describe('Bag', () => {
     });
 
     it('raises BAG_CHANGED with bag on event payload', () => {
-        // Bag constructor fires BAG_CHANGED when given initial dice, so subscribe after construction.
-        const bag = new Bag([new Die({ faceCount: 6, id: 'd1' })]);
+        const bag = makeBag(makeDie({ faceCount: 6, id: 'd1' }));
 
         const callback = vi.fn();
         const subscriptionId = Events.Subscribe(TrickEvents.BAG_CHANGED, callback);
