@@ -1,216 +1,173 @@
-# F14 - Material System & Texture Authoring
+# F14 - Material Family Authoring and Texture Implementation Plan
 
-Status: 🔄 In Progress
+Status: 🔄 Planning Update (Documentation Only)
 
 ## Objective
 
-Implement a material system that allows dice to have independent body and pip materials (e.g., "brass on wood"), with a pluggable texture generation architecture to enable material authors to add procedural, baked, or hybrid textures without modifying the core renderer.
+Prepare an implementation-ready plan for procedural material textures by:
 
-## Current State
+1. Grouping materials by reusable material type families
+2. Defining family-first generator strategy so one base algorithm can produce multiple variants
+3. Estimating effort versus visual payoff to prioritize "best bang for buck"
+4. Defining preview and acceptance workflow before writing any new texture code
 
-- **Runtime plumbing**: ✅ Complete
-  - 11 materials fully wired: plastic, wood, stone, ceramic, resin, brass, steel, obsidian, jade, glass, crystal
-  - Body/pip material selectors in modification panel
-  - Material changes trigger live 3D view updates
-  - Pip color logic corrected (uses pip material's pip color, not body color)
+## Current State (Already in Place)
 
-- **Texture Generation Architecture**: ✅ Implemented (F14 groundwork)
-  - `MaterialTextureRegistry`: Global registry for material texture generators
-  - `MaterialTextureGenerator`: Interface for pluggable texture generation
-  - `PlasticMaterialGenerator`: Baseline color-based implementation
-  - Flow: Material system → registry lookup → generator → texture
-  - Fallback: If no generator registered, uses color-only rendering
-  - **All future materials register their own generator without touching core code**
+- Runtime supports independent body and pip materials
+- 11 materials are wired in presets: plastic, wood, stone, ceramic, resin, brass, steel, obsidian, jade, glass, crystal
+- Texture generator registry exists with fallback to color-only rendering
+- `PlasticMaterialGenerator` is the baseline generator implementation
 
-## Architecture Overview
+This document focuses on what to build next, not on changing runtime architecture.
 
-### Material Texture Generator System
+## Family-First Material Strategy
 
-```
-DiceGraphic.createMaterial()
-    ↓
-resolveDieMaterialPreset() → colors + finish profiles
-    ↓
-createPhysicalD6Material()
-    ↓
-createD6FaceAtlasMaterialTexture()
-    ↓
-MaterialTextureRegistry.get(material)
-    ├─ Found: Call generator.generateTexture() → Full texture generation
-    └─ Not found: Fallback to color-only rendering
-```
+The next phase should be implemented by material families, not by isolated named materials.
 
-### Key Files
+### Why Family-First
 
-- `src/rendering/textures/MaterialTextureGenerator.ts`: Interface definition
-- `src/rendering/textures/MaterialTextureRegistry.ts`: Global registry (register/get)
-- `src/rendering/textures/generators/PlasticMaterialGenerator.ts`: Baseline implementation
-- `src/rendering/textures/DieFaceTextureAtlas.ts`: Updated to use registry
-- `src/rendering/DiceGraphic.ts`: Initializes registry on load
+- Reuse: one family generator can produce several marketable variants
+- Consistency: finish responses behave similarly within a family
+- Speed: variant creation becomes parameter tuning, not full reimplementation
+- Maintainability: fewer core algorithms to test and optimize
 
-### Adding a New Material
+### Family Model
 
-1. Create `src/rendering/textures/generators/[Material]MaterialGenerator.ts`
-2. Implement `MaterialTextureGenerator` interface
-3. Register in `MaterialTextureRegistry.register(myGenerator)`
-4. **That's it** — no changes to core renderer needed
+| Family | Current Materials In Family | Immediate Variants We Can Derive | Core Procedural Signals |
+|---|---|---|---|
+| Metal | brass, steel | gold, silver, bronze, copper, iron | directional brush noise, edge wear, spec breakup |
+| Stone/Mineral | stone, obsidian, jade | granite, slate, basalt, marble, soapstone | cellular noise, cracks, vein masks, grain breakup |
+| Wood/Organic | wood | oak, walnut, maple, cherry, ebony | ring/grain fields, knots, anisotropic streaks |
+| Ceramic/Porcelain | ceramic | porcelain, terracotta, glazed clay, raku-like | smooth base, glaze pooling, fine speckle |
+| Transparent Gem/Glass | glass, crystal | smoky quartz, amethyst-like tint, frosted glass | transmission tint, edge brightening, internal noise |
+| Synthetic/Polymer | plastic, resin | matte ABS, glossy acrylic, translucent resin, glitter resin | flat base, micro-noise, optional inclusions |
 
-Example:
-```typescript
-export const WoodMaterialGenerator: MaterialTextureGenerator = {
-    material: 'wood',
-    label: 'Wood',
-    generateTexture(options) {
-        // Generate procedural wood grain or load baked texture
-        return createWoodTexture(options);
-    }
-};
-// Register once, anywhere, anytime (e.g., in DiceGraphic.static block)
-MaterialTextureRegistry.register(WoodMaterialGenerator);
-```
+## Proposed Generator Architecture Direction
 
-## Material Color Palette (Current Placeholders)
+Keep current registry contracts. Add implementation in this sequence:
 
-| Material | Body Color | Pip Color | Use Case |
-|----------|-----------|-----------|----------|
-| Plastic | #f5f5f2 | #1f2c35 | Baseline high-contrast |
-| Wood | #8b6f47 | #2a1810 | Warm, natural organic feel |
-| Stone | #a0a0a0 | #3a3a3a | Cool, earthy, matte |
-| Ceramic | #f0e5d8 | #4a3c32 | Warm porcelain, smooth |
-| Resin | #e8d5c4 | #2a2a2a | Glossy, translucent-like |
-| Brass | #d4a574 | #3d3d2d | Golden metallic, warm |
-| Steel | #d0d0d0 | #1a1a1a | Cool metallic, industrial |
-| Obsidian | #1f1f1f | #e8e8e8 | High contrast, dark body |
-| Jade | #3a6a4a | #d8e8d0 | Deep green, subtle variation |
-| Glass | #e8f0f8 | #2a2a3a | Translucent pale blue |
-| Crystal | #f0f8ff | #3a4a5a | Very light, icy tone |
+1. Build one base generator per family.
+2. Add family parameter presets for named variants.
+3. Route existing named materials to family presets.
+4. Add net-new named materials by reusing family presets.
 
-## Texture Authoring Workflow (Phase 2+)
+Example intent for metal family (documentation only):
 
-### For Each Material Generator
+- One metal generator handles spec and brushing patterns
+- Gold versus silver versus brass differ mostly by hue/value/roughness ranges and patina mask settings
 
-1. **Author texture** (choose one or combine):
-   - **Procedural**: Generate patterns dynamically using Canvas 2D (wood grain, metal brushing, stucco)
-   - **Baked**: Create in Blender/Substance Painter, import as texture atlas sheet
-   - **Hybrid**: Procedural base + baked detail/normal maps overlaid
+## Brainstorm: Additional Materials by Family
 
-2. **Implement generator**:
-   - Inherit base atlas generation from `createD6FaceAtlasTexture()`
-   - Add procedural overlays or baked sampling
-   - Test all four finishes (plain/etched/polished/hammered)
+These are candidates for content expansion once family generators exist.
 
-3. **Validate**:
-   - Readability at gameplay camera distance
-   - No UV shift/cropping with repeated material changes
-   - Pips remain visible and readable
-   - All finish profiles work as intended
+| Family | Candidate Materials |
+|---|---|
+| Metal | gold, silver, bronze, copper, iron, titanium, blackened steel, patina brass |
+| Stone/Mineral | granite, marble, slate, basalt, limestone, sandstone, malachite |
+| Wood/Organic | oak, walnut, maple, cherry, mahogany, ebony, bamboo |
+| Ceramic/Porcelain | porcelain white, terracotta, crackle glaze, celadon-inspired, matte stoneware |
+| Transparent Gem/Glass | clear glass, frosted glass, smoky crystal, rose crystal, emerald-like gem |
+| Synthetic/Polymer | matte plastic, glossy plastic, pearlescent plastic, translucent resin, glitter resin |
+| Novelty/Advanced Later | lava rock glow, carbon fiber, mother-of-pearl, opal-like iridescence |
 
-4. **Test & Ship**:
-   - Add snapshot test for generator output
-   - Include before/after screenshots
-   - Register generator in DiceGraphic or standalone loader
-   - Create PR to mainline
+## Comparative Estimates (Procedural Generation)
 
-## Prioritized Material Implementation Order
+Scoring uses a 1-5 scale:
 
-### Tier 1 - High Impact (Ship ASAP - best ROI)
-1. **Wood** - Most requested, procedural grain candidates, high visual impact
-2. **Brass** - Metallic polish response, straightforward finish tuning
-3. **Stone** - Natural reference, good for procedural Voronoi/crack patterns
+- `Impact`: visual distinctiveness in gameplay camera
+- `Reuse`: how many variants can share the same generator core
+- `Complexity`: implementation and tuning effort
+- `Risk`: rendering/perf risk under current pipeline
+- `BangForBuck`: `(Impact + Reuse) / (Complexity + Risk)`
 
-### Tier 2 - Medium Impact (Ship Mid)
-4. **Steel** - Industrial aesthetic, distinct from brass with cooler tones
-5. **Ceramic** - Smooth/matte response, gloss contrast, pottery feel
-6. **Obsidian** - Dramatic high-contrast, mirrors/gloss simulation
+Higher `BangForBuck` should generally be prioritized.
 
-### Tier 3 - Special/Niche (Ship Later - Polish Additions)
-7. **Jade** - Subtle color variation, cultural appeal
-8. **Resin** - Glossy/translucent simulation, modern craft feel
-9. **Glass** - Challenging transparency, premium luxury feel
-10. **Crystal** - Extreme clarity simulation, high-difficulty shimmer
+| Family | Impact | Reuse | Complexity | Risk | BangForBuck | Initial Estimate | Notes |
+|---|---:|---:|---:|---:|---:|---|---|
+| Metal | 5 | 5 | 3 | 2 | 2.00 | 1.5-2.5 days | Best early leverage for gold/silver/brass/copper from one core |
+| Stone/Mineral | 4 | 5 | 3 | 2 | 1.80 | 1.5-2.5 days | Crack/vein masks scale well to many variants |
+| Wood/Organic | 4 | 4 | 3 | 2 | 1.60 | 1.5-2.0 days | Strong visual gain; moderate tuning time for believable grain |
+| Ceramic/Porcelain | 3 | 4 | 2 | 1 | 2.33 | 1.0-1.5 days | Easiest quality win; subtle but clean look |
+| Synthetic/Polymer | 3 | 4 | 2 | 1 | 2.33 | 1.0-1.5 days | Low risk and very controllable for fallback-safe rollout |
+| Transparent Gem/Glass | 4 | 3 | 5 | 4 | 0.78 | 3.0-5.0 days | High difficulty in current non-raytraced context; defer |
+| Novelty/Advanced Later | 5 | 2 | 5 | 5 | 0.58 | 4.0-6.0 days | Great polish track, weak near-term ROI |
 
-### Tier 4 - Future Expansion (Post-MVP)
-11. **Copper** - Oxidation states, patina aging effects
-12. **Marble** - Veining patterns, elegant luxury
-13. **Leather** - Textured surface, warm stitching accents
-14. **Carbon Fiber** - Woven pattern, tech aesthetic
-15. **Pearl** - Iridescent shimmer, luxury appeal
+### Recommended Priority by Value
 
-## Procedural Pattern Suggestions
+1. Ceramic/Porcelain family (fast win, low risk)
+2. Synthetic/Polymer family (fast win, low risk)
+3. Metal family (highest leverage for named premium variants)
+4. Stone/Mineral family (broad thematic range)
+5. Wood/Organic family (good impact, medium tuning cost)
+6. Transparent Gem/Glass family (after baseline pipeline is stable)
+7. Novelty/Advanced effects (post-MVP polish)
 
-### Wood
-- Perlin noise grain with radial waves (growth rings)
-- Darker sapwood edges, lighter heartwood center
-- Finish responses: plain=matte, polished=glossy highlights, etched=grain exaggeration
+## Ready-to-Implement Wave Plan
 
-### Brass
-- Brushed directional noise + specular highlights
-- Warm yellow-gold base, darker shading in recesses
-- Finish responses: plain=matte brushing, polished=mirror gloss, etched=pattern amplification
+### Wave 1 (Fast, High Certainty)
 
-### Stone
-- Voronoi cellular patterns with random cracks
-- Subtle color variance, matte overlay
-- Finish responses: plain=rough pores, polished=smooth reflective, etched=deep cracks
+- Ceramic/Porcelain base generator
+- Synthetic/Polymer base generator
+- Metal base generator with brass, steel, gold, silver variants
 
-### Obsidian
-- High-gloss black with subtle specular simulation
-- Reflective edges, subtle iridescent shimmer
-- Finish responses: all keep glossy, but vary edge sharpness
+Estimated wave duration: 4-6 implementation days including preview/test passes.
 
-### Ceramic
-- Subtle radial gradient + gloss center
-- Hand-thrown potter's mark variation
-- Finish responses: plain=matte clay, polished=glazed shine, etched=texture accentuation
+### Wave 2 (Content Expansion)
 
-## Technical Constraints
+- Stone/Mineral base generator with stone, granite, slate, obsidian variants
+- Wood/Organic base generator with wood, oak, walnut variants
 
-- Keep `DieFaceTextureAtlas.ts` UV remap logic unchanged
-- Do not alter die orientation mapping or face-up probability model  
-- Maintain backward compatibility: missing generators fall back to color-only
-- Textures must fit in 256px×256px per face (5% gap = ~243px usable per face in 3×2 grid)
-- Generator calls must complete synchronously during material creation
-- `DieMaterialPreset.ts` remains source of truth for color fallbacks
+Estimated wave duration: 3-5 implementation days including tuning.
 
-## Workflow Per Material (Tier 1, 2, 3)
+### Wave 3 (Advanced Look Development)
 
-1. Create generator file in `src/rendering/textures/generators/[Material]MaterialGenerator.ts`
-2. Implement texture generation (procedural Canvas or baked import)
-3. Validate all four finishes in roll screen
-4. Screenshot texture results (plain, etched, polished, hammered variants)
-5. Add snapshot test in `src/tests/rendering/generators/[Material]MaterialGenerator.test.ts`
-6. Update `DieMaterialPreset.ts` color palette if texture shifts tone significantly
-7. Register generator in `DiceGraphic.static` or dedicated generator loader
-8. Update F14 document marking material complete
-9. Create PR with generator + tests
+- Transparent Gem/Glass base generator
+- Optional novelty materials (opal-like, carbon fiber, pearl)
 
-## Expected Output Per Material
+Estimated wave duration: 4-7 implementation days with iteration risk.
 
-- **PR with**: MaterialGenerator implementation, screenshot comparisons, snapshot tests
-- **Docs**: Material-specific notes in docs/textures/[material]-notes.md
-- **Acceptance**: Roll screen shows realistic appearance; finishes respond appropriately; no regressions
+## Texture Preview and Validation Workflow (No Code Yet)
 
-## Known Unknowns
+The implementation pass should be guided by a strict preview loop.
 
-- Exact procedural formula for each material (requires iteration + playtesting)
-- Whether baked textures justify bundle size tradeoff vs procedural
-- Performance profile of procedural generation vs. cached textures
-- How glass/crystal translucency should simulate in current pipeline
+### Per Family Preview Checklist
 
-## Future: Dynamic Material Variants
+1. Preview baseline family material under all finish profiles.
+2. Preview at gameplay camera distance and close-up camera distance.
+3. Confirm pip readability on light body and dark body combinations.
+4. Compare at least 3 variants from the same family side-by-side.
+5. Verify no UV drift/cropping across rapid material swaps.
+6. Capture screenshots for plain, etched, polished, hammered variants.
 
-Once texture authoring complete, consider per-material variants:
-- **Wood**: Oak, Maple, Walnut, Cherry
-- **Brass**: Polished, Patina, Verdigris
-- **Stone**: Granite, Marble, Slate, Basalt
+### Acceptance Gate Per Family
 
-## Exit Criteria
+- At least one variant is clearly distinguishable at gameplay distance.
+- Finish profiles are visibly different, not only color-shifted.
+- Switching materials does not regress roll performance or stability.
+- Fallback path remains visually acceptable if generator is absent.
 
-- ✅ Runtime plumbing for 11 materials (done)
-- ✅ Body/pip material selectors working (done)
-- ✅ Texture generator registry + architecture (done)
-- ✅ PlasticMaterialGenerator baseline (done)
-- Tier 1 materials (wood, brass, stone) have realistic texture generators
-- All materials pass readability + finish validation
-- No UV shift/cropping regressions
-- Roll screen screenshots document final appearance per tier
+## Technical Constraints (Carry Forward)
+
+- Keep `DieFaceTextureAtlas.ts` UV mapping contract unchanged
+- Preserve die orientation mapping and probability model behavior
+- Keep generator execution synchronous during material creation
+- Maintain fallback to color-only rendering when no generator exists
+- Keep `DieMaterialPreset.ts` as source of truth for fallback palette values
+
+## Deliverables for First Implementation Pass
+
+No code changes are requested in this planning turn. The next implementation turn should produce:
+
+1. Family generator implementations for Wave 1
+2. Variant presets for at least 2-4 named materials per completed family
+3. Preview screenshot set per family and finish profile
+4. Focused tests around generator output stability
+5. F14 doc updates marking completed families and adding tuning notes
+
+## Exit Criteria for This Planning Update
+
+- Material families are defined and mapped to current materials
+- Additional material brainstorm is captured in family groups
+- Comparative procedural estimates are documented for prioritization
+- A practical implementation and preview workflow is documented
+- Document is ready for a code implementation pass next

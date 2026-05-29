@@ -3,6 +3,24 @@
 - default circle pip is score / currency
 gem faces are 10x currency value?
 
+- animate score a little
+
+- camera zoom to fit dice
+zoom out a little to roll dice
+slowly zoom back in after dice land
+
+- After face pips like locks or clovers do their thing, they are scored as if circle pips
+
+- mod screen as "popup" sub-window 
+no longer needs to render dice at all, just uses rolling viewport
+should modify render viewport to center on die (zoom, depends on camera zooming feature)
+need a way to cancel / close / finish
+can drop preview and die selection and just have dropdowns
+this reduces us to one screen and removes the explicit need for tabs
+
+- die mod screen
+material preview when changing, but reset if "install" not hit
+
 - colors are worth score
     each band worth 0-255
     full black (RGB 000) is worth 0
@@ -33,6 +51,9 @@ show that (image) (as data uri if possible) in the high score area
 - move 'resources' to canvas screen
 and draw them with the appropriate (pip) icons related to them
 and ui scaling as in other places...
+(this would make sense after we do mod popout)
+
+- Maybe "travel" of some kind looking for materials to collect wood, obsidian, etc.
 
 - (later) unlock and then buy the sword, heart, and shield
 with all 3, unlocks pvp
