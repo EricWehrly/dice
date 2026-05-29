@@ -159,4 +159,4 @@ Evaluation gate for this slice:
 
 - [F06 - Dice Rolling Screen](../features/F06-dice-rolling-screen.md)
 - [F10 - Screen Shell and Navigation](../features/F10-screen-shell-navigation.md)
-- [Pivot Roadmap](../active/roadmap-pivot.md)
+- [Active Roadmap](../active/roadmap.md)

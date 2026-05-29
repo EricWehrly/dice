@@ -1,32 +1,47 @@
 # Dice Game - Active Roadmap
 
-Branch: with-engine
-Goal: migrate standalone dice prototype onto engine runtime while preserving incremental playability.
+Last updated: 2026-05-29
 
-Feature docs: [F02](../features/F02-throw-input-cooldown.md), [F03](../features/F03-inspector-selection.md), [F04](../features/F04-camera-profile.md)
-Migration plan reference: [docs/UPGRADE_PLAN_DUAL_SCENE.md](../UPGRADE_PLAN_DUAL_SCENE.md)
+This is the only active roadmap.
 
-## Current Priority Order
+## Current Focus
 
-1. 🔄 [F02 - Throw Input and Cooldown](../features/F02-throw-input-cooldown.md)
-2. 🚧 [F03 - Inspector Selection and Deferred UI](../features/F03-inspector-selection.md)
-3. 🔮 [F04 - Camera Profile and Scene View Policy](../features/F04-camera-profile.md)
+1. 🔄 TB-03 - Bag Management
+2. 🔄 TB-04 - Stateful Tricks and Combos
+3. 🔮 TB-06 - Trick Discovery
+4. 🔄 TB-08 - Die Mixin + Equipped Refactor
+5. 🔄 F02 - Throw Input and Cooldown (3D path)
+6. 🔄 F12 - Die Material and Texture Pipeline
+7. 🔮 F05/F10/F06/F07/F08/F09 - Screen Architecture expansion
 
-## Status Summary
+## Status Snapshot
 
-- ✅ Engine bootstrap and entity rendering foundation are complete.
-- 🔄 Throw flow works through engine path, but thrown dice currently disappear and need persistence/reset behavior fixed plus cooldown HUD.
-- 🚧 Inspector UI is deferred; selection and logging plumbing is kept active.
-- 🔮 Camera defaults need one centralized feature-owned profile.
+### Completed
+- ✅ TB-01 Foundation
+- ✅ TB-02 Trick System (core/stateless)
+- ✅ TB-05 Modification System
+- ✅ F14 Material Authoring
 
-## Legacy Cleanup Track
+### In Progress
+- 🔄 TB-03 Bag Management
+- 🔄 TB-04 Stateful Tricks
+- 🔄 TB-08 Equipment refactor
+- 🔄 F02 Throw flow polish
+- 🔄 F12 texture/material pipeline
 
-- `src/rendering/RenderingContextManager.ts` and `src/rendering/RotationViewer.ts` were removed.
-- Any remaining docs/tests referencing those classes should be retired or rewritten against feature docs.
+### Planned / Deferred
+- 🔮 TB-06 Trick Discovery
+- 🔮 TB-07 Lock Breaking
+- 🔮 F04/F05/F06/F07/F08/F09/F10/F13 screen architecture and 3D UX expansion
 
-## Next Action
+## Roadmap Structure
 
-Implement F02 remaining items in order:
-1) reset/snap previous throw visuals on new throw,
-2) cooldown HUD,
-3) tests for both.
+- Active roadmap (this file): `docs/active/roadmap.md`
+- Archived roadmap: `docs/archive/roadmap-archived.md`
+
+## Current Delivery Focus
+
+1. Close TB-03/TB-04 gaps with tests and explicit combo scope.
+2. Decide whether TB-06 starts before or after TB-08 factory-guard cleanup.
+3. Keep F02/F12 moving as non-blocking 3D improvements.
+4. Start F05/F10 when TB core loop is stable enough for screen-shell work.
