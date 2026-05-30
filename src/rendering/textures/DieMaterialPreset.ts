@@ -17,8 +17,8 @@ const BODY_COLORS: Record<DieBodyMaterial, { backgroundColor: string; pipColor: 
     stone: { backgroundColor: '#a0a0a0', pipColor: '#3a3a3a' },
     ceramic: { backgroundColor: '#f0e5d8', pipColor: '#4a3c32' },
     resin: { backgroundColor: '#e8d5c4', pipColor: '#2a2a2a' },
-    brass: { backgroundColor: '#d4a574', pipColor: '#3d3d2d' },
-    steel: { backgroundColor: '#d0d0d0', pipColor: '#1a1a1a' },
+    brass: { backgroundColor: '#c8a15a', pipColor: '#342514' },
+    steel: { backgroundColor: '#bcc7d1', pipColor: '#1c222a' },
     obsidian: { backgroundColor: '#1f1f1f', pipColor: '#e8e8e8' },
     jade: { backgroundColor: '#3a6a4a', pipColor: '#d8e8d0' },
     glass: { backgroundColor: '#e8f0f8', pipColor: '#2a2a3a' },
@@ -58,6 +58,66 @@ const FINISH_PROFILES: Record<DieSurfaceFinish, DieMaterialPreset['surface']> = 
     },
 };
 
+const METAL_MATERIALS = new Set<DieBodyMaterial>([
+    'brass',
+    'steel',
+]);
+
+const METAL_SURFACE_OVERRIDES: Record<Extract<DieBodyMaterial, 'brass' | 'steel'>, Record<DieSurfaceFinish, Partial<DieMaterialPreset['surface']>>> = {
+    brass: {
+        plain: {
+            roughness: 0.3,
+            metalness: 0.9,
+            clearcoat: 0.28,
+            clearcoatRoughness: 0.3,
+        },
+        etched: {
+            roughness: 0.42,
+            metalness: 0.86,
+            clearcoat: 0.12,
+            clearcoatRoughness: 0.42,
+        },
+        polished: {
+            roughness: 0.12,
+            metalness: 0.97,
+            clearcoat: 0.96,
+            clearcoatRoughness: 0.08,
+        },
+        hammered: {
+            roughness: 0.5,
+            metalness: 0.9,
+            clearcoat: 0.14,
+            clearcoatRoughness: 0.34,
+        },
+    },
+    steel: {
+        plain: {
+            roughness: 0.24,
+            metalness: 0.94,
+            clearcoat: 0.18,
+            clearcoatRoughness: 0.24,
+        },
+        etched: {
+            roughness: 0.36,
+            metalness: 0.92,
+            clearcoat: 0.08,
+            clearcoatRoughness: 0.36,
+        },
+        polished: {
+            roughness: 0.08,
+            metalness: 0.98,
+            clearcoat: 0.88,
+            clearcoatRoughness: 0.06,
+        },
+        hammered: {
+            roughness: 0.44,
+            metalness: 0.93,
+            clearcoat: 0.1,
+            clearcoatRoughness: 0.28,
+        },
+    },
+};
+
 function isBodyMaterial(value: string | undefined): value is DieBodyMaterial {
     if (!value) {
         return false;
@@ -85,7 +145,7 @@ export function resolveDieMaterialPreset(input: ResolveDieMaterialPresetInput): 
         base = FALLBACK_COLOR;
     }
 
-    const surface = FINISH_PROFILES[surfaceFinish];
+    const surface = resolveSurfaceProfile(bodyMaterial, surfaceFinish);
 
     return {
         bodyMaterial,
@@ -93,5 +153,18 @@ export function resolveDieMaterialPreset(input: ResolveDieMaterialPresetInput): 
         backgroundColor: input.fallbackBackgroundColor ?? base.backgroundColor,
         pipColor: input.fallbackPipColor ?? base.pipColor,
         surface,
+    };
+}
+
+function resolveSurfaceProfile(bodyMaterial: DieBodyMaterial, surfaceFinish: DieSurfaceFinish): DieMaterialPreset['surface'] {
+    const baseProfile = FINISH_PROFILES[surfaceFinish];
+
+    if (!METAL_MATERIALS.has(bodyMaterial)) {
+        return baseProfile;
+    }
+
+    return {
+        ...baseProfile,
+        ...METAL_SURFACE_OVERRIDES[bodyMaterial as Extract<DieBodyMaterial, 'brass' | 'steel'>][surfaceFinish],
     };
 }

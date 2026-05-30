@@ -11,6 +11,7 @@ import { createStandardDieMaterial } from './materials/StandardDieMaterial';
 import { resolveDieMaterialPreset } from './textures/DieMaterialPreset';
 import { MaterialTextureRegistry } from './textures/MaterialTextureRegistry';
 import { PlasticMaterialGenerator } from './textures/generators/PlasticMaterialGenerator';
+import { MetalMaterialGenerators } from './textures/generators/MetalMaterialGenerator';
 import { normalizeRenderPipStyle } from '../game/PipStyle';
 
 /**
@@ -30,6 +31,7 @@ export class DiceGraphic extends EntityGraphicThree {
         registerEntity3DRenderer(Die, DiceGraphic);
         // Initialize material texture generators
         MaterialTextureRegistry.register(PlasticMaterialGenerator);
+        MetalMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
     }
     
     constructor(entity: Entity) {
@@ -59,6 +61,8 @@ export class DiceGraphic extends EntityGraphicThree {
 
         const mesh = new THREE.Mesh(geometry, meshMaterial);
         this.materialSignature = this.getMaterialSignature(config);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
 
         registerEntityMesh(mesh, this.entity);
 

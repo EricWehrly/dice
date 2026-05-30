@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 
 import { createD6FaceAtlasMaterialTexture } from '../../rendering/textures/DieFaceTextureAtlas';
+import { resolveDieMaterialPreset } from '../../rendering/textures/DieMaterialPreset';
+import { MaterialTextureRegistry } from '../../rendering/textures/MaterialTextureRegistry';
+import { MetalMaterialGenerators } from '../../rendering/textures/generators/MetalMaterialGenerator';
 
 const mockCanvasContext = {
     clearRect: () => {},
@@ -154,5 +157,30 @@ describe('DieFaceTextureAtlas UV mapping', () => {
 
         texture.dispose();
         geometry.dispose();
+    });
+
+    it('uses a registered metal generator for steel atlas textures', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const preset = resolveDieMaterialPreset({
+            bodyMaterial: 'steel',
+            surfaceFinish: 'polished',
+        });
+
+        MetalMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: preset.backgroundColor,
+            pipColor: preset.pipColor,
+            bodyMaterial: 'steel',
+            surfaceFinish: 'polished',
+            faceSize: 64,
+        });
+
+        expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+
+        texture.dispose();
+        geometry.dispose();
+        MaterialTextureRegistry.clear();
     });
 });

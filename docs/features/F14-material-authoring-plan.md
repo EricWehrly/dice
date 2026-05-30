@@ -56,6 +56,11 @@ Example intent for metal family (documentation only):
 - One metal generator handles spec and brushing patterns
 - Gold versus silver versus brass differ mostly by hue/value/roughness ranges and patina mask settings
 
+Current implementation note:
+
+- Brass and steel are the only actively implemented metal selections right now.
+- Future metals such as gold, silver, bronze, copper, iron, and titanium stay on the roadmap, but should not become selectable until each has a distinct texture treatment that reads as real metal rather than a flat recolor.
+
 ## Brainstorm: Additional Materials by Family
 
 These are candidates for content expansion once family generators exist.
@@ -108,7 +113,7 @@ Higher `BangForBuck` should generally be prioritized.
 
 - Ceramic/Porcelain base generator
 - Synthetic/Polymer base generator
-- Metal base generator with brass, steel, gold, silver variants
+- Metal generator refinement for brass and steel as the first fully convincing metal looks
 
 Estimated wave duration: 4-6 implementation days including preview/test passes.
 
@@ -116,6 +121,7 @@ Estimated wave duration: 4-6 implementation days including preview/test passes.
 
 - Stone/Mineral base generator with stone, granite, slate, obsidian variants
 - Wood/Organic base generator with wood, oak, walnut variants
+- Additional metal variants only after they have individually convincing visual identity: gold, silver, bronze, copper, iron, titanium
 
 Estimated wave duration: 3-5 implementation days including tuning.
 
