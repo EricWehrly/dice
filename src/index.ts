@@ -15,13 +15,6 @@ import './rendering/DiceGraphic';  // Import for class initialization and event 
 import { MakeDieCharacter } from './game/DieCharacterFactory';
 import { DieEquippedMixin } from './game/DieEquippedMixin';
 
-declare global {
-    interface Window {
-        addTestDie: () => number;
-        addDie: () => number;
-    }
-}
-
 // TODO: handle in managed UI instead
 function wireRollButtons(bag: Bag) {
     const rollButtons = [
@@ -46,17 +39,10 @@ function calculateBagMaxRoll(bag: Bag): number {
 }
 
 const bag = new Bag();
+const dieA = MakeDieCharacter([DieEquippedMixin]);
+bag.addDie(dieA);
 bag.addDie(MakeDieCharacter([DieEquippedMixin]));
 bag.addDie(MakeDieCharacter([DieEquippedMixin]));
-bag.addDie(MakeDieCharacter([DieEquippedMixin]));
-
-const addTestDie = (): number => {
-    bag.addDie(MakeDieCharacter([DieEquippedMixin]));
-    return bag.getActiveDice().length;
-};
-
-window.addTestDie = addTestDie;
-window.addDie = addTestDie;
 
 wireRollButtons(bag);
 new DiceCanvasRenderer(bag);
@@ -106,3 +92,17 @@ rollHistoryPanel.render();
 if (!Events.EventHasFired(Events.List.GameStart)) {
     Events.RaiseEvent(Events.List.GameStart, null, { finalFire: true });
 }
+
+const addTestDie = (): number => {
+    bag.addDie(MakeDieCharacter([DieEquippedMixin]));
+    return bag.getActiveDice().length;
+};
+
+declare global {
+    interface Window {
+        addTestDie: () => number;
+        addDie: () => number;
+    }
+}
+window.addTestDie = addTestDie;
+window.addDie = addTestDie;

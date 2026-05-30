@@ -8,13 +8,17 @@ const mockCanvasContext = {
     strokeRect: () => {},
     beginPath: () => {},
     arc: () => {},
+    moveTo: () => {},
+    lineTo: () => {},
     fill: () => {},
+    stroke: () => {},
     shadowColor: 'transparent',
     shadowBlur: 0,
     shadowOffsetY: 0,
     fillStyle: '#000000',
     strokeStyle: '#000000',
     lineWidth: 0,
+    lineCap: 'round' as CanvasLineCap,
 };
 
 if (typeof HTMLCanvasElement !== 'undefined') {
@@ -104,6 +108,24 @@ describe('DieFaceTextureAtlas UV mapping', () => {
             expect(uSpan).toBeGreaterThan(0.2);
             expect(vSpan).toBeGreaterThan(0.2);
         }
+
+        texture.dispose();
+        geometry.dispose();
+    });
+
+    it('supports x pip style texture generation without throwing', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: '#ffffff',
+            pipColor: '#000000',
+            faceSize: 64,
+            pipStyle: 'x',
+        });
+
+        expect(texture).toBeDefined();
+        expect(texture.image).toBeDefined();
 
         texture.dispose();
         geometry.dispose();

@@ -115,8 +115,6 @@ export class DiceCanvasRenderer {
                 y,
                 die,
                 size: tileSize,
-                pipShape: die.locked ? 'padlock' : 'circle',
-                pipCountOverride: die.locked ? 1 : undefined,
                 colors: {
                     fill: dieFaceColor,
                     stroke: die.locked ? (trimColor ?? dieStrokeColor) : dieStrokeColor,

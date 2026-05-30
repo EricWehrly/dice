@@ -24,6 +24,7 @@ export const PlasticMaterialGenerator: MaterialTextureGenerator = {
             pipColor: options.pipColor,
             faceSize: options.faceSize,
             edgeRoundness: options.edgeRoundness,
+            pipStyle: options.pipStyle,
         });
     },
 };

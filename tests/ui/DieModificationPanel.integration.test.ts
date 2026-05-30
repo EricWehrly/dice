@@ -75,7 +75,7 @@ describe('DieModificationPanel integration', () => {
         const bag = new Bag();
         const die = MakeDieCharacter([DieEquippedMixin], { id: 'die-1', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
         bag.addDie(die);
-        const panel = new DieModificationPanel(bag);
+        const panel = new DieModificationPanel(bag.getActiveDice() as Array<ReturnType<typeof MakeDieCharacter> & DieEquipped>);
 
         panel.render();
 
@@ -110,7 +110,7 @@ describe('DieModificationPanel integration', () => {
         const bag = new Bag();
         const die = MakeDieCharacter([DieEquippedMixin], { id: 'die-2', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
         bag.addDie(die);
-        const panel = new DieModificationPanel(bag);
+        const panel = new DieModificationPanel(bag.getActiveDice() as Array<ReturnType<typeof MakeDieCharacter> & DieEquipped>);
 
         panel.render();
 
@@ -149,7 +149,7 @@ describe('DieModificationPanel integration', () => {
         const bag = new Bag();
         const die = MakeDieCharacter([DieEquippedMixin], { id: 'die-3', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
         bag.addDie(die);
-        const panel = new DieModificationPanel(bag);
+        const panel = new DieModificationPanel(bag.getActiveDice() as Array<ReturnType<typeof MakeDieCharacter> & DieEquipped>);
 
         panel.render();
 
@@ -172,6 +172,27 @@ describe('DieModificationPanel integration', () => {
         expect(refreshedTargetSelector.disabled).toBe(true);
         expect(refreshedInstallBtn.disabled).toBe(true);
         expect(refreshedInstallBtn.textContent?.trim()).toBe('Install');
+    });
+
+    it('applies and clears the die pip style from selector changes', () => {
+        const bag = new Bag();
+        const die = MakeDieCharacter([DieEquippedMixin], { id: 'die-4', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
+        bag.addDie(die);
+        const panel = new DieModificationPanel(bag.getActiveDice() as Array<ReturnType<typeof MakeDieCharacter> & DieEquipped>);
+
+        panel.render();
+
+        const faceStyleSelector = getRequired<HTMLSelectElement>('.die-mod-face-style-selector');
+        faceStyleSelector.value = 'x';
+        faceStyleSelector.dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(die.pipStyle).toBe('x');
+
+        const refreshedFaceStyleSelector = getRequired<HTMLSelectElement>('.die-mod-face-style-selector');
+        refreshedFaceStyleSelector.value = 'none';
+        refreshedFaceStyleSelector.dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(die.pipStyle).toBe('');
     });
 
 });

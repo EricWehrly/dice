@@ -70,6 +70,16 @@ Notes:
 - Readability: high
 - Note: engraved and similar treatments should apply to whichever face mark is active — pips or numeral fallback alike
 
+11. `x`
+- Visual: bold crossed-stroke symbol
+- Readability: high when stroke width remains thick at small tile sizes
+- Note: first pass can remain visual-only until tied to a dedicated gameplay mechanic
+
+12. `lock`
+- Visual: padlock glyph with locked/unlocked variants
+- Readability: high with thicker shackle and larger icon footprint
+- Note: interaction semantics should follow TB-07 lock behavior rather than ad-hoc renderer logic
+
 ## Layout Approaches
 
 1. Grid fill (implemented now)

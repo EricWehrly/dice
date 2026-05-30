@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createD6FaceAtlasMaterialTexture } from '../textures/DieFaceTextureAtlas';
 import { resolveDieMaterialPreset } from '../textures/DieMaterialPreset';
 import { type DieBodyMaterial, type DieSurfaceFinish } from '../textures/DieTextureTypes';
+import { type RenderPipStyle } from '../../game/PipStyle';
 
 export interface PhysicalD6MaterialConfig {
     backgroundColor: string;
@@ -11,6 +12,7 @@ export interface PhysicalD6MaterialConfig {
     bodyMaterial?: string;
     surfaceFinish?: string;
     edgeRoundness?: number;
+    pipStyle?: RenderPipStyle;
 }
 
 /**
@@ -36,6 +38,7 @@ export function createPhysicalD6Material(config: PhysicalD6MaterialConfig): THRE
         edgeRoundness: config.edgeRoundness,
         bodyMaterial: config.bodyMaterial as DieBodyMaterial | undefined,
         surfaceFinish: config.surfaceFinish as DieSurfaceFinish | undefined,
+        pipStyle: config.pipStyle,
     });
 
     return new THREE.MeshPhysicalMaterial({

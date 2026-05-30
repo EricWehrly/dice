@@ -166,4 +166,24 @@ describe('drawDieFaceTile', () => {
         // Tile + lock body + keyhole stem rectangles.
         expect(context.fillRect.mock.calls.length).toBeGreaterThanOrEqual(3);
     });
+
+    it('draws an x pip shape using crossed stroke lines', () => {
+        const context = createMockContext();
+
+        drawDieFaceTile(ctx(context), {
+            x: 8,
+            y: 8,
+            die: { faceUp: 1, active: true, locked: false },
+            pipShape: 'x',
+            colors: {
+                fill: '#fff',
+                stroke: '#000',
+                text: '#111',
+            },
+            size: 80,
+        });
+
+        expect(context.lineTo.mock.calls.length).toBeGreaterThanOrEqual(2);
+        expect(context.stroke.mock.calls.length).toBeGreaterThan(0);
+    });
 });

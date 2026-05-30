@@ -10,10 +10,34 @@ export interface Equippable<TSlotKey extends string> {
     type: TSlotKey;
 }
 
+export const FACE_STYLE_IDS = ['none', 'circle', 'lock', 'x', 'clover'] as const;
+export type FaceStyleId = typeof FACE_STYLE_IDS[number];
+
+export function isFaceStyleId(value: string): value is FaceStyleId {
+    return (FACE_STYLE_IDS as readonly string[]).includes(value);
+}
+
+export function normalizeFaceStyleId(value: string | null | undefined): FaceStyleId {
+    if (!value) {
+        return 'circle';
+    }
+
+    return isFaceStyleId(value) ? value : 'circle';
+}
+
 export enum DieSlotType {
     MOD = 'MOD',
     FACE_STYLE = 'FACE_STYLE',
     BODY_STYLE = 'BODY_STYLE',
 }
 
-export type DieEquipment = Equippable<DieSlotType>;
+export type DieEquipmentLane = 'mod' | 'faceStyle' | 'bodyStyle';
+
+export interface FaceStyleEquipment extends Equippable<DieSlotType.FACE_STYLE> {
+    faceStyleId: FaceStyleId;
+}
+
+export type DieEquipment =
+    | Equippable<DieSlotType.MOD>
+    | FaceStyleEquipment
+    | Equippable<DieSlotType.BODY_STYLE>;

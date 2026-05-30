@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { type DieBodyMaterial, type DieSurfaceFinish } from './DieTextureTypes';
+import { type RenderPipStyle } from '../../game/PipStyle';
 
 /**
  * Options passed to a material texture generator.
@@ -13,6 +14,7 @@ export interface MaterialTextureGeneratorOptions {
     readonly surfaceFinish: DieSurfaceFinish;
     readonly faceSize: number;
     readonly edgeRoundness?: number;
+    readonly pipStyle?: RenderPipStyle;
 }
 
 /**

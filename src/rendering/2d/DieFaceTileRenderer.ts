@@ -4,7 +4,7 @@ export interface DieFaceTileColors {
     text: string;
 }
 
-export type PipShape = 'circle' | 'square' | 'diamond' | 'hollow-circle' | 'star' | 'heart' | 'club' | 'clover' | 'skull' | 'padlock';
+export type PipShape = 'circle' | 'square' | 'diamond' | 'hollow-circle' | 'star' | 'heart' | 'club' | 'clover' | 'skull' | 'padlock' | 'x';
 
 export interface DieDuckType {
     faceUp: number;
@@ -322,6 +322,16 @@ function drawPipShape(
             context.fillRect(centerX - keyholeR * 0.45, bodyY + bodyH * 0.45, keyholeR * 0.9, keyholeR * 1.2);
 
             context.fillStyle = colors.text;
+            return;
+        }
+        case 'x': {
+            context.lineWidth = Math.max(1.5, radius * 0.45);
+            context.beginPath();
+            context.moveTo(centerX - radius * 0.9, centerY - radius * 0.9);
+            context.lineTo(centerX + radius * 0.9, centerY + radius * 0.9);
+            context.moveTo(centerX + radius * 0.9, centerY - radius * 0.9);
+            context.lineTo(centerX - radius * 0.9, centerY + radius * 0.9);
+            context.stroke();
             return;
         }
         case 'circle':

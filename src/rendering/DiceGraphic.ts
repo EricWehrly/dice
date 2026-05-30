@@ -11,6 +11,7 @@ import { createStandardDieMaterial } from './materials/StandardDieMaterial';
 import { resolveDieMaterialPreset } from './textures/DieMaterialPreset';
 import { MaterialTextureRegistry } from './textures/MaterialTextureRegistry';
 import { PlasticMaterialGenerator } from './textures/generators/PlasticMaterialGenerator';
+import { normalizeRenderPipStyle } from '../game/PipStyle';
 
 /**
  * 3D graphics handler for Dice entities
@@ -106,6 +107,7 @@ export class DiceGraphic extends EntityGraphicThree {
                     textureFaceSize: DiceGraphic.D6_TEXTURE_FACE_SIZE,
                     bodyMaterial: config.bodyMaterial,
                     surfaceFinish: config.surfaceFinish,
+                    pipStyle: normalizeRenderPipStyle(config.pipStyle),
                 });
             } catch (error) {
                 console.warn('Falling back to legacy d6 material path', error);
@@ -185,6 +187,7 @@ export class DiceGraphic extends EntityGraphicThree {
             config.bodyMaterial ?? '',
             config.pipMaterial ?? '',
             config.surfaceFinish ?? '',
+            config.pipStyle ?? '',
         ].join('|');
     }
 

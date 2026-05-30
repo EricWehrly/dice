@@ -1,4 +1,5 @@
 import { DieModificationCanvasRenderer } from '../../ui/DieModificationCanvasRenderer';
+import { drawDieFaceTile } from '../../rendering/2d/DieFaceTileRenderer';
 
 vi.mock('../../rendering/2d/DieFaceTileRenderer', () => ({
     drawDieFaceTile: vi.fn(),

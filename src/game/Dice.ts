@@ -1,4 +1,5 @@
 import { EntityOptions } from '../../engine/js/entities/character/EntityOptions';
+import { type PipStyleSetting } from './PipStyle';
 
 /**
  * Dice-specific configuration stored on entities
@@ -11,7 +12,7 @@ export interface DiceConfig extends EntityOptions {
     pipMaterial?: string;
     surfaceFinish?: string;
     edgeRoundness?: number;
-    pipStyle?: string;
+    pipStyle?: PipStyleSetting;
 }
 
 /**

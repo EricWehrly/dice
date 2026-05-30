@@ -9,7 +9,7 @@ import { EntityOptions } from '../../engine/js/entities/character/EntityOptions'
 import { EntityMixin, MixinBase } from '../../engine/js/entities/character/EntityBuilder';
 import Events, { GameEvent } from '../../engine/js/events';
 import type { DieEquipment } from './DieEquipmentTypes';
-import { DieSlotType } from './DieEquipmentTypes';
+import { DieSlotType, type DieEquipmentLane } from './DieEquipmentTypes';
 import { DieWeightMod } from './mods/DieWeightMod';
 
 export { DieSlotType } from './DieEquipmentTypes';
@@ -23,9 +23,12 @@ Events.List.DieEquipmentChanged = 'DieEquipmentChanged';
 
 export interface DieEquipmentChangedEvent extends GameEvent {
     entity: Entity & DieEquipped;
+    slot: DieEquipmentLane;
     slotType: DieSlotType;
     previous: DieEquipment | null;
     current: DieEquipment | null;
+    previousId: string | null;
+    currentId: string | null;
 }
 
 export interface DieEquipmentInstallOptions {
@@ -71,6 +74,17 @@ interface WeightAdjustableDie {
 
 function isWeightAdjustableDie(entity: unknown): entity is WeightAdjustableDie {
     return typeof (entity as WeightAdjustableDie)?.adjustFaceWeight === 'function';
+}
+
+function toEquipmentLane(slotType: DieSlotType): DieEquipmentLane {
+    switch (slotType) {
+        case DieSlotType.MOD:
+            return 'mod';
+        case DieSlotType.FACE_STYLE:
+            return 'faceStyle';
+        case DieSlotType.BODY_STYLE:
+            return 'bodyStyle';
+    }
 }
 
 export const DieEquippedMixin: EntityMixin<DieEquipped> = {
@@ -120,9 +134,12 @@ export const DieEquippedMixin: EntityMixin<DieEquipped> = {
 
                 const event: DieEquipmentChangedEvent = {
                     entity: this as unknown as Entity & DieEquipped,
+                    slot: toEquipmentLane(item.type),
                     slotType: item.type,
                     previous,
                     current: item,
+                    previousId: previous?.id ?? null,
+                    currentId: item.id,
                 };
                 Events.RaiseEvent(Events.List.DieEquipmentChanged, event);
                 return true;
@@ -140,9 +157,12 @@ export const DieEquippedMixin: EntityMixin<DieEquipped> = {
 
                 const event: DieEquipmentChangedEvent = {
                     entity: this as unknown as Entity & DieEquipped,
+                    slot: toEquipmentLane(slotType),
                     slotType,
                     previous,
                     current: null,
+                    previousId: previous.id,
+                    currentId: null,
                 };
                 Events.RaiseEvent(Events.List.DieEquipmentChanged, event);
                 return true;

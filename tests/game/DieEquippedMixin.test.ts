@@ -121,9 +121,12 @@ describe('DieEquippedMixin', () => {
             entity.install(item);
 
             expect(received).toHaveLength(1);
+            expect(received[0].slot).toBe('mod');
             expect(received[0].slotType).toBe(DieSlotType.MOD);
             expect(received[0].previous).toBeNull();
             expect(received[0].current).toBe(item);
+            expect(received[0].previousId).toBeNull();
+            expect(received[0].currentId).toBe(item.id);
         });
 
         it('raises DieEquipmentChanged with old item as previous on replacement', () => {
@@ -172,8 +175,11 @@ describe('DieEquippedMixin', () => {
             entity.uninstall(DieSlotType.FACE_STYLE);
 
             expect(received).toHaveLength(1);
+            expect(received[0].slot).toBe('faceStyle');
             expect(received[0].previous).toBe(item);
             expect(received[0].current).toBeNull();
+            expect(received[0].previousId).toBe(item.id);
+            expect(received[0].currentId).toBeNull();
         });
 
         it('does not raise event when uninstalling from an empty slot', () => {

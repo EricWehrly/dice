@@ -17,6 +17,7 @@ import {
     type AvailableModValue,
     type AvailableCoreModValue,
     type AvailableMaterialValue,
+    type AvailableFaceStyleValue,
     type AvailableStyleValue,
 } from './DieModificationTypes';
 import { getPreviewChances } from '../game/DiceProbability';
@@ -45,6 +46,7 @@ export class DieModificationPanel {
     private draftCoreMaterial: AvailableMaterialValue = 'plastic';
     private draftPipMaterial: AvailableMaterialValue = 'plastic';
     private draftFaceStyles: AvailableStyleValue[] = [];
+    private draftFaceStyle: AvailableFaceStyleValue = 'none';
     
     // Core mod install state
     private selectedCoreMod: AvailableCoreModValue | null = null;
@@ -114,6 +116,7 @@ export class DieModificationPanel {
             draftCoreMaterial: this.draftCoreMaterial,
             draftPipMaterial: this.draftPipMaterial,
             draftFaceStyles: this.draftFaceStyles,
+            draftFaceStyle: this.draftFaceStyle,
             preview,
             deltas,
             current,
@@ -219,6 +222,14 @@ export class DieModificationPanel {
             const target = event.target as HTMLSelectElement;
             this.draftFaceStyles[0] = (target.value as AvailableStyleValue) ?? 'plain';
             this.applyCosmeticsToSelectedDie();
+            this.render();
+        });
+
+        const faceStyleSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-face-style-selector');
+        faceStyleSelector?.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            this.draftFaceStyle = (target.value as AvailableFaceStyleValue) ?? 'none';
+            this.applyPipStyleToSelectedDie();
             this.render();
         });
 
@@ -374,9 +385,18 @@ export class DieModificationPanel {
         this.draftFaceMods = this.getDraftFaceModsFromDie(die);
         const finish = (die.surfaceFinish as AvailableStyleValue | undefined) ?? 'plain';
         this.draftFaceStyles = Array.from({ length: die.faceCount }, () => finish);
+        this.draftFaceStyle = this.getDraftFaceStyleFromDie(die);
         this.draftCoreMod = 'none';
         this.draftCoreMaterial = (die.bodyMaterial as AvailableMaterialValue | undefined) ?? 'plastic';
         this.draftPipMaterial = (die.pipMaterial as AvailableMaterialValue | undefined) ?? 'plastic';
+    }
+
+    private applyPipStyleToSelectedDie(): void {
+        const die = this.getSelectedDie();
+        die.pipStyle = this.draftFaceStyle === 'none' || this.draftFaceStyle === 'circle'
+            ? ''
+            : this.draftFaceStyle;
+        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
     }
 
     private applyCosmeticsToSelectedDie(): void {
@@ -431,6 +451,19 @@ export class DieModificationPanel {
 
     private getSelectedDie(): Die & DieEquipped {
         return this.dice.find((die) => die.id === this.selectedDieId) ?? this.dice[0];
+    }
+
+    private getDraftFaceStyleFromDie(die: Die & DieEquipped): AvailableFaceStyleValue {
+        const pipStyle = die.pipStyle;
+        if (pipStyle === 'x') {
+            return pipStyle;
+        }
+
+        if (pipStyle === 'circle') {
+            return 'circle';
+        }
+
+        return 'none';
     }
 
     private getInstalledWeightMod(die: Die & DieEquipped): DieWeightMod | null {

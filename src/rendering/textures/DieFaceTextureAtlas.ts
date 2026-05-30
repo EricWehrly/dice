@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 import { type DieBodyMaterial, type DieSurfaceFinish } from './DieTextureTypes';
 import { MaterialTextureRegistry } from './MaterialTextureRegistry';
+import { type RenderPipStyle } from '../../game/PipStyle';
 
 export interface DieFaceTextureOptions {
     readonly faceSize?: number;
     readonly backgroundColor: string;
     readonly pipColor: string;
     readonly edgeRoundness?: number;
+    readonly pipStyle?: RenderPipStyle;
 }
 
 export interface D6AtlasMaterialOptions extends DieFaceTextureOptions {
@@ -101,7 +103,7 @@ export function createD6FaceAtlasTexture(options: DieFaceTextureOptions): THREE.
         const x = gap + column * (faceSize + gap);
         const y = gap + row * (faceSize + gap);
         drawFaceBackground(context, x, y, faceSize, options.backgroundColor, edgeRoundness);
-        drawFacePips(context, x, y, faceSize, faceValue, options.pipColor);
+        drawFacePips(context, x, y, faceSize, faceValue, options.pipColor, options.pipStyle ?? 'circle');
     });
 
     const texture = new THREE.CanvasTexture(canvas);
@@ -130,6 +132,7 @@ export function createD6FaceAtlasMaterialTexture(input: D6AtlasMaterialWithGener
             surfaceFinish: input.surfaceFinish ?? 'plain',
             faceSize,
             edgeRoundness: input.edgeRoundness,
+            pipStyle: input.pipStyle,
         });
     }
     
@@ -139,6 +142,7 @@ export function createD6FaceAtlasMaterialTexture(input: D6AtlasMaterialWithGener
         pipColor: input.pipColor,
         faceSize,
         edgeRoundness: input.edgeRoundness,
+        pipStyle: input.pipStyle,
     });
 }
 
@@ -211,6 +215,7 @@ function drawFacePips(
     faceSize: number,
     faceValue: number,
     pipColor: string,
+    pipStyle: RenderPipStyle,
 ): void {
     const pipRadius = faceSize * 0.062;
     const highlightColor = mixHexColors(pipColor, '#ffffff', 0.35);
@@ -224,20 +229,54 @@ function drawFacePips(
         const centerX = x + (normalizedX * faceSize);
         const centerY = y + (normalizedY * faceSize);
 
-        context.beginPath();
-        context.arc(centerX, centerY, pipRadius, 0, Math.PI * 2);
-        context.fill();
-
-        context.fillStyle = highlightColor;
-        context.beginPath();
-        context.arc(centerX - pipRadius * 0.22, centerY - pipRadius * 0.22, pipRadius * 0.34, 0, Math.PI * 2);
-        context.fill();
-        context.fillStyle = pipColor;
+        if (pipStyle === 'x') {
+            drawCrossPip(context, centerX, centerY, pipRadius, pipColor);
+        } else {
+            drawCirclePip(context, centerX, centerY, pipRadius, pipColor, highlightColor);
+        }
     }
 
     context.shadowColor = 'transparent';
     context.shadowBlur = 0;
     context.shadowOffsetY = 0;
+}
+
+function drawCrossPip(
+    context: CanvasRenderingContext2D,
+    centerX: number,
+    centerY: number,
+    pipRadius: number,
+    pipColor: string,
+): void {
+    const arm = pipRadius * 0.9;
+    context.lineWidth = Math.max(1, pipRadius * 0.65);
+    context.lineCap = 'round';
+    context.beginPath();
+    context.moveTo(centerX - arm, centerY - arm);
+    context.lineTo(centerX + arm, centerY + arm);
+    context.moveTo(centerX + arm, centerY - arm);
+    context.lineTo(centerX - arm, centerY + arm);
+    context.strokeStyle = pipColor;
+    context.stroke();
+}
+
+function drawCirclePip(
+    context: CanvasRenderingContext2D,
+    centerX: number,
+    centerY: number,
+    pipRadius: number,
+    pipColor: string,
+    highlightColor: string,
+): void {
+    context.beginPath();
+    context.arc(centerX, centerY, pipRadius, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = highlightColor;
+    context.beginPath();
+    context.arc(centerX - pipRadius * 0.22, centerY - pipRadius * 0.22, pipRadius * 0.34, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = pipColor;
 }
 
 function mixHexColors(colorA: string, colorB: string, ratio: number): string {

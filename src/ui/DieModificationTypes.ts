@@ -45,7 +45,14 @@ export const AVAILABLE_STYLES = [
     { value: 'hammered', label: 'Hammered finish' },
 ] as const;
 
+export const AVAILABLE_FACE_STYLES = [
+    { value: 'none', label: '---' },
+    { value: 'circle', label: 'Circle (default)' },
+    { value: 'x', label: 'X' },
+] as const;
+
 export type AvailableModValue = typeof AVAILABLE_MODS[number]['value'];
 export type AvailableCoreModValue = typeof AVAILABLE_CORE_MODS[number]['value'];
 export type AvailableMaterialValue = typeof AVAILABLE_MATERIALS[number]['value'];
 export type AvailableStyleValue = typeof AVAILABLE_STYLES[number]['value'];
+export type AvailableFaceStyleValue = typeof AVAILABLE_FACE_STYLES[number]['value'];
