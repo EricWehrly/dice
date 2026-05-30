@@ -1,6 +1,6 @@
 # F16: Camera Focus on Die Click + Mod Panel Dock
 
-Status: Planned (implementation plan approved, coding not started for panel docking)
+Status: Planned (Option B approved: dock existing DieModificationPanel; engine Panel migration deferred)
 
 ## Problem
 Currently all dice are framed uniformly in the viewport. To inspect or edit a single die, users must manually coordinate camera + UI interactions. We need a click flow that focuses a die and opens the die modification panel as a docked sub-panel in the 3D screen, while preserving clean close behavior.
@@ -17,6 +17,7 @@ Currently all dice are framed uniformly in the viewport. To inspect or edit a si
 - Preserve rapid-click behavior without jank
 - The docked mod panel should be the long-term replacement for the existing global die-mod panel
 - Prefer styling and behavior by role/function, not by persistent unique identity
+- Product direction for this phase: Roll 3D is the default primary screen and tabs are slated for removal (single-screen flow)
 
 **Visual Constraints (User Preference):**
 - Focus mode should be tighter than all-dice framing
@@ -68,6 +69,7 @@ Files to Create/Modify:
     - panel entering/open/closing states
     - canvas flex-height transition
     - min/max height rules for canvas and docked panel
+    - independent scroll container rules for the docked panel content
   - Keep animation duration aligned with camera transition (400ms)
 - `src/ui/DieModificationPanel.ts`
   - Add public method to select die by id from external click flow
@@ -76,6 +78,7 @@ Files to Create/Modify:
   - Wire panel bridge between camera focus events and DieModificationPanel instance
   - Ensure roll-3d screen mode owns this behavior only
   - Use a dock shell helper so the 3D screen can resize the canvas above the panel without hard-coding layout identity
+  - Keep this phase on Option B: dock the existing DieModificationPanel in Roll 3D; do not migrate to engine Panel in F16
 
 Testing:
 - Manual: panel slides up while canvas shrinks
@@ -93,6 +96,7 @@ Files to Create/Modify:
 - `src/camera.ts`
   - On focused die removal, close focus and panel
   - Keep alive drift only when focused and panel open
+  - Start drift only after the slide animation completes, then wait about 2s before easing into motion
 
 Testing:
 - Manual: die removed while focused -> clean close
@@ -183,6 +187,15 @@ User clicks on die
 - ✅ Raycast works at any window size and camera position
 - ✅ Core feature ships without DoF dependency
 
+### Deferred Manual QA Checklist (Not Yet Executed)
+- [ ] Rapid click retargeting across multiple dice while panel is opening/closing
+- [ ] Focused die removal during open panel state returns to all-dice framing cleanly
+- [ ] 0-dice state: no crash and stable close behavior
+- [ ] 1-die state: click same die behavior remains stable (no accidental toggle/jank)
+- [ ] Empty-space click and Escape both close panel and restore controls
+- [ ] Dock open state hides Roll button and camera debug controls
+- [ ] Easter egg isometric toggle swaps viewport mode without breaking focus flow
+
 ---
 
 ## Open Questions
@@ -197,8 +210,26 @@ User clicks on die
 - Focusing the same die again should keep the current behavior unless later code naturally changes it.
 - The docked panel should size to its content, with the canvas taking the remaining vertical space.
 - Use min/max pixel heights as guardrails on smaller layouts; if the viewport cannot fit both minimums, do not add a separate mobile overlay mode in this phase.
+- The docked panel should scroll independently when its content exceeds its height.
+- The alive camera drift should start only after the panel slide finishes, then wait roughly 2 seconds before beginning.
+
+### Option B Decision (Locked for F16)
+- Implement docking by reusing `src/ui/DieModificationPanel.ts` and making it dockable in the Roll 3D layout.
+- Do not migrate to `engine/js/ui/Panel.ts` during F16.
+- Treat engine-level panel migration as a separate follow-up feature after F16 ships.
+- Rationale: lower implementation risk, faster delivery, avoids expanding scope into draft engine panel infrastructure.
 
 ### Remaining Implementation Questions
-- [ ] Should the dock shell be a reusable class-based layout wrapper, or a screen-specific helper inside the Roll 3D flow?
-- [ ] Should the docked panel scroll independently when its content exceeds its max height, or should the whole Roll 3D screen scroll?
-- [ ] When focused, should the alive camera drift start only after the panel finishes sliding open, or can it begin during the open animation?
+- [x] Which existing engine UI primitive should host the docked panel?
+  - Answer: none for F16; use Option B and dock the existing DieModificationPanel.
+- [x] Who owns open/close animation timing?
+  - Answer: UI layer owns timing, and animation should be keyframe/interruptable in design.
+  - F16 implementation note: provide start/open/close hooks from controller to UI and keep timing ownership in the docked panel behavior.
+
+### Deferred Follow-up (Post-F16)
+- Evaluate migration path from docked DieModificationPanel to engine `Panel` once engine UI panel primitives are no longer draft and lifecycle hooks are standardized.
+
+### Forward Intent Notes
+- if there is significantly more width in the screen's aspect ratio, have them side-by-side rather than above-and-below
+- UI simplification intent: remove play-mode tabs for now and keep a single primary Roll 3D screen flow with docked interactions.
+- Visualization intent: project die face probabilities directly into 3D space (near faces/regions) and add a controlled die spin mode that exposes all sides for approximately equal proportions of the rotation interval.
