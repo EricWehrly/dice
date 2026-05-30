@@ -29,4 +29,15 @@ describe('DieMaterialPreset metal overrides', () => {
         expect(steelPreset.backgroundColor).toBe('#bcc7d1');
         expect(brassPreset.surface.clearcoat).toBeGreaterThanOrEqual(steelPreset.surface.clearcoat);
     });
+
+    it('resolves gold as a metallic material with high polished metalness', () => {
+        const goldPreset = resolveDieMaterialPreset({
+            bodyMaterial: 'gold',
+            surfaceFinish: 'polished',
+        });
+
+        expect(goldPreset.bodyMaterial).toBe('gold');
+        expect(goldPreset.backgroundColor).toBe('#d6b34d');
+        expect(goldPreset.surface.metalness).toBeGreaterThan(0.95);
+    });
 });

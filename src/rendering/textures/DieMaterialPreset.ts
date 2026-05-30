@@ -19,6 +19,12 @@ const BODY_COLORS: Record<DieBodyMaterial, { backgroundColor: string; pipColor: 
     resin: { backgroundColor: '#e8d5c4', pipColor: '#2a2a2a' },
     brass: { backgroundColor: '#c8a15a', pipColor: '#342514' },
     steel: { backgroundColor: '#bcc7d1', pipColor: '#1c222a' },
+    gold: { backgroundColor: '#d6b34d', pipColor: '#2f2411' },
+    silver: { backgroundColor: '#d7dee7', pipColor: '#1d2630' },
+    bronze: { backgroundColor: '#a87749', pipColor: '#2f2218' },
+    copper: { backgroundColor: '#c88457', pipColor: '#35241b' },
+    iron: { backgroundColor: '#7f8791', pipColor: '#171d24' },
+    titanium: { backgroundColor: '#aeb8c7', pipColor: '#1a232d' },
     obsidian: { backgroundColor: '#1f1f1f', pipColor: '#e8e8e8' },
     jade: { backgroundColor: '#3a6a4a', pipColor: '#d8e8d0' },
     glass: { backgroundColor: '#e8f0f8', pipColor: '#2a2a3a' },
@@ -61,9 +67,17 @@ const FINISH_PROFILES: Record<DieSurfaceFinish, DieMaterialPreset['surface']> = 
 const METAL_MATERIALS = new Set<DieBodyMaterial>([
     'brass',
     'steel',
+    'gold',
+    'silver',
+    'bronze',
+    'copper',
+    'iron',
+    'titanium',
 ]);
 
-const METAL_SURFACE_OVERRIDES: Record<Extract<DieBodyMaterial, 'brass' | 'steel'>, Record<DieSurfaceFinish, Partial<DieMaterialPreset['surface']>>> = {
+type MetalMaterial = Extract<DieBodyMaterial, 'brass' | 'steel' | 'gold' | 'silver' | 'bronze' | 'copper' | 'iron' | 'titanium'>;
+
+const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Partial<DieMaterialPreset['surface']>>> = {
     brass: {
         plain: {
             roughness: 0.3,
@@ -116,6 +130,162 @@ const METAL_SURFACE_OVERRIDES: Record<Extract<DieBodyMaterial, 'brass' | 'steel'
             clearcoatRoughness: 0.28,
         },
     },
+    gold: {
+        plain: {
+            roughness: 0.2,
+            metalness: 0.99,
+            clearcoat: 0.35,
+            clearcoatRoughness: 0.22,
+        },
+        etched: {
+            roughness: 0.34,
+            metalness: 0.98,
+            clearcoat: 0.2,
+            clearcoatRoughness: 0.3,
+        },
+        polished: {
+            roughness: 0.06,
+            metalness: 1,
+            clearcoat: 0.98,
+            clearcoatRoughness: 0.05,
+        },
+        hammered: {
+            roughness: 0.36,
+            metalness: 0.98,
+            clearcoat: 0.18,
+            clearcoatRoughness: 0.22,
+        },
+    },
+    silver: {
+        plain: {
+            roughness: 0.19,
+            metalness: 0.99,
+            clearcoat: 0.26,
+            clearcoatRoughness: 0.2,
+        },
+        etched: {
+            roughness: 0.32,
+            metalness: 0.98,
+            clearcoat: 0.14,
+            clearcoatRoughness: 0.26,
+        },
+        polished: {
+            roughness: 0.05,
+            metalness: 1,
+            clearcoat: 0.94,
+            clearcoatRoughness: 0.04,
+        },
+        hammered: {
+            roughness: 0.34,
+            metalness: 0.98,
+            clearcoat: 0.16,
+            clearcoatRoughness: 0.22,
+        },
+    },
+    bronze: {
+        plain: {
+            roughness: 0.33,
+            metalness: 0.93,
+            clearcoat: 0.22,
+            clearcoatRoughness: 0.29,
+        },
+        etched: {
+            roughness: 0.46,
+            metalness: 0.9,
+            clearcoat: 0.1,
+            clearcoatRoughness: 0.36,
+        },
+        polished: {
+            roughness: 0.11,
+            metalness: 0.96,
+            clearcoat: 0.9,
+            clearcoatRoughness: 0.08,
+        },
+        hammered: {
+            roughness: 0.55,
+            metalness: 0.9,
+            clearcoat: 0.12,
+            clearcoatRoughness: 0.31,
+        },
+    },
+    copper: {
+        plain: {
+            roughness: 0.29,
+            metalness: 0.94,
+            clearcoat: 0.22,
+            clearcoatRoughness: 0.27,
+        },
+        etched: {
+            roughness: 0.43,
+            metalness: 0.91,
+            clearcoat: 0.1,
+            clearcoatRoughness: 0.34,
+        },
+        polished: {
+            roughness: 0.1,
+            metalness: 0.97,
+            clearcoat: 0.92,
+            clearcoatRoughness: 0.08,
+        },
+        hammered: {
+            roughness: 0.5,
+            metalness: 0.9,
+            clearcoat: 0.13,
+            clearcoatRoughness: 0.3,
+        },
+    },
+    iron: {
+        plain: {
+            roughness: 0.4,
+            metalness: 0.86,
+            clearcoat: 0.1,
+            clearcoatRoughness: 0.28,
+        },
+        etched: {
+            roughness: 0.52,
+            metalness: 0.83,
+            clearcoat: 0.06,
+            clearcoatRoughness: 0.34,
+        },
+        polished: {
+            roughness: 0.16,
+            metalness: 0.9,
+            clearcoat: 0.72,
+            clearcoatRoughness: 0.1,
+        },
+        hammered: {
+            roughness: 0.6,
+            metalness: 0.82,
+            clearcoat: 0.08,
+            clearcoatRoughness: 0.34,
+        },
+    },
+    titanium: {
+        plain: {
+            roughness: 0.23,
+            metalness: 0.95,
+            clearcoat: 0.2,
+            clearcoatRoughness: 0.21,
+        },
+        etched: {
+            roughness: 0.35,
+            metalness: 0.94,
+            clearcoat: 0.11,
+            clearcoatRoughness: 0.27,
+        },
+        polished: {
+            roughness: 0.07,
+            metalness: 0.98,
+            clearcoat: 0.88,
+            clearcoatRoughness: 0.06,
+        },
+        hammered: {
+            roughness: 0.38,
+            metalness: 0.94,
+            clearcoat: 0.12,
+            clearcoatRoughness: 0.24,
+        },
+    },
 };
 
 function isBodyMaterial(value: string | undefined): value is DieBodyMaterial {
@@ -165,6 +335,6 @@ function resolveSurfaceProfile(bodyMaterial: DieBodyMaterial, surfaceFinish: Die
 
     return {
         ...baseProfile,
-        ...METAL_SURFACE_OVERRIDES[bodyMaterial as Extract<DieBodyMaterial, 'brass' | 'steel'>][surfaceFinish],
+        ...METAL_SURFACE_OVERRIDES[bodyMaterial as MetalMaterial][surfaceFinish],
     };
 }

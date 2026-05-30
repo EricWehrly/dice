@@ -3,7 +3,7 @@ import { createD6FaceAtlasTexture } from '../DieFaceTextureAtlas';
 import { type MaterialTextureGenerator, type MaterialTextureGeneratorOptions } from '../MaterialTextureGenerator';
 import { type DieSurfaceFinish } from '../DieTextureTypes';
 
-type MetalMaterial = 'brass' | 'steel';
+type MetalMaterial = 'brass' | 'steel' | 'gold' | 'silver' | 'bronze' | 'copper' | 'iron' | 'titanium';
 
 interface MetalFinishTuning {
     readonly brushStep: number;
@@ -24,6 +24,12 @@ interface MetalAppearanceProfile {
 const METAL_LABELS: Record<MetalMaterial, string> = {
     brass: 'Brass',
     steel: 'Steel',
+    gold: 'Gold',
+    silver: 'Silver',
+    bronze: 'Bronze',
+    copper: 'Copper',
+    iron: 'Iron',
+    titanium: 'Titanium',
 };
 
 const METAL_APPEARANCE: Record<MetalMaterial, MetalAppearanceProfile> = {
@@ -37,6 +43,42 @@ const METAL_APPEARANCE: Record<MetalMaterial, MetalAppearanceProfile> = {
         brightColor: '247, 251, 255',
         darkColor: '52, 66, 82',
         sweepColor: '220, 236, 255',
+        brushDirection: 'horizontal',
+    },
+    gold: {
+        brightColor: '255, 242, 173',
+        darkColor: '92, 71, 27',
+        sweepColor: '255, 225, 120',
+        brushDirection: 'diagonal',
+    },
+    silver: {
+        brightColor: '246, 250, 255',
+        darkColor: '63, 74, 89',
+        sweepColor: '229, 239, 253',
+        brushDirection: 'horizontal',
+    },
+    bronze: {
+        brightColor: '225, 180, 136',
+        darkColor: '79, 50, 31',
+        sweepColor: '214, 153, 110',
+        brushDirection: 'diagonal',
+    },
+    copper: {
+        brightColor: '236, 167, 127',
+        darkColor: '90, 52, 33',
+        sweepColor: '230, 145, 101',
+        brushDirection: 'diagonal',
+    },
+    iron: {
+        brightColor: '178, 188, 201',
+        darkColor: '37, 45, 56',
+        sweepColor: '136, 145, 158',
+        brushDirection: 'horizontal',
+    },
+    titanium: {
+        brightColor: '209, 221, 238',
+        darkColor: '47, 62, 79',
+        sweepColor: '184, 203, 229',
         brushDirection: 'horizontal',
     },
 };
@@ -79,6 +121,12 @@ const FINISH_TUNING: Record<DieSurfaceFinish, MetalFinishTuning> = {
 export const MetalMaterialGenerators: readonly MaterialTextureGenerator[] = ([
     'brass',
     'steel',
+    'gold',
+    'silver',
+    'bronze',
+    'copper',
+    'iron',
+    'titanium',
 ] as const).map((material) => createMetalMaterialGenerator(material));
 
 function createMetalMaterialGenerator(material: MetalMaterial): MaterialTextureGenerator {

@@ -183,4 +183,29 @@ describe('DieFaceTextureAtlas UV mapping', () => {
         geometry.dispose();
         MaterialTextureRegistry.clear();
     });
+
+    it('uses a registered metal generator for titanium atlas textures', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const preset = resolveDieMaterialPreset({
+            bodyMaterial: 'titanium',
+            surfaceFinish: 'polished',
+        });
+
+        MetalMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: preset.backgroundColor,
+            pipColor: preset.pipColor,
+            bodyMaterial: 'titanium',
+            surfaceFinish: 'polished',
+            faceSize: 64,
+        });
+
+        expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+
+        texture.dispose();
+        geometry.dispose();
+        MaterialTextureRegistry.clear();
+    });
 });
