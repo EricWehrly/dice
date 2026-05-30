@@ -15,6 +15,7 @@ export interface MaterialTextureGeneratorOptions {
     readonly faceSize: number;
     readonly edgeRoundness?: number;
     readonly pipStyle?: RenderPipStyle;
+    readonly pipSize?: number;
 }
 
 /**

@@ -49,6 +49,8 @@ export const AVAILABLE_FACE_STYLES = [
     { value: 'none', label: '---' },
     { value: 'circle', label: 'Circle (default)' },
     { value: 'x', label: 'X' },
+    { value: 'clover', label: 'Clover' },
+    { value: 'lock', label: 'Lock' },
 ] as const;
 
 export type AvailableModValue = typeof AVAILABLE_MODS[number]['value'];

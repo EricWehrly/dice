@@ -21,6 +21,8 @@ const mockCanvasContext = {
     lineCap: 'round' as CanvasLineCap,
 };
 
+const arcSpy = vi.spyOn(mockCanvasContext, 'arc');
+
 if (typeof HTMLCanvasElement !== 'undefined') {
     Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
         configurable: true,
@@ -40,6 +42,10 @@ function cloneUvArray(geometry: THREE.BoxGeometry): Float32Array {
 }
 
 describe('DieFaceTextureAtlas UV mapping', () => {
+    beforeEach(() => {
+        arcSpy.mockClear();
+    });
+
     it('is stable across repeated atlas remaps on the same geometry', () => {
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const before = cloneUvArray(geometry);
@@ -126,6 +132,25 @@ describe('DieFaceTextureAtlas UV mapping', () => {
 
         expect(texture).toBeDefined();
         expect(texture.image).toBeDefined();
+
+        texture.dispose();
+        geometry.dispose();
+    });
+
+    it('does not draw pips when pip size is zero', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: '#ffffff',
+            pipColor: '#000000',
+            faceSize: 64,
+            pipStyle: 'circle',
+            pipSize: 0,
+        });
+
+        expect(texture).toBeDefined();
+        expect(arcSpy).not.toHaveBeenCalled();
 
         texture.dispose();
         geometry.dispose();

@@ -21,6 +21,7 @@ export class Die extends Entity {
     pipMaterial: string;
     surfaceFinish: string;
     edgeRoundness: number;
+    pipSize: number;
 
     constructor({
         faceCount = 6,
@@ -51,6 +52,7 @@ export class Die extends Entity {
         this.pipMaterial = 'plastic';
         this.surfaceFinish = 'plain';
         this.edgeRoundness = edgeRoundness;
+        this.pipSize = 1;
     }
 
     roll(): number {

@@ -13,6 +13,7 @@ export interface DiceConfig extends EntityOptions {
     surfaceFinish?: string;
     edgeRoundness?: number;
     pipStyle?: PipStyleSetting;
+    pipSize?: number;
 }
 
 /**
@@ -26,7 +27,8 @@ export const DEFAULT_DICE_CONFIG: DiceConfig = {
     pipMaterial: 'plastic',
     surfaceFinish: 'plain',
     edgeRoundness: 0.32,
-    pipStyle: ''
+    pipStyle: '',
+    pipSize: 1,
 };
 
 /**
@@ -44,7 +46,8 @@ export function getDiceConfig(entity: any): DiceConfig {
         pipMaterial: entity.pipMaterial ?? DEFAULT_DICE_CONFIG.pipMaterial,
         surfaceFinish: entity.surfaceFinish ?? DEFAULT_DICE_CONFIG.surfaceFinish,
         edgeRoundness: entity.edgeRoundness ?? DEFAULT_DICE_CONFIG.edgeRoundness,
-        pipStyle: entity.pipStyle ?? DEFAULT_DICE_CONFIG.pipStyle
+        pipStyle: entity.pipStyle ?? DEFAULT_DICE_CONFIG.pipStyle,
+        pipSize: entity.pipSize ?? DEFAULT_DICE_CONFIG.pipSize,
     };
 }
 

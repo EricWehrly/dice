@@ -108,6 +108,7 @@ export class DiceGraphic extends EntityGraphicThree {
                     bodyMaterial: config.bodyMaterial,
                     surfaceFinish: config.surfaceFinish,
                     pipStyle: normalizeRenderPipStyle(config.pipStyle),
+                    pipSize: config.pipSize,
                 });
             } catch (error) {
                 console.warn('Falling back to legacy d6 material path', error);
@@ -188,6 +189,7 @@ export class DiceGraphic extends EntityGraphicThree {
             config.pipMaterial ?? '',
             config.surfaceFinish ?? '',
             config.pipStyle ?? '',
+            config.pipSize ?? '',
         ].join('|');
     }
 

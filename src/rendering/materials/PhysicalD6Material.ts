@@ -13,6 +13,7 @@ export interface PhysicalD6MaterialConfig {
     surfaceFinish?: string;
     edgeRoundness?: number;
     pipStyle?: RenderPipStyle;
+    pipSize?: number;
 }
 
 /**
@@ -39,6 +40,7 @@ export function createPhysicalD6Material(config: PhysicalD6MaterialConfig): THRE
         bodyMaterial: config.bodyMaterial as DieBodyMaterial | undefined,
         surfaceFinish: config.surfaceFinish as DieSurfaceFinish | undefined,
         pipStyle: config.pipStyle,
+        pipSize: config.pipSize,
     });
 
     return new THREE.MeshPhysicalMaterial({

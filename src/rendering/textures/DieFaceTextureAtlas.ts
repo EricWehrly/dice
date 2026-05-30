@@ -9,6 +9,7 @@ export interface DieFaceTextureOptions {
     readonly pipColor: string;
     readonly edgeRoundness?: number;
     readonly pipStyle?: RenderPipStyle;
+    readonly pipSize?: number;
 }
 
 export interface D6AtlasMaterialOptions extends DieFaceTextureOptions {
@@ -103,7 +104,17 @@ export function createD6FaceAtlasTexture(options: DieFaceTextureOptions): THREE.
         const x = gap + column * (faceSize + gap);
         const y = gap + row * (faceSize + gap);
         drawFaceBackground(context, x, y, faceSize, options.backgroundColor, edgeRoundness);
-        drawFacePips(context, x, y, faceSize, faceValue, options.pipColor, options.pipStyle ?? 'circle');
+        drawFacePips(
+            context,
+            x,
+            y,
+            faceSize,
+            faceValue,
+            options.pipColor,
+            options.backgroundColor,
+            options.pipStyle ?? 'circle',
+            options.pipSize ?? 1,
+        );
     });
 
     const texture = new THREE.CanvasTexture(canvas);
@@ -133,16 +144,21 @@ export function createD6FaceAtlasMaterialTexture(input: D6AtlasMaterialWithGener
             faceSize,
             edgeRoundness: input.edgeRoundness,
             pipStyle: input.pipStyle,
+            pipSize: input.pipSize,
         });
     }
     
-    // Fallback to color-based rendering if no generator registered
+    // Fallback: no generator registered for this material, so render with flat palette colors.
+    // This is an intentional permanent backstop — F14 explicitly requires it to stay so
+    // new materials can be added to the registry incrementally without visual breakage.
+    // See: docs/features/F14-material-authoring-plan.md — "Maintain fallback to color-only rendering when no generator exists"
     return createD6FaceAtlasTexture({
         backgroundColor: input.backgroundColor,
         pipColor: input.pipColor,
         faceSize,
         edgeRoundness: input.edgeRoundness,
         pipStyle: input.pipStyle,
+        pipSize: input.pipSize,
     });
 }
 
@@ -215,9 +231,16 @@ function drawFacePips(
     faceSize: number,
     faceValue: number,
     pipColor: string,
+    backgroundColor: string,
     pipStyle: RenderPipStyle,
+    pipSize: number,
 ): void {
-    const pipRadius = faceSize * 0.062;
+    const normalizedPipSize = Number.isFinite(pipSize) && pipSize >= 0 ? pipSize : 0;
+    if (normalizedPipSize === 0) {
+        return;
+    }
+
+    const pipRadius = faceSize * 0.062 * normalizedPipSize;
     const highlightColor = mixHexColors(pipColor, '#ffffff', 0.35);
 
     context.fillStyle = pipColor;
@@ -231,6 +254,10 @@ function drawFacePips(
 
         if (pipStyle === 'x') {
             drawCrossPip(context, centerX, centerY, pipRadius, pipColor);
+        } else if (pipStyle === 'clover') {
+            drawCloverPip(context, centerX, centerY, pipRadius, pipColor);
+        } else if (pipStyle === 'lock') {
+            drawLockPip(context, centerX, centerY, pipRadius, pipColor, backgroundColor);
         } else {
             drawCirclePip(context, centerX, centerY, pipRadius, pipColor, highlightColor);
         }
@@ -276,6 +303,112 @@ function drawCirclePip(
     context.beginPath();
     context.arc(centerX - pipRadius * 0.22, centerY - pipRadius * 0.22, pipRadius * 0.34, 0, Math.PI * 2);
     context.fill();
+    context.fillStyle = pipColor;
+}
+
+function drawCloverPip(
+    context: CanvasRenderingContext2D,
+    centerX: number,
+    centerY: number,
+    pipRadius: number,
+    pipColor: string,
+): void {
+    context.fillStyle = pipColor;
+    const leafSize = pipRadius * 1.02;
+    drawCloverLeaf(context, centerX, centerY, -0.72, -0.72, leafSize);
+    drawCloverLeaf(context, centerX, centerY, 0.72, -0.72, leafSize);
+    drawCloverLeaf(context, centerX, centerY, -0.72, 0.72, leafSize);
+    drawCloverLeaf(context, centerX, centerY, 0.72, 0.72, leafSize);
+
+    context.beginPath();
+    context.arc(centerX, centerY, Math.max(1, pipRadius * 0.2), 0, Math.PI * 2);
+    context.fill();
+
+    if (pipRadius >= 6) {
+        const stemW = Math.max(1, pipRadius * 0.14);
+        const stemTop = centerY + (leafSize * 0.42);
+        const stemH = pipRadius * 0.34;
+        context.fillRect(centerX - stemW / 2, stemTop, stemW, stemH);
+    }
+}
+
+function drawCloverLeaf(
+    context: CanvasRenderingContext2D,
+    centerX: number,
+    centerY: number,
+    dirX: number,
+    dirY: number,
+    leafSize: number,
+): void {
+    const length = Math.hypot(dirX, dirY) || 1;
+    const nx = dirX / length;
+    const ny = dirY / length;
+    const px = -ny;
+    const py = nx;
+
+    const point = (along: number, across: number): [number, number] => [
+        centerX + (nx * along + px * across) * leafSize,
+        centerY + (ny * along + py * across) * leafSize,
+    ];
+
+    // Clover style spectrum knobs:
+    // cartoonBias: lower = botanical, higher = shamrock-cartoon.
+    // notchNarrowness: lower = broad heart notch, higher = tight/narrow notch.
+    // Keep these near each other so art tuning can happen in one spot.
+    const cartoonBias = 0.8;
+    const notchNarrowness = 0.85;
+    const [baseX, baseY] = point(0.07, 0);
+    const [leftShoulderX, leftShoulderY] = point(0.34, 0.44 + (0.08 * cartoonBias));
+    const [leftTipX, leftTipY] = point(0.76 + (0.04 * cartoonBias), 0.22 + (0.06 * cartoonBias));
+    const [tipNotchX, tipNotchY] = point(0.60 + (0.08 * cartoonBias), 0);
+    const [rightTipX, rightTipY] = point(0.76 + (0.04 * cartoonBias), -0.22 - (0.06 * cartoonBias));
+    const [rightShoulderX, rightShoulderY] = point(0.34, -0.44 - (0.08 * cartoonBias));
+    const [leftNotchCtrlX, leftNotchCtrlY] = point(
+        0.88 + (0.06 * cartoonBias),
+        (0.08 + (0.05 * cartoonBias)) * (1 - (0.7 * notchNarrowness)),
+    );
+    const [rightNotchCtrlX, rightNotchCtrlY] = point(
+        0.88 + (0.06 * cartoonBias),
+        (-0.08 - (0.05 * cartoonBias)) * (1 - (0.7 * notchNarrowness)),
+    );
+
+    context.beginPath();
+    context.moveTo(baseX, baseY);
+    context.quadraticCurveTo(leftShoulderX, leftShoulderY, leftTipX, leftTipY);
+    context.quadraticCurveTo(leftNotchCtrlX, leftNotchCtrlY, tipNotchX, tipNotchY);
+    context.quadraticCurveTo(rightNotchCtrlX, rightNotchCtrlY, rightTipX, rightTipY);
+    context.quadraticCurveTo(rightShoulderX, rightShoulderY, baseX, baseY);
+    context.fill();
+}
+
+function drawLockPip(
+    context: CanvasRenderingContext2D,
+    centerX: number,
+    centerY: number,
+    pipRadius: number,
+    pipColor: string,
+    backgroundColor: string,
+): void {
+    context.fillStyle = pipColor;
+    const bodyW = pipRadius * 1.45;
+    const bodyH = pipRadius * 1.15;
+    const bodyX = centerX - bodyW / 2;
+    const bodyY = centerY - pipRadius * 0.02;
+
+    context.fillRect(bodyX, bodyY, bodyW, bodyH);
+
+    context.strokeStyle = pipColor;
+    context.lineWidth = Math.max(1, pipRadius * 0.22);
+    context.beginPath();
+    context.arc(centerX, bodyY, pipRadius * 0.55, Math.PI, 0);
+    context.stroke();
+
+    const keyholeR = Math.max(1, pipRadius * 0.16);
+    context.fillStyle = backgroundColor;
+    context.beginPath();
+    context.arc(centerX, bodyY + bodyH * 0.45, keyholeR, 0, Math.PI * 2);
+    context.fill();
+    context.fillRect(centerX - keyholeR * 0.45, bodyY + bodyH * 0.45, keyholeR * 0.9, keyholeR * 1.2);
     context.fillStyle = pipColor;
 }
 

@@ -29,6 +29,7 @@ export interface DieModPanelData {
     draftPipMaterial: AvailableMaterialValue;
     draftFaceStyles: AvailableStyleValue[];
     draftFaceStyle: AvailableFaceStyleValue;
+    draftPipSize: number;
     preview: number[];
     deltas: number[];
     current: number[];
@@ -130,6 +131,11 @@ export function renderDieModPanel(data: DieModPanelData): string {
                             `<option value="${faceStyle.value}" ${faceStyle.value === data.draftFaceStyle ? 'selected' : ''}>${faceStyle.label}</option>`
                     ).join('')}
                 </select>
+            </label>
+
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">pip size</span>
+                <input class="die-mod-setting-select die-mod-pip-size-input" type="number" min="0" step="0.1" value="${data.draftPipSize}">
             </label>
 
             <!-- Install button — always present at bottom, enabled only when mod + face both selected -->

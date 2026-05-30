@@ -25,6 +25,7 @@ export const PlasticMaterialGenerator: MaterialTextureGenerator = {
             faceSize: options.faceSize,
             edgeRoundness: options.edgeRoundness,
             pipStyle: options.pipStyle,
+            pipSize: options.pipSize,
         });
     },
 };

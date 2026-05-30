@@ -1,4 +1,4 @@
-export const RENDER_PIP_STYLES = ['circle', 'x'] as const;
+export const RENDER_PIP_STYLES = ['circle', 'x', 'clover', 'lock'] as const;
 
 export type RenderPipStyle = typeof RENDER_PIP_STYLES[number];
 export type PipStyleSetting = '' | RenderPipStyle;

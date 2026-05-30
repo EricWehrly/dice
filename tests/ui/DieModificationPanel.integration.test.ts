@@ -195,4 +195,26 @@ describe('DieModificationPanel integration', () => {
         expect(die.pipStyle).toBe('');
     });
 
+    it('converts pip size input to number and defaults invalid input to 0', () => {
+        const bag = new Bag();
+        const die = MakeDieCharacter([DieEquippedMixin], { id: 'die-5', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
+        bag.addDie(die);
+        const panel = new DieModificationPanel(bag.getActiveDice() as Array<ReturnType<typeof MakeDieCharacter> & DieEquipped>);
+
+        panel.render();
+
+        const pipSizeInput = getRequired<HTMLInputElement>('.die-mod-pip-size-input');
+        pipSizeInput.value = '1.7';
+        pipSizeInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(die.pipSize).toBe(1.7);
+
+        const refreshedPipSizeInput = getRequired<HTMLInputElement>('.die-mod-pip-size-input');
+        refreshedPipSizeInput.value = 'not-a-number';
+        refreshedPipSizeInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(die.pipSize).toBe(0);
+        expect(refreshedPipSizeInput.value).toBe('0');
+    });
+
 });

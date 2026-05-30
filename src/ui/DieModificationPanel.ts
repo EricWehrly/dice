@@ -47,6 +47,7 @@ export class DieModificationPanel {
     private draftPipMaterial: AvailableMaterialValue = 'plastic';
     private draftFaceStyles: AvailableStyleValue[] = [];
     private draftFaceStyle: AvailableFaceStyleValue = 'none';
+    private draftPipSize = 0;
     
     // Core mod install state
     private selectedCoreMod: AvailableCoreModValue | null = null;
@@ -117,6 +118,7 @@ export class DieModificationPanel {
             draftPipMaterial: this.draftPipMaterial,
             draftFaceStyles: this.draftFaceStyles,
             draftFaceStyle: this.draftFaceStyle,
+            draftPipSize: this.draftPipSize,
             preview,
             deltas,
             current,
@@ -229,7 +231,16 @@ export class DieModificationPanel {
         faceStyleSelector?.addEventListener('change', (event) => {
             const target = event.target as HTMLSelectElement;
             this.draftFaceStyle = (target.value as AvailableFaceStyleValue) ?? 'none';
-            this.applyPipStyleToSelectedDie();
+            this.applyPipVisualsToSelectedDie();
+            this.render();
+        });
+
+        const pipSizeInput = this.root.querySelector<HTMLInputElement>('.die-mod-pip-size-input');
+        pipSizeInput?.addEventListener('change', (event) => {
+            const target = event.target as HTMLInputElement;
+            this.draftPipSize = this.parsePipSizeInputValue(target.value);
+            target.value = String(this.draftPipSize);
+            this.applyPipVisualsToSelectedDie();
             this.render();
         });
 
@@ -386,17 +397,28 @@ export class DieModificationPanel {
         const finish = (die.surfaceFinish as AvailableStyleValue | undefined) ?? 'plain';
         this.draftFaceStyles = Array.from({ length: die.faceCount }, () => finish);
         this.draftFaceStyle = this.getDraftFaceStyleFromDie(die);
+        this.draftPipSize = this.getDraftPipSizeFromDie(die);
         this.draftCoreMod = 'none';
         this.draftCoreMaterial = (die.bodyMaterial as AvailableMaterialValue | undefined) ?? 'plastic';
         this.draftPipMaterial = (die.pipMaterial as AvailableMaterialValue | undefined) ?? 'plastic';
     }
 
-    private applyPipStyleToSelectedDie(): void {
+    private applyPipVisualsToSelectedDie(): void {
         const die = this.getSelectedDie();
-        die.pipStyle = this.draftFaceStyle === 'none' || this.draftFaceStyle === 'circle'
+        die.pipStyle = (this.draftFaceStyle === 'none' || this.draftFaceStyle === 'circle')
             ? ''
-            : this.draftFaceStyle;
+            : this.draftFaceStyle as import('../game/PipStyle').RenderPipStyle;
+        die.pipSize = this.draftPipSize;
         Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+    }
+
+    private parsePipSizeInputValue(rawValue: string): number {
+        const parsedValue = Number(rawValue);
+        if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+            return 0;
+        }
+
+        return parsedValue;
     }
 
     private applyCosmeticsToSelectedDie(): void {
@@ -455,7 +477,7 @@ export class DieModificationPanel {
 
     private getDraftFaceStyleFromDie(die: Die & DieEquipped): AvailableFaceStyleValue {
         const pipStyle = die.pipStyle;
-        if (pipStyle === 'x') {
+        if (pipStyle === 'x' || pipStyle === 'clover' || pipStyle === 'lock') {
             return pipStyle;
         }
 
@@ -464,6 +486,11 @@ export class DieModificationPanel {
         }
 
         return 'none';
+    }
+
+    private getDraftPipSizeFromDie(die: Die & DieEquipped): number {
+        const pipSize = die.pipSize;
+        return Number.isFinite(pipSize) && pipSize >= 0 ? pipSize : 0;
     }
 
     private getInstalledWeightMod(die: Die & DieEquipped): DieWeightMod | null {
