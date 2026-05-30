@@ -51,10 +51,10 @@ const FINISH_PROFILES: Record<DieSurfaceFinish, DieMaterialPreset['surface']> = 
         clearcoatRoughness: 0.55,
     },
     polished: {
-        roughness: 0.26,
-        metalness: 0.15,
-        clearcoat: 0.86,
-        clearcoatRoughness: 0.18,
+        roughness: 0.4,
+        metalness: 0.08,
+        clearcoat: 0.22,
+        clearcoatRoughness: 0.38,
     },
     hammered: {
         roughness: 0.78,
@@ -92,10 +92,10 @@ const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Pa
             clearcoatRoughness: 0.42,
         },
         polished: {
-            roughness: 0.12,
-            metalness: 0.97,
-            clearcoat: 0.96,
-            clearcoatRoughness: 0.08,
+            roughness: 0.26,
+            metalness: 0.82,
+            clearcoat: 0.3,
+            clearcoatRoughness: 0.26,
         },
         hammered: {
             roughness: 0.5,
@@ -118,10 +118,10 @@ const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Pa
             clearcoatRoughness: 0.36,
         },
         polished: {
-            roughness: 0.08,
-            metalness: 0.98,
-            clearcoat: 0.88,
-            clearcoatRoughness: 0.06,
+            roughness: 0.14,
+            metalness: 0.9,
+            clearcoat: 0.24,
+            clearcoatRoughness: 0.16,
         },
         hammered: {
             roughness: 0.44,
@@ -144,10 +144,10 @@ const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Pa
             clearcoatRoughness: 0.3,
         },
         polished: {
-            roughness: 0.06,
-            metalness: 1,
-            clearcoat: 0.98,
-            clearcoatRoughness: 0.05,
+            roughness: 0.1,
+            metalness: 0.99,
+            clearcoat: 0.3,
+            clearcoatRoughness: 0.12,
         },
         hammered: {
             roughness: 0.36,
@@ -196,10 +196,10 @@ const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Pa
             clearcoatRoughness: 0.36,
         },
         polished: {
-            roughness: 0.11,
-            metalness: 0.96,
-            clearcoat: 0.9,
-            clearcoatRoughness: 0.08,
+            roughness: 0.28,
+            metalness: 0.84,
+            clearcoat: 0.22,
+            clearcoatRoughness: 0.24,
         },
         hammered: {
             roughness: 0.55,
@@ -222,10 +222,10 @@ const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Pa
             clearcoatRoughness: 0.34,
         },
         polished: {
-            roughness: 0.1,
-            metalness: 0.97,
-            clearcoat: 0.92,
-            clearcoatRoughness: 0.08,
+            roughness: 0.26,
+            metalness: 0.86,
+            clearcoat: 0.24,
+            clearcoatRoughness: 0.22,
         },
         hammered: {
             roughness: 0.5,
@@ -248,10 +248,10 @@ const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Pa
             clearcoatRoughness: 0.34,
         },
         polished: {
-            roughness: 0.16,
-            metalness: 0.9,
-            clearcoat: 0.72,
-            clearcoatRoughness: 0.1,
+            roughness: 0.3,
+            metalness: 0.8,
+            clearcoat: 0.18,
+            clearcoatRoughness: 0.28,
         },
         hammered: {
             roughness: 0.6,
@@ -274,10 +274,10 @@ const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Pa
             clearcoatRoughness: 0.27,
         },
         polished: {
-            roughness: 0.07,
-            metalness: 0.98,
-            clearcoat: 0.88,
-            clearcoatRoughness: 0.06,
+            roughness: 0.26,
+            metalness: 0.82,
+            clearcoat: 0.2,
+            clearcoatRoughness: 0.24,
         },
         hammered: {
             roughness: 0.38,

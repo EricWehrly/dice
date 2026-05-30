@@ -28,6 +28,9 @@ export const DIE_SURFACE_FINISHES = [
 export type DieBodyMaterial = typeof DIE_BODY_MATERIALS[number];
 export type DieSurfaceFinish = typeof DIE_SURFACE_FINISHES[number];
 
+export const MATERIAL_CATEGORIES = ['metal', 'plastic', 'premium'] as const;
+export type MaterialCategory = typeof MATERIAL_CATEGORIES[number];
+
 export interface DieSurfaceProfile {
     readonly roughness: number;
     readonly metalness: number;

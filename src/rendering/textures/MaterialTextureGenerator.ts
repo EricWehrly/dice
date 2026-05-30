@@ -35,6 +35,12 @@ export interface MaterialTextureGenerator {
     readonly material: DieBodyMaterial;
     readonly label: string;
     /**
+     * Material category (e.g., 'metal', 'plastic', 'premium').
+     * Drives material-specific behavior like bump scale, envMapIntensity, and finish tuning.
+     * Defaults to 'plastic' if not specified.
+     */
+    readonly category?: string;
+    /**
      * Generate a color texture for this material with the given options.
      * 
      * @param options Configuration for texture generation

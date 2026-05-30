@@ -81,10 +81,10 @@ export function createPhysicalD6Material(config: PhysicalD6MaterialConfig): THRE
         }
     }
 
+    const generator = bodyMaterial ? MaterialTextureRegistry.get(bodyMaterial) : undefined;
+    const isMetal = generator?.category === 'metal';
+
     // Increase bump scale for metals to enhance pip depth, but avoid over-darkening polished faces.
-    const isMetal = bodyMaterial === 'brass' || bodyMaterial === 'steel' || bodyMaterial === 'gold' ||
-        bodyMaterial === 'silver' || bodyMaterial === 'bronze' || bodyMaterial === 'copper' ||
-        bodyMaterial === 'iron' || bodyMaterial === 'titanium';
     const bumpScale = !isMetal
         ? 0.04
         : surfaceFinish === 'polished'
@@ -95,6 +95,17 @@ export function createPhysicalD6Material(config: PhysicalD6MaterialConfig): THRE
                     ? 0.085
                     : 0.075;
 
+    let envMapIntensity = !isMetal
+        ? 0.6
+        : surfaceFinish === 'polished'
+            ? 1.0
+            : surfaceFinish === 'hammered'
+                ? 0.75
+                : surfaceFinish === 'etched'
+                    ? 0.65
+                    : 0.8;
+    envMapIntensity = 0;
+
     return new THREE.MeshPhysicalMaterial({
         color: '#ffffff',
         map: texture,
@@ -103,6 +114,7 @@ export function createPhysicalD6Material(config: PhysicalD6MaterialConfig): THRE
         roughnessMap,
         roughness: roughnessMap ? 1 : preset.surface.roughness,
         metalness: preset.surface.metalness,
+        envMapIntensity,
         clearcoat: preset.surface.clearcoat,
         clearcoatRoughness: preset.surface.clearcoatRoughness,
     });

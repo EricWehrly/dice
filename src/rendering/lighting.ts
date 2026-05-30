@@ -6,15 +6,15 @@ export function ensureDiceLighting(scene: THREE.Scene): void {
         return;
     }
 
-    const ambient = new THREE.AmbientLight(0xfff8ee, 0.64);
+    const ambient = new THREE.AmbientLight(0xfff8ee, 0.25);
     ambient.name = 'dice-ambient-light';
     scene.add(ambient);
 
-    const hemi = new THREE.HemisphereLight(0xfff3da, 0x6a5f52, 1.28);
+    const hemi = new THREE.HemisphereLight(0xfff3da, 0x6a5f52, 0.55);
     hemi.name = 'dice-hemi-light';
     scene.add(hemi);
 
-    const key = new THREE.DirectionalLight(0xffefcf, 1.52);
+    const key = new THREE.DirectionalLight(0xffefcf, 0.9);
     key.name = 'dice-key-light';
     key.position.set(4, 16, 6);
     key.castShadow = true;
@@ -31,12 +31,12 @@ export function ensureDiceLighting(scene: THREE.Scene): void {
     key.shadow.camera.bottom = -20;
     scene.add(key);
 
-    const fill = new THREE.DirectionalLight(0xffe7be, 1.46);
+    const fill = new THREE.DirectionalLight(0xffe7be, 0.35);
     fill.name = 'dice-fill-light';
     fill.position.set(-8, 10, 7);
     scene.add(fill);
 
-    const rim = new THREE.DirectionalLight(0xfff6ea, 0.58);
+    const rim = new THREE.DirectionalLight(0xfff6ea, 0.25);
     rim.name = 'dice-rim-light';
     rim.position.set(-2, 11, -9);
     scene.add(rim);

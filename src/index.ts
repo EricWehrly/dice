@@ -41,13 +41,21 @@ function calculateBagMaxRoll(bag: Bag): number {
 
 const bag = new Bag();
 const dieA = MakeDieCharacter([DieEquippedMixin]);
-dieA.pipStyle = 'clover';
-dieA.pipSize = 3;
+dieA.pipStyle = 'x';
 dieA.bodyMaterial = 'brass';
 // dieA.pipMaterial = 'brass';
 bag.addDie(dieA);
-bag.addDie(MakeDieCharacter([DieEquippedMixin]));
-bag.addDie(MakeDieCharacter([DieEquippedMixin]));
+const dieB = MakeDieCharacter([DieEquippedMixin]);
+dieB.bodyMaterial = 'silver';
+dieB.surfaceFinish = 'hammered';
+// dieB.pipMaterial = 'brass';
+bag.addDie(dieB);
+const dieC = MakeDieCharacter([DieEquippedMixin]);
+dieC.bodyMaterial = 'gold';
+dieC.pipSize = 2.8;
+dieC.pipStyle = 'clover';
+dieC.surfaceFinish = 'polished';
+bag.addDie(dieC);
 
 wireRollButtons(bag);
 new DiceCanvasRenderer(bag);

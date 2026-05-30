@@ -102,11 +102,11 @@ const FINISH_TUNING: Record<DieSurfaceFinish, MetalFinishTuning> = {
     },
     polished: {
         brushStep: 2,
-        brushAlpha: 0.11,
-        crossAlpha: 0.015,
-        sweepAlpha: 0.2,
-        sweepWidth: 0.12,
-        edgeAlpha: 0.16,
+        brushAlpha: 0.02,
+        crossAlpha: 0.004,
+        sweepAlpha: 0.03,
+        sweepWidth: 0.02,
+        edgeAlpha: 0.03,
     },
     hammered: {
         brushStep: 6,
@@ -133,6 +133,7 @@ function createMetalMaterialGenerator(material: MetalMaterial): MaterialTextureG
     return {
         material,
         label: METAL_LABELS[material],
+        category: 'metal',
         generateTexture(options: MaterialTextureGeneratorOptions): THREE.CanvasTexture {
             const texture = createD6FaceAtlasTexture({
                 backgroundColor: options.backgroundColor,
@@ -208,17 +209,19 @@ function applyMetalFinish(texture: THREE.CanvasTexture, material: MetalMaterial,
     const width = canvas.width;
     const height = canvas.height;
 
+    const isPolished = finish === 'polished';
+
     if (appearance.brushDirection === 'horizontal') {
         for (let y = 0; y < height; y += tuning.brushStep) {
             const wave = Math.sin(y * 0.11) + Math.cos(y * 0.037);
-            const alpha = clampAlpha((0.5 + wave * 0.25) * tuning.brushAlpha);
+            const alpha = clampAlpha((0.5 + wave * 0.25) * tuning.brushAlpha * (isPolished ? 0.35 : 1));
             context.fillStyle = `rgba(${appearance.brightColor}, ${alpha.toFixed(3)})`;
             context.fillRect(0, y, width, 1);
         }
     } else {
         for (let y = 0; y < height; y += 1) {
             const diagonalOffset = Math.round((Math.sin(y * 0.045) + 1) * width * 0.08);
-            const alpha = clampAlpha((0.45 + Math.cos(y * 0.028) * 0.2) * tuning.brushAlpha);
+            const alpha = clampAlpha((0.45 + Math.cos(y * 0.028) * 0.2) * tuning.brushAlpha * (isPolished ? 0.35 : 1));
             context.fillStyle = `rgba(${appearance.brightColor}, ${alpha.toFixed(3)})`;
             for (let x = -diagonalOffset; x < width; x += tuning.brushStep * 4) {
                 context.fillRect(x + diagonalOffset, y, tuning.brushStep * 2, 1);
@@ -228,24 +231,26 @@ function applyMetalFinish(texture: THREE.CanvasTexture, material: MetalMaterial,
 
     for (let x = 0; x < width; x += tuning.brushStep * 2) {
         const wave = Math.cos(x * 0.09) + Math.sin(x * 0.031);
-        const alpha = clampAlpha((0.45 + wave * 0.18) * tuning.crossAlpha);
+        const alpha = clampAlpha((0.45 + wave * 0.18) * tuning.crossAlpha * (isPolished ? 0.35 : 1));
         context.fillStyle = `rgba(${appearance.darkColor}, ${alpha.toFixed(3)})`;
         context.fillRect(x, 0, 1, height);
     }
 
-    const sweepWidth = Math.max(8, Math.round(width * tuning.sweepWidth));
-    const primarySweepX = Math.round(width * 0.24);
-    const secondarySweepX = Math.round(width * 0.67);
-    context.fillStyle = `rgba(${appearance.sweepColor}, ${tuning.sweepAlpha.toFixed(3)})`;
-    context.fillRect(primarySweepX, 0, sweepWidth, height);
-    context.fillRect(secondarySweepX, 0, Math.max(4, Math.round(sweepWidth * 0.55)), height);
+    if (!isPolished) {
+        const sweepWidth = Math.max(8, Math.round(width * tuning.sweepWidth));
+        const primarySweepX = Math.round(width * 0.24);
+        const secondarySweepX = Math.round(width * 0.67);
+        context.fillStyle = `rgba(${appearance.sweepColor}, ${tuning.sweepAlpha.toFixed(3)})`;
+        context.fillRect(primarySweepX, 0, sweepWidth, height);
+        context.fillRect(secondarySweepX, 0, Math.max(4, Math.round(sweepWidth * 0.55)), height);
+    }
 
     const edgeSize = Math.max(2, Math.round(Math.min(width, height) * 0.012));
-    context.fillStyle = `rgba(${appearance.brightColor}, ${tuning.edgeAlpha.toFixed(3)})`;
+    context.fillStyle = `rgba(${appearance.brightColor}, ${(tuning.edgeAlpha * (isPolished ? 0.35 : 1)).toFixed(3)})`;
     context.fillRect(0, 0, width, edgeSize);
     context.fillRect(0, 0, edgeSize, height);
 
-    context.fillStyle = `rgba(${appearance.darkColor}, ${(tuning.edgeAlpha * 0.85).toFixed(3)})`;
+    context.fillStyle = `rgba(${appearance.darkColor}, ${((tuning.edgeAlpha * 0.85) * (isPolished ? 0.35 : 1)).toFixed(3)})`;
     context.fillRect(0, height - edgeSize, width, edgeSize);
     context.fillRect(width - edgeSize, 0, edgeSize, height);
 
