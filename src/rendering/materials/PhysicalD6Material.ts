@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { createD6FaceAtlasMaterialTexture } from '../textures/DieFaceTextureAtlas';
+import { createD6FaceAtlasMaterialTexture, createD6FaceSurfaceDetailTexture } from '../textures/DieFaceTextureAtlas';
+import { MaterialTextureRegistry } from '../textures/MaterialTextureRegistry';
 import { resolveDieMaterialPreset } from '../textures/DieMaterialPreset';
 import { type DieBodyMaterial, type DieSurfaceFinish } from '../textures/DieTextureTypes';
 import { type RenderPipStyle } from '../../game/PipStyle';
@@ -30,6 +31,7 @@ export function createPhysicalD6Material(config: PhysicalD6MaterialConfig): THRE
         surfaceFinish: config.surfaceFinish,
     });
     const pipColor = config.pipColor || preset.pipColor;
+    const surfaceFinish = (config.surfaceFinish as DieSurfaceFinish) ?? 'plain';
 
     const texture = createD6FaceAtlasMaterialTexture({
         geometry: config.geometry,
@@ -38,15 +40,68 @@ export function createPhysicalD6Material(config: PhysicalD6MaterialConfig): THRE
         faceSize: config.textureFaceSize,
         edgeRoundness: config.edgeRoundness,
         bodyMaterial: config.bodyMaterial as DieBodyMaterial | undefined,
-        surfaceFinish: config.surfaceFinish as DieSurfaceFinish | undefined,
+        surfaceFinish,
         pipStyle: config.pipStyle,
         pipSize: config.pipSize,
     });
 
+    // Bump map is always generated (it's geometric detail for pips, not material-specific)
+    const bumpMap = createD6FaceSurfaceDetailTexture({
+        kind: 'bump',
+        geometry: config.geometry,
+        backgroundColor: preset.backgroundColor,
+        pipColor,
+        faceSize: config.textureFaceSize,
+        edgeRoundness: config.edgeRoundness,
+        surfaceFinish,
+        pipStyle: config.pipStyle,
+        pipSize: config.pipSize,
+    });
+
+    // Roughness map is material-specific: request from generator if available
+    let roughnessMap: THREE.CanvasTexture | undefined;
+    const bodyMaterial = config.bodyMaterial as DieBodyMaterial | undefined;
+    if (bodyMaterial) {
+        const generator = MaterialTextureRegistry.get(bodyMaterial);
+        if (generator?.generateRoughnessMap) {
+            roughnessMap = generator.generateRoughnessMap({
+                backgroundColor: preset.backgroundColor,
+                pipColor,
+                surfaceFinish,
+                faceSize: config.textureFaceSize ?? 256,
+                edgeRoundness: config.edgeRoundness,
+                pipStyle: config.pipStyle,
+                pipSize: config.pipSize,
+            });
+        } else if (generator) {
+            console.warn(
+                `[D6 Material] Generator for "${generator.label}" does not implement generateRoughnessMap. ` +
+                'Roughness map will not be applied.',
+            );
+        }
+    }
+
+    // Increase bump scale for metals to enhance pip depth, but avoid over-darkening polished faces.
+    const isMetal = bodyMaterial === 'brass' || bodyMaterial === 'steel' || bodyMaterial === 'gold' ||
+        bodyMaterial === 'silver' || bodyMaterial === 'bronze' || bodyMaterial === 'copper' ||
+        bodyMaterial === 'iron' || bodyMaterial === 'titanium';
+    const bumpScale = !isMetal
+        ? 0.04
+        : surfaceFinish === 'polished'
+            ? 0.055
+            : surfaceFinish === 'hammered'
+                ? 0.1
+                : surfaceFinish === 'etched'
+                    ? 0.085
+                    : 0.075;
+
     return new THREE.MeshPhysicalMaterial({
         color: '#ffffff',
         map: texture,
-        roughness: preset.surface.roughness,
+        bumpMap,
+        bumpScale,
+        roughnessMap,
+        roughness: roughnessMap ? 1 : preset.surface.roughness,
         metalness: preset.surface.metalness,
         clearcoat: preset.surface.clearcoat,
         clearcoatRoughness: preset.surface.clearcoatRoughness,

@@ -146,7 +146,50 @@ function createMetalMaterialGenerator(material: MetalMaterial): MaterialTextureG
             applyMetalFinish(texture, material, options.surfaceFinish);
             return texture;
         },
+        generateRoughnessMap(options: MaterialTextureGeneratorOptions): THREE.CanvasTexture {
+            const faceSize = options.faceSize ?? 256;
+            const canvas = document.createElement('canvas');
+            const gap = Math.max(4, Math.round(faceSize * 0.05));
+            canvas.width = (3 * faceSize) + (4 * gap);
+            canvas.height = (2 * faceSize) + (3 * gap);
+
+            const context = canvas.getContext('2d');
+            if (!context) {
+                throw new Error('Failed to create 2D canvas context for metal roughness texture');
+            }
+
+            // Metal is polished/smooth by default: near-black (0.05-0.15 range)
+            // Darker values = smoother surface, which preserves specular highlights
+            const roughness = resolveMetalRoughness(material, options.surfaceFinish);
+            context.fillStyle = roughness;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.NoColorSpace;
+            texture.wrapS = THREE.ClampToEdgeWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+            texture.generateMipmaps = false;
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.needsUpdate = true;
+            return texture;
+        },
     };
+}
+
+function resolveMetalRoughness(material: MetalMaterial, finish: DieSurfaceFinish): string {
+    // Near-black grayscale values preserve shine on metal
+    // Lower values = smoother/shinier, higher = rougher
+    const finishAdjustment: Record<DieSurfaceFinish, number> = {
+        plain: 0.16,
+        etched: 0.24,
+        polished: 0.1,
+        hammered: 0.2,
+    };
+
+    const roughnessValue = finishAdjustment[finish];
+    const grayscale = Math.round(roughnessValue * 255);
+    return `rgb(${grayscale}, ${grayscale}, ${grayscale})`;
 }
 
 function applyMetalFinish(texture: THREE.CanvasTexture, material: MetalMaterial, finish: DieSurfaceFinish): void {

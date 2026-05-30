@@ -35,10 +35,24 @@ export interface MaterialTextureGenerator {
     readonly material: DieBodyMaterial;
     readonly label: string;
     /**
-     * Generate a texture for this material with the given options.
+     * Generate a color texture for this material with the given options.
      * 
      * @param options Configuration for texture generation
      * @returns Canvas texture ready to apply to die material
      */
     generateTexture(options: MaterialTextureGeneratorOptions): THREE.CanvasTexture;
+    /**
+     * Generate a roughness map texture (optional).
+     * 
+     * Roughness semantics are material-specific:
+     * - Metal: should be near-black (0.0-0.2) to preserve shine, with subtle scratches
+     * - Plastic: typically mid-gray (0.4-0.6)
+     * - Other: material-appropriate roughness
+     * 
+     * Convention: white = rough, black = smooth (THREE.js standard)
+     * 
+     * @param options Configuration for roughness texture generation
+     * @returns Roughness map canvas texture, or undefined if material doesn't support it
+     */
+    generateRoughnessMap?(options: MaterialTextureGeneratorOptions): THREE.CanvasTexture | undefined;
 }

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { createD6FaceAtlasMaterialTexture } from '../../rendering/textures/DieFaceTextureAtlas';
+import { createD6FaceAtlasMaterialTexture, createD6FaceSurfaceDetailTexture } from '../../rendering/textures/DieFaceTextureAtlas';
 import { resolveDieMaterialPreset } from '../../rendering/textures/DieMaterialPreset';
 import { MaterialTextureRegistry } from '../../rendering/textures/MaterialTextureRegistry';
 import { MetalMaterialGenerators } from '../../rendering/textures/generators/MetalMaterialGenerator';
@@ -207,5 +207,39 @@ describe('DieFaceTextureAtlas UV mapping', () => {
         texture.dispose();
         geometry.dispose();
         MaterialTextureRegistry.clear();
+    });
+
+    it('creates a bump surface-detail texture for d6', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+        const texture = createD6FaceSurfaceDetailTexture({
+            kind: 'bump',
+            geometry,
+            backgroundColor: '#ffffff',
+            pipColor: '#000000',
+            faceSize: 64,
+            surfaceFinish: 'plain',
+        });
+
+        expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+        texture.dispose();
+        geometry.dispose();
+    });
+
+    it('creates a roughness surface-detail texture for d6', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+        const texture = createD6FaceSurfaceDetailTexture({
+            kind: 'roughness',
+            geometry,
+            backgroundColor: '#ffffff',
+            pipColor: '#000000',
+            faceSize: 64,
+            surfaceFinish: 'etched',
+        });
+
+        expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+        texture.dispose();
+        geometry.dispose();
     });
 });

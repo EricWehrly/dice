@@ -27,6 +27,11 @@ export interface D6AtlasMaterialWithGeneratorOptions extends D6AtlasMaterialOpti
     readonly surfaceFinish?: DieSurfaceFinish;
 }
 
+export interface D6SurfaceDetailTextureOptions extends D6AtlasMaterialOptions {
+    readonly surfaceFinish?: DieSurfaceFinish;
+    readonly kind: 'bump' | 'roughness';
+}
+
 const DEFAULT_FACE_SIZE = 256;
 const DEFAULT_EDGE_ROUNDNESS = 0.32;
 const ATLAS_COLUMNS = 3;
@@ -118,7 +123,7 @@ export function createD6FaceAtlasTexture(options: DieFaceTextureOptions): THREE.
     });
 
     const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.colorSpace = THREE.NoColorSpace;
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
     texture.generateMipmaps = false;
@@ -160,6 +165,92 @@ export function createD6FaceAtlasMaterialTexture(input: D6AtlasMaterialWithGener
         pipStyle: input.pipStyle,
         pipSize: input.pipSize,
     });
+}
+
+export function createD6FaceSurfaceDetailTexture(input: D6SurfaceDetailTextureOptions): THREE.CanvasTexture {
+    const faceSize = input.faceSize ?? DEFAULT_FACE_SIZE;
+    applyD6AtlasUvs(input.geometry, faceSize);
+
+    const gap = Math.max(4, Math.round(faceSize * ATLAS_GAP_RATIO));
+    const atlasWidth = (ATLAS_COLUMNS * faceSize) + ((ATLAS_COLUMNS + 1) * gap);
+    const atlasHeight = (ATLAS_ROWS * faceSize) + ((ATLAS_ROWS + 1) * gap);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = atlasWidth;
+    canvas.height = atlasHeight;
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+        throw new Error('Failed to create 2D canvas context for die face surface detail texture');
+    }
+
+    const profile = resolveSurfaceDetailProfile(input.surfaceFinish, input.kind);
+
+    context.clearRect(0, 0, atlasWidth, atlasHeight);
+    context.fillStyle = profile.atlasBase;
+    context.fillRect(0, 0, atlasWidth, atlasHeight);
+
+    D6_FACE_ORDER.forEach((faceValue, index) => {
+        const column = index % ATLAS_COLUMNS;
+        const row = Math.floor(index / ATLAS_COLUMNS);
+        const x = gap + column * (faceSize + gap);
+        const y = gap + row * (faceSize + gap);
+
+        drawFaceBackground(context, x, y, faceSize, profile.faceBase, 0);
+        drawFacePips(
+            context,
+            x,
+            y,
+            faceSize,
+            faceValue,
+            profile.pipValue,
+            profile.faceBase,
+            input.pipStyle ?? 'circle',
+            input.pipSize ?? 1,
+        );
+    });
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.needsUpdate = true;
+    return texture;
+}
+
+function resolveSurfaceDetailProfile(
+    surfaceFinish: DieSurfaceFinish | undefined,
+    kind: 'bump' | 'roughness',
+): { atlasBase: string; faceBase: string; pipValue: string } {
+    if (kind === 'bump') {
+        switch (surfaceFinish ?? 'plain') {
+            case 'etched':
+                return { atlasBase: '#585858', faceBase: '#707070', pipValue: '#dedede' };
+            case 'polished':
+                return { atlasBase: '#6a6a6a', faceBase: '#7a7a7a', pipValue: '#d4d4d4' };
+            case 'hammered':
+                return { atlasBase: '#4f4f4f', faceBase: '#666666', pipValue: '#d8d8d8' };
+            case 'plain':
+            default:
+                return { atlasBase: '#5f5f5f', faceBase: '#747474', pipValue: '#dadada' };
+        }
+    }
+
+    // Roughness map convention: white = rough, black = smooth
+    switch (surfaceFinish ?? 'plain') {
+        case 'etched':
+            return { atlasBase: '#808080', faceBase: '#b3b3b3', pipValue: '#666666' };
+        case 'polished':
+            return { atlasBase: '#595959', faceBase: '#6e6e6e', pipValue: '#3b3b3b' };
+        case 'hammered':
+            return { atlasBase: '#8f8f8f', faceBase: '#c2c2c2', pipValue: '#7a7a7a' };
+        case 'plain':
+        default:
+            return { atlasBase: '#6e6e6e', faceBase: '#9c9c9c', pipValue: '#525252' };
+    }
 }
 
 function applyD6AtlasUvs(geometry: THREE.BoxGeometry, faceSize: number): void {
