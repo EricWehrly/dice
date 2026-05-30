@@ -13,6 +13,17 @@ import { calculateCameraForBounds } from './camera/FramingCalculator';
 import { DieClickHandler } from './camera/DieClickHandler';
 import { FocusedCameraDrift } from './camera/FocusedCameraDrift';
 
+export interface Roll3DFocusUiState {
+    focusedDieId: string | null;
+    panelOpen: boolean;
+    transition: 'open' | 'close';
+}
+
+export interface Roll3DCameraOptions {
+    onFocusUiStateChange?: (state: Roll3DFocusUiState) => void;
+    canvasParentElement?: HTMLElement;
+}
+
 export function createCameraDebugOverlay(container: HTMLElement, cameraRig: ThreeCam): void {
     const lookTarget = new THREE.Vector3(0, 0, 0);
 
@@ -205,7 +216,7 @@ function applyCameraState(cameraRig: ThreeCam, state: { position: THREE.Vector3;
     }
 }
 
-function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag): void {
+function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag, roll3dScreen: HTMLElement, options: Roll3DCameraOptions = {}): void {
     const camera = cameraRig.camera;
     if (!(camera instanceof THREE.PerspectiveCamera)) {
         return;
@@ -213,23 +224,115 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag): void {
 
     const animator = new CameraAnimator(cameraRig);
     const cameraDrift = new FocusedCameraDrift(cameraRig);
+    const roll3dDock = roll3dScreen.querySelector<HTMLElement>('.roll-3d-dock');
     let focusedDie: Die | null = null;
+    let focusDriftTimeoutId: number | null = null;
+    let focusSettleRefitTimeoutId: number | null = null;
+    let resizeResumeTimeoutId: number | null = null;
+    let resizeDrivenFramingSuspended = false;
     let pendingFrame = false;
     let pendingAnimated = false;
 
     const focusConstraints = {
-        paddingPercent: -0.2,
+        paddingPercent: -0.3,
         depthOffsetPercent: 0,
+        verticalTargetOffsetPercent: -1.2,
+        bottomAnchorNdc: null,
+        lookDownPitchDegrees: 38,
     };
+    const focusAnimationDurationMs = 400;
+    const panelTransitionDurationMs = 2000;
+    const focusSettleRefitDelayMs = panelTransitionDurationMs + 160;
 
     const applyFocusedDrift = (stateTarget: THREE.Vector3): void => {
         cameraDrift.start(stateTarget);
     };
 
+    const clearPendingDrift = (): void => {
+        if (focusDriftTimeoutId === null) {
+            return;
+        }
+
+        window.clearTimeout(focusDriftTimeoutId);
+        focusDriftTimeoutId = null;
+    };
+
+    const clearFocusSettleRefit = (): void => {
+        if (focusSettleRefitTimeoutId === null) {
+            return;
+        }
+
+        window.clearTimeout(focusSettleRefitTimeoutId);
+        focusSettleRefitTimeoutId = null;
+    };
+
+    const clearResizeResumeTimeout = (): void => {
+        if (resizeResumeTimeoutId === null) {
+            return;
+        }
+
+        window.clearTimeout(resizeResumeTimeoutId);
+        resizeResumeTimeoutId = null;
+    };
+
+    const suspendResizeDrivenFraming = (): void => {
+        resizeDrivenFramingSuspended = true;
+        clearResizeResumeTimeout();
+        resizeResumeTimeoutId = window.setTimeout(() => {
+            resizeResumeTimeoutId = null;
+            resizeDrivenFramingSuspended = false;
+            scheduleFrame(false);
+        }, panelTransitionDurationMs + 50);
+    };
+
+    const scheduleFocusedDrift = (stateTarget: THREE.Vector3): void => {
+        clearPendingDrift();
+        focusDriftTimeoutId = window.setTimeout(() => {
+            focusDriftTimeoutId = null;
+            if (!focusedDie) {
+                return;
+            }
+
+            applyFocusedDrift(stateTarget);
+        }, focusAnimationDurationMs + 24);
+    };
+
+    const notifyFocusStateChange = (state: Roll3DFocusUiState): void => {
+        options.onFocusUiStateChange?.(state);
+    };
+
+    const resolveFramingAspectRatio = (): number => {
+        const canvas = ThreeJSRenderContext.Instance.canvas;
+        const parent = canvas.parentElement;
+        const width = parent?.clientWidth || canvas.clientWidth || window.innerWidth;
+        const height = parent?.clientHeight || canvas.clientHeight || window.innerHeight;
+        const baseHeight = Math.max(1, height);
+
+        if (!focusedDie || !roll3dDock) {
+            return width / baseHeight;
+        }
+
+        const dockHeight = roll3dDock.getBoundingClientRect().height;
+        const focusedHeight = Math.max(1, baseHeight - dockHeight);
+        return width / focusedHeight;
+    };
+
     const clearFocus = (animated: boolean): void => {
         const wasFocused = focusedDie !== null;
         focusedDie = null;
+        clearPendingDrift();
+        clearFocusSettleRefit();
+        if (animated) {
+            suspendResizeDrivenFraming();
+        }
         cameraDrift.stop();
+        if (wasFocused) {
+            notifyFocusStateChange({
+                focusedDieId: null,
+                panelOpen: false,
+                transition: 'close',
+            });
+        }
         if (wasFocused) {
             scheduleFrame(animated);
         }
@@ -248,20 +351,13 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag): void {
             bounds,
             {
             fovDegrees: camera.fov,
-            aspectRatio: getAspectRatio(camera),
+            aspectRatio: resolveFramingAspectRatio(),
             },
             focusedDie ? focusConstraints : undefined,
         );
 
         if (animated) {
-            animator.animateCameraTo(nextState, 400);
-            if (focusedDie) {
-                window.setTimeout(() => {
-                    if (focusedDie) {
-                        applyFocusedDrift(nextState.target);
-                    }
-                }, 410);
-            }
+            animator.animateCameraTo(nextState, focusAnimationDurationMs);
             return;
         }
 
@@ -303,6 +399,10 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag): void {
     });
 
     Events.Subscribe('RendererResized', () => {
+        if (resizeDrivenFramingSuspended) {
+            return;
+        }
+
         scheduleFrame(false);
     });
 
@@ -328,8 +428,39 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag): void {
             }
 
             focusedDie = die;
+            clearPendingDrift();
+            clearFocusSettleRefit();
+            suspendResizeDrivenFraming();
             cameraDrift.stop();
+            notifyFocusStateChange({
+                focusedDieId: die.id,
+                panelOpen: true,
+                transition: 'open',
+            });
             scheduleFrame(true);
+            focusSettleRefitTimeoutId = window.setTimeout(() => {
+                focusSettleRefitTimeoutId = null;
+                if (!focusedDie || focusedDie.id !== die.id) {
+                    return;
+                }
+
+                const settledBounds = getDieBounds(focusedDie);
+                if (!settledBounds) {
+                    return;
+                }
+
+                const settledState = calculateCameraForBounds(
+                    settledBounds,
+                    {
+                        fovDegrees: camera.fov,
+                        aspectRatio: resolveFramingAspectRatio(),
+                    },
+                    focusConstraints,
+                );
+
+                applyCameraState(cameraRig, settledState);
+                applyFocusedDrift(settledState.target);
+            }, focusSettleRefitDelayMs);
             return true;
         },
     });
@@ -351,9 +482,9 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag): void {
     });
 }
 
-export function initializeRoll3DCamera(roll3dScreen: HTMLElement, bag: Bag): ThreeCam {
+export function initializeRoll3DCamera(roll3dScreen: HTMLElement, bag: Bag, options: Roll3DCameraOptions = {}): ThreeCam {
     ThreeJSRenderContext.configure({
-        parentElement: roll3dScreen,
+        parentElement: options.canvasParentElement ?? roll3dScreen,
     });
     
     ensureDiceLighting(ThreeJSRenderContext.Instance.scene);
@@ -369,7 +500,7 @@ export function initializeRoll3DCamera(roll3dScreen: HTMLElement, bag: Bag): Thr
         far: 1000,
     });
 
-    initializeDynamicFraming(diceMainCamera, bag);
+    initializeDynamicFraming(diceMainCamera, bag, roll3dScreen, options);
     createCameraDebugOverlay(roll3dScreen, diceMainCamera);
 
     return diceMainCamera;

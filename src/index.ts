@@ -1,5 +1,4 @@
 import { Bag } from './game/Bag';
-import { initializeRoll3DCamera } from './camera';
 import { ScoreProgressionTracker } from './game/score/ScoreProgressionTracker';
 import { TrickEvaluator } from './game/tricks/TrickEvaluator';
 import { DiceCanvasRenderer } from './rendering/2d/DiceCanvasRenderer';
@@ -7,6 +6,8 @@ import { DieModificationPanel } from './ui';
 import { RollHistoryPanel } from './ui/RollHistoryPanel';
 import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
+import { setupIsometricEasterEgg } from './roll3d/isometricEasterEgg';
+import { setupRoll3DScreen } from './roll3d/setupRoll3DScreen';
 import { ScreenManager } from './utils/ScreenManager';
 import { init as initThrower } from './thrower/index';
 import { initializeGameResources } from './game/resources/GameResources';
@@ -40,6 +41,10 @@ function calculateBagMaxRoll(bag: Bag): number {
 
 const bag = new Bag();
 const dieA = MakeDieCharacter([DieEquippedMixin]);
+dieA.pipStyle = 'clover';
+dieA.pipSize = 3;
+dieA.bodyMaterial = 'brass';
+// dieA.pipMaterial = 'brass';
 bag.addDie(dieA);
 bag.addDie(MakeDieCharacter([DieEquippedMixin]));
 bag.addDie(MakeDieCharacter([DieEquippedMixin]));
@@ -69,7 +74,16 @@ screenManager.register('mod',
 );
 
 const roll3dScreen = document.getElementById('roll-3d-screen')!;
-initializeRoll3DCamera(roll3dScreen, bag);
+setupIsometricEasterEgg({
+    bag,
+    roll3dScreen,
+});
+
+setupRoll3DScreen({
+    bag,
+    roll3dScreen,
+    dieModificationPanel,
+});
 
 initThrower();
 

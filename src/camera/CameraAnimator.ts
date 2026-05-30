@@ -18,26 +18,13 @@ const easeInOutCubic: EasingFn = (t: number): number => {
 };
 
 export class CameraAnimator {
-    private readonly queue: AnimationRequest[] = [];
-    private running = false;
+    private activeAnimationId = 0;
 
     constructor(private readonly cameraRig: ThreeCam) {}
 
     animateCameraTo(target: CameraState, durationMs = 500, easing: EasingFn = easeInOutCubic): void {
-        this.queue.push({ target, durationMs, easing });
-        if (!this.running) {
-            this.runNext();
-        }
-    }
-
-    private runNext(): void {
-        const next = this.queue.shift();
-        if (!next) {
-            this.running = false;
-            return;
-        }
-
-        this.running = true;
+        const next: AnimationRequest = { target, durationMs, easing };
+        const animationId = ++this.activeAnimationId;
 
         const camera = this.cameraRig.camera;
         const startPosition = camera.position.clone();
@@ -47,6 +34,10 @@ export class CameraAnimator {
         const startTime = performance.now();
 
         const step = (time: number): void => {
+            if (animationId !== this.activeAnimationId) {
+                return;
+            }
+
             const elapsed = time - startTime;
             const rawProgress = next.durationMs <= 0 ? 1 : elapsed / next.durationMs;
             const progress = THREE.MathUtils.clamp(rawProgress, 0, 1);
@@ -71,8 +62,6 @@ export class CameraAnimator {
                 window.requestAnimationFrame(step);
                 return;
             }
-
-            this.runNext();
         };
 
         window.requestAnimationFrame(step);

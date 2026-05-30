@@ -10,7 +10,6 @@
  */
 
 import { renderDieModPanel, type DieModPanelData } from './DieModificationPanelTemplate';
-import { DieIsometricRenderer } from '../rendering/2d/DieIsometricRenderer';
 import { DieModificationCanvasRenderer } from './DieModificationCanvasRenderer';
 import {
     AVAILABLE_MODS,
@@ -31,8 +30,7 @@ import { type DieEquipped } from '../game/DieEquippedMixin';
 type PendingModAction = 'install' | 'uninstall' | 'none';
 
 export class DieModificationPanel {
-    private readonly root: HTMLElement | null;
-    private readonly isometricRenderer = new DieIsometricRenderer();
+    private root: HTMLElement | null;
     private readonly canvasRenderer = new DieModificationCanvasRenderer();
     private readonly dice: Array<Die & DieEquipped>;
     
@@ -61,6 +59,48 @@ export class DieModificationPanel {
         this.dice = dice;
         this.selectedDieId = this.dice[0].id;
         this.resetDraftForSelectedDie();
+    }
+
+    setRootElement(root: HTMLElement): void {
+        this.root = root;
+    }
+
+    setDockedMode(enabled: boolean): void {
+        if (!this.root) {
+            return;
+        }
+
+        this.root.classList.toggle('die-mod-panel--docked', enabled);
+    }
+
+    show(): void {
+        if (!this.root) {
+            return;
+        }
+
+        this.root.classList.remove('is-hidden');
+    }
+
+    hide(): void {
+        if (!this.root) {
+            return;
+        }
+
+        this.root.classList.add('is-hidden');
+    }
+
+    selectDieById(dieId: string): void {
+        const nextSelected = this.dice.find((die) => die.id === dieId);
+        if (!nextSelected) {
+            return;
+        }
+
+        this.selectedDieId = nextSelected.id;
+        this.selectedFaceIndex = 0;
+        this.resetDraftForSelectedDie();
+        this.selectedCoreMod = null;
+        this.selectedTargetFaceIndex = null;
+        this.render();
     }
 
     render(): void {
@@ -133,19 +173,6 @@ export class DieModificationPanel {
         };
 
         this.root.innerHTML = renderDieModPanel(templateData);
-
-        const installedCoreMod = this.getInstalledWeightMod(die);
-        const installedCoreModId = installedCoreMod?.id ?? null;
-        const installedCoreModFaceIndex = installedCoreMod?.faceIndex ?? null;
-
-        // Keep both viewports rendered so CSS can cross-fade between them.
-        this.isometricRenderer.render({
-            root: this.root,
-            faceCount: die.faceCount,
-            currentCoreMod: this.selectedCoreMod ?? installedCoreModId,
-            coreModInstalledOnFace: installedCoreModFaceIndex,
-            style: (this.draftFaceStyles[0] ?? 'plain') as 'plain' | 'etched' | 'polished' | 'hammered',
-        });
 
         this.canvasRenderer.render({
             root: this.root,

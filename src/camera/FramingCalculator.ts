@@ -14,6 +14,8 @@ export interface FramingConstraints {
     horizontalOffsetRelaxWidth: number;
     depthOffsetPercent: number;
     lookDownPitchDegrees: number;
+    verticalTargetOffsetPercent: number;
+    bottomAnchorNdc: number | null;
     minDistance: number;
     maxDistance: number;
     paddingPercent: number;
@@ -30,6 +32,8 @@ const DEFAULT_CONSTRAINTS: FramingConstraints = {
     horizontalOffsetRelaxWidth: 23,
     depthOffsetPercent: 0.05,
     lookDownPitchDegrees: 42,
+    verticalTargetOffsetPercent: 0,
+    bottomAnchorNdc: null,
     minDistance: 4,
     maxDistance: 24,
     paddingPercent: 0.15,
@@ -54,6 +58,7 @@ export function calculateCameraForBounds(
 
     const target = bounds.getCenter(new THREE.Vector3());
     const size = bounds.getSize(new THREE.Vector3());
+    const composedTarget = target.clone();
 
     const halfVerticalFov = THREE.MathUtils.degToRad(camera.fovDegrees * 0.5);
     const halfHorizontalFov = Math.atan(Math.tan(halfVerticalFov) * Math.max(camera.aspectRatio, EPSILON));
@@ -98,9 +103,63 @@ export function calculateCameraForBounds(
         target.z + horizontalDistance + depthOffset,
     );
 
+    let targetYOffset = size.y * resolvedConstraints.verticalTargetOffsetPercent;
+
+    if (resolvedConstraints.bottomAnchorNdc !== null) {
+        const desiredBottomNdc = resolvedConstraints.bottomAnchorNdc;
+        const evaluateBottomNdc = (offsetY: number): number => {
+            const lookTarget = new THREE.Vector3(target.x, target.y + offsetY, target.z);
+            const testCamera = new THREE.PerspectiveCamera(camera.fovDegrees, Math.max(camera.aspectRatio, EPSILON), 0.1, 1000);
+            testCamera.position.copy(position);
+            testCamera.up.set(0, 1, 0);
+            testCamera.lookAt(lookTarget);
+            testCamera.updateProjectionMatrix();
+            testCamera.updateMatrixWorld(true);
+
+            const points: THREE.Vector3[] = [];
+            const min = bounds.min;
+            const max = bounds.max;
+            for (const x of [min.x, max.x]) {
+                for (const y of [min.y, max.y]) {
+                    for (const z of [min.z, max.z]) {
+                        points.push(new THREE.Vector3(x, y, z));
+                    }
+                }
+            }
+
+            let minNdcY = Infinity;
+            points.forEach((point) => {
+                const ndc = point.clone().project(testCamera);
+                minNdcY = Math.min(minNdcY, ndc.y);
+            });
+            return minNdcY;
+        };
+
+        const epsilon = Math.max(size.y * 0.05, 0.01);
+        const maxOffset = Math.max(size.y * 2.5, 0.25);
+        for (let i = 0; i < 4; i += 1) {
+            const currentBottomNdc = evaluateBottomNdc(targetYOffset);
+            const error = desiredBottomNdc - currentBottomNdc;
+            if (Math.abs(error) < 0.01) {
+                break;
+            }
+
+            const slopeSample = evaluateBottomNdc(targetYOffset + epsilon);
+            const slope = (slopeSample - currentBottomNdc) / epsilon;
+            if (Math.abs(slope) < EPSILON) {
+                break;
+            }
+
+            targetYOffset += error / slope;
+            targetYOffset = THREE.MathUtils.clamp(targetYOffset, -maxOffset, maxOffset);
+        }
+    }
+
+    composedTarget.y += targetYOffset;
+
     return {
         position,
-        target,
+        target: composedTarget,
         fov: camera.fovDegrees,
     };
 }

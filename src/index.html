@@ -22,6 +22,15 @@
       </div>
       <div id="die-mod-panel" class="die-mod-panel play-screen"></div>
       <div id="roll-3d-screen" class="play-screen is-hidden">
+        <div class="roll-3d-layout">
+          <div class="roll-3d-canvas-host"></div>
+          <div class="roll-3d-easter-egg" aria-hidden="true">
+            <canvas id="die-isometric-canvas"></canvas>
+          </div>
+          <div class="roll-3d-dock is-hidden">
+            <div id="roll-3d-die-mod-panel" class="die-mod-panel roll-3d-die-mod-panel"></div>
+          </div>
+        </div>
         <button id="roll-3d-btn" class="roll-button" type="button">Roll</button>
       </div>
     </section>
@@ -29,6 +38,10 @@
     <aside class="panel management">
       <div id="counter-grid" class="counter-grid"></div>
       <ul id="trick-list" class="trick-list"></ul>
+      <label class="management-toggle">
+        <input id="roll-3d-easter-egg-toggle" type="checkbox">
+        Use Isometric Dice View (Easter Egg)
+      </label>
       <p>Placeholder for TB-03 bag management.</p>
       <section class="roll-history-panel" aria-label="Roll history">
         <h3 class="roll-history-title">Roll History</h3>
