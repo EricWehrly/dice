@@ -10,6 +10,8 @@ import { IsDieEquipped } from './game/DieEquippedMixin';
 import { GetEntity3DGraphic } from '../engine/js/rendering/entities/entity-3d-graphics';
 import { CameraAnimator } from './camera/CameraAnimator';
 import { calculateCameraForBounds } from './camera/FramingCalculator';
+import { DieClickHandler } from './camera/DieClickHandler';
+import { FocusedCameraDrift } from './camera/FocusedCameraDrift';
 
 export function createCameraDebugOverlay(container: HTMLElement, cameraRig: ThreeCam): void {
     const lookTarget = new THREE.Vector3(0, 0, 0);
@@ -177,6 +179,16 @@ function getVisibleDiceBounds(bag: Bag): THREE.Box3 | null {
     return hasAny ? bounds : null;
 }
 
+function getDieBounds(die: Die): THREE.Box3 | null {
+    const graphic = GetEntity3DGraphic(die);
+    if (!graphic) {
+        return null;
+    }
+
+    const bounds = new THREE.Box3().setFromObject(graphic);
+    return bounds.isEmpty() ? null : bounds;
+}
+
 function applyCameraState(cameraRig: ThreeCam, state: { position: THREE.Vector3; target: THREE.Vector3; fov?: number }): void {
     const camera = cameraRig.camera;
     camera.position.copy(state.position);
@@ -200,26 +212,63 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag): void {
     }
 
     const animator = new CameraAnimator(cameraRig);
+    const cameraDrift = new FocusedCameraDrift(cameraRig);
+    let focusedDie: Die | null = null;
     let pendingFrame = false;
     let pendingAnimated = false;
 
+    const focusConstraints = {
+        paddingPercent: -0.2,
+        depthOffsetPercent: 0,
+    };
+
+    const applyFocusedDrift = (stateTarget: THREE.Vector3): void => {
+        cameraDrift.start(stateTarget);
+    };
+
+    const clearFocus = (animated: boolean): void => {
+        const wasFocused = focusedDie !== null;
+        focusedDie = null;
+        cameraDrift.stop();
+        if (wasFocused) {
+            scheduleFrame(animated);
+        }
+    };
+
     const frameCamera = (animated: boolean): void => {
-        const bounds = getVisibleDiceBounds(bag);
+        const bounds = focusedDie ? getDieBounds(focusedDie) : getVisibleDiceBounds(bag);
         if (!bounds) {
+            if (focusedDie) {
+                clearFocus(false);
+            }
             return;
         }
 
-        const nextState = calculateCameraForBounds(bounds, {
+        const nextState = calculateCameraForBounds(
+            bounds,
+            {
             fovDegrees: camera.fov,
             aspectRatio: getAspectRatio(camera),
-        });
+            },
+            focusedDie ? focusConstraints : undefined,
+        );
 
         if (animated) {
             animator.animateCameraTo(nextState, 400);
+            if (focusedDie) {
+                window.setTimeout(() => {
+                    if (focusedDie) {
+                        applyFocusedDrift(nextState.target);
+                    }
+                }, 410);
+            }
             return;
         }
 
         applyCameraState(cameraRig, nextState);
+        if (focusedDie) {
+            applyFocusedDrift(nextState.target);
+        }
     };
 
     const scheduleFrame = (animated: boolean): void => {
@@ -246,11 +295,59 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag): void {
     }
 
     Events.Subscribe<BagChangedEvent>(TrickEvents.BAG_CHANGED, () => {
+        if (focusedDie && !bag.getActiveDice().some((die) => die.id === focusedDie?.id)) {
+            clearFocus(true);
+            return;
+        }
         scheduleFrame(true);
     });
 
     Events.Subscribe('RendererResized', () => {
         scheduleFrame(false);
+    });
+
+    const renderContext = ThreeJSRenderContext.Instance;
+    const canvas = renderContext.canvas;
+    const scene = renderContext.scene as unknown as THREE.Scene;
+    const dieClickHandler = new DieClickHandler({
+        canvas,
+        camera,
+        scene,
+        onClickResolved: (die) => {
+            if (!die) {
+                if (!focusedDie) {
+                    return false;
+                }
+
+                clearFocus(true);
+                return true;
+            }
+
+            if (!bag.getActiveDice().some((item) => item.id === die.id)) {
+                return false;
+            }
+
+            focusedDie = die;
+            cameraDrift.stop();
+            scheduleFrame(true);
+            return true;
+        },
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            clearFocus(true);
+        }
+    });
+
+    ThreeJSRenderContext.RegisterRenderMethod(25, () => {
+        cameraDrift.update(performance.now());
+    });
+
+    Events.Subscribe(Events.List.GameStart, () => {
+        if (!document.body.contains(canvas)) {
+            dieClickHandler.dispose();
+        }
     });
 }
 
