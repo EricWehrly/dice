@@ -91,6 +91,7 @@ p {
   overflow: hidden;
   min-height: 400px;
   --roll3d-dock-height: min(42vh, 360px);
+  --roll3d-transition-ms: 700ms;
 }
 
 .roll-3d-layout {
@@ -103,7 +104,7 @@ p {
 .roll-3d-canvas-host {
   position: absolute;
   inset: 0;
-  transition: clip-path 0.7s ease-in-out;
+  transition: clip-path var(--roll3d-transition-ms) ease-in-out;
   clip-path: inset(0 0 0 0);
 }
 
@@ -148,7 +149,7 @@ p {
   height: var(--roll3d-dock-height);
   opacity: 1;
   transform: translateY(0);
-  transition: transform 0.7s ease-in-out, opacity 0.7s ease-in-out;
+  transition: transform var(--roll3d-transition-ms) ease-in-out, opacity var(--roll3d-transition-ms) ease-in-out;
   overflow: hidden;
 }
 
@@ -284,6 +285,59 @@ p {
 
 .management-toggle input {
   margin: 0;
+}
+
+.render-preset-panel {
+  margin: 8px 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--color-counter-bg);
+  border: 1px solid color-mix(in srgb, var(--color-counter-border) 80%, black 20%);
+}
+
+.render-preset-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.render-preset-caption {
+  margin: 4px 0 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  opacity: 0.82;
+}
+
+.render-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.render-preset-button {
+  border: 1px solid color-mix(in srgb, var(--color-gold-trim) 72%, black 28%);
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-panel-bg) 88%, black 12%);
+  cursor: pointer;
+  transition: filter 120ms ease-in-out, transform 120ms ease-in-out;
+}
+
+.render-preset-button:hover {
+  filter: brightness(1.05);
+}
+
+.render-preset-button:active {
+  transform: translateY(1px);
+}
+
+.render-preset-button.is-active {
+  color: var(--color-button-text);
+  background: linear-gradient(135deg, var(--color-button-grad-start), var(--color-button-grad-end));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .trick-item {

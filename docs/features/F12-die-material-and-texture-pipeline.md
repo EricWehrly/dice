@@ -140,7 +140,17 @@ Acceptance criteria:
 - pips read as more than flat paint
 - lighting changes produce visible material differences
 
-Status: 🔮 next
+Status: ✅ complete
+
+Implemented:
+- Added d6 surface-detail texture generation derived from the existing face atlas data (`kind: bump | roughness`) in `src/rendering/textures/DieFaceTextureAtlas.ts`.
+- Wired generated `bumpMap` and `roughnessMap` into `MeshPhysicalMaterial` creation in `src/rendering/materials/PhysicalD6Material.ts`.
+- Kept the renderer contract d6-first and fallback-safe (non-d6 path unchanged, local fallback behavior retained).
+- Added focused tests in `src/tests/rendering/DieFaceTextureAtlas.test.ts` for bump/roughness detail texture generation.
+
+Validation:
+- `yarn test -- tests/rendering/DieFaceTextureAtlas.test.ts tests/rendering/DiceGraphic.test.ts` passes.
+- `yarn build` passes.
 
 ### Milestone 4: premium rendering track
 Goal: unlock the high-end looks that justify `MeshPhysicalMaterial`.
@@ -153,6 +163,30 @@ Deliverables:
 Acceptance criteria:
 - at least one preset clearly outperforms the simpler baseline visually
 - premium looks remain optional and isolated from baseline gameplay rendering
+
+Current exploratory status:
+- Added a first-pass scene environment/reflection source in `src/rendering/lighting.ts` (procedural equirect canvas assigned to `scene.environment`) so polished metals have highlight content to reflect.
+- Added finish-aware `envMapIntensity` tuning for d6 physical materials in `src/rendering/materials/PhysicalD6Material.ts`.
+- Lowered the global lighting rig in `src/rendering/lighting.ts` after the environment pass did not change the dice color washout on screen.
+- Reduced the polished metal finish overlay in `src/rendering/textures/generators/MetalMaterialGenerator.ts` because the streaking on 3/5/6 looked like the finish brush pass was cutting through the pip faces.
+
+Open issue: polished metal can still read too dark in the current rolling scene
+- Symptom: `polished` finish (especially silver) can collapse toward dark/shadow-heavy appearance, while `hammered` reads more balanced.
+- Scope: observed in current game lighting and camera setup; not a hard crash or fallback issue.
+- Current evidence: the visible color washout is not tracking with the environment map changes, so the dominant cause is likely the physical material preset or the finish overlay rather than `scene.environment` alone.
+
+Potential causes under current conditions:
+- Reflection source quality/coverage is still limited for very low-roughness BRDF response.
+- Direct-light contrast plus cast-shadow setup may overpower polished-face readability at certain view angles.
+- Bump contrast on very smooth finishes can amplify dark micro-shading where we expect mirror-like highlights.
+- Material presets (`clearcoat`, `clearcoatRoughness`, `metalness`) may still be too aggressive for the available environment energy.
+- The polished metal atlas overlay may still be too directional for face centers and side faces, especially on the pip-bearing faces.
+
+Mitigation levers to continue in Milestone 4:
+- Improve environment strategy: HDRI or PMREM-backed environment from the active renderer path, with controllable intensity.
+- Add finish-specific polished tuning: lower bump amplitude or flatter bump profile for polished while preserving pip legibility.
+- Rebalance light rig for polished readability: key/fill ratio, hemisphere ground color/intensity, and shadow bias/normalBias.
+- Add debug toggles for material diagnostics: enable/disable `roughnessMap`, `bumpMap`, and `envMapIntensity` per die for rapid A/B checks.
 
 ## Suggested File/Module Shape
 - `src/rendering/textures/DieFaceTextureAtlas.ts`

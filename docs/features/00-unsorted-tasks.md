@@ -5,6 +5,13 @@ gem faces are 10x currency value?
 
 - animate score a little
 
+- after we've animated the score above the dice,
+we could animate the X's the same way
+drift X's up to a spot above the die, bumping to change X,X2,X3,X4, etc. use the same animation as with score
+once multiplier is done, apply it to score & show new total ("= XXX")
+second phase: distribute X's to other die (maybe 2nd row because from another, not of that die) and apply the multiplier
+later: make ring stacking noises, have higher pitch for the bigger increase from 10s and 100s and so on
+
 - camera zoom to fit dice
 zoom out a little to roll dice
 slowly zoom back in after dice land
@@ -20,6 +27,10 @@ this reduces us to one screen and removes the explicit need for tabs
 
 - die mod screen
 material preview when changing, but reset if "install" not hit
+
+die labels should update when material changes
+align to die positions in 3d scene above
+and "sticky" to the top of the mod panel now that it's a child of the 3d canvas
 
 - colors are worth score
     each band worth 0-255
@@ -47,6 +58,12 @@ show that (image) (as data uri if possible) in the high score area
     upgrades for weight can increase or decrease weight from the default / middle value
     brain could have "smarter" variants (take more into account ...?)
     the above mentioned central light could be mono-colored before getting the RGB upgrade
+    clover upgrade separates the stem to make a clover exclamation ... luckier?
+
+what if the upgrades were based on material
+so if you use the "right" material, the thing is boosted / upgraded
+does it feel like finding the right combination when you deliberately slot your brand new hard-earned shiny gold material into your dear lucky clovers?
+(we should also permit a "vanity" slot in that case -- but it would have to be earned)
 
 - move 'resources' to canvas screen
 and draw them with the appropriate (pip) icons related to them
@@ -58,3 +75,15 @@ and ui scaling as in other places...
 - (later) unlock and then buy the sword, heart, and shield
 with all 3, unlocks pvp
 must deploy to pvp with at least one heart die
+
+tabs for "combat" and "journey"
+journey is a series of combats until you're defeated
+(as should be noted elsewhere) if you're victorious in a round of combat, you can clone one material from a die you captured from the loser in the round
+
+- try cranking up the numbers a little
+pips start with default value of 10 so we don't have to do fractionals
+then metals can start being worth 20 points, 30, 40
+10 more points for each grade of metal, with rarer and more desirable like gold at the top
+other metals like steel may be valuable and strong, and the strength offer some yet-unimagined benefit like defense
+
+- hats

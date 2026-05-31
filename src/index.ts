@@ -4,6 +4,7 @@ import { TrickEvaluator } from './game/tricks/TrickEvaluator';
 import { DiceCanvasRenderer } from './rendering/2d/DiceCanvasRenderer';
 import { DieModificationPanel } from './ui';
 import { RollHistoryPanel } from './ui/RollHistoryPanel';
+import { setupRenderPresetPanel } from './ui/RenderPresetPanel';
 import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
 import { setupIsometricEasterEgg } from './roll3d/isometricEasterEgg';
@@ -92,6 +93,8 @@ setupRoll3DScreen({
     roll3dScreen,
     dieModificationPanel,
 });
+
+setupRenderPresetPanel();
 
 initThrower();
 

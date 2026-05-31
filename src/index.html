@@ -42,6 +42,16 @@
         <input id="roll-3d-easter-egg-toggle" type="checkbox">
         Use Isometric Dice View (Easter Egg)
       </label>
+      <section class="render-preset-panel" aria-label="Render presets">
+        <h3 class="render-preset-title">Render Presets</h3>
+        <p class="render-preset-caption">Quick diagnostics for brightness and contrast while tuning materials.</p>
+        <div id="render-preset-buttons" class="render-preset-grid" role="group" aria-label="Render preset options">
+          <button class="render-preset-button" type="button" data-render-preset="balanced">ACES Balanced</button>
+          <button class="render-preset-button" type="button" data-render-preset="too-bright">Reinhard Bright</button>
+          <button class="render-preset-button is-active" type="button" data-render-preset="too-dark">ACES Dark</button>
+          <button class="render-preset-button" type="button" data-render-preset="flat-diagnostic">No Tone Flat</button>
+        </div>
+      </section>
       <p>Placeholder for TB-03 bag management.</p>
       <section class="roll-history-panel" aria-label="Roll history">
         <h3 class="roll-history-title">Roll History</h3>

@@ -123,7 +123,7 @@ export function createD6FaceAtlasTexture(options: DieFaceTextureOptions): THREE.
     });
 
     const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.NoColorSpace;
+    texture.colorSpace = THREE.SRGBColorSpace;
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
     texture.generateMipmaps = false;
@@ -211,7 +211,7 @@ export function createD6FaceSurfaceDetailTexture(input: D6SurfaceDetailTextureOp
     });
 
     const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.colorSpace = THREE.NoColorSpace;
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
     texture.generateMipmaps = false;
