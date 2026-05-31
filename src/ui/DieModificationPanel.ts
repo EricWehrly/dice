@@ -271,12 +271,28 @@ export class DieModificationPanel {
             this.render();
         });
 
-        // Target face selector (shown only when a mod is selected)
-        const targetSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-target-face-selector');
-        targetSelector?.addEventListener('change', (event) => {
-            const target = event.target as HTMLSelectElement;
-            const value = target.value;
-            this.selectedTargetFaceIndex = value ? parseInt(value, 10) : null;
+        const canAdjustTargetFace = this.selectedCoreMod !== null && this.selectedCoreMod !== 'none';
+        const previousFaceButton = this.root.querySelector<HTMLButtonElement>('.die-mod-face-nav-prev');
+        previousFaceButton?.addEventListener('click', () => {
+            if (!canAdjustTargetFace) {
+                return;
+            }
+
+            const die = this.getSelectedDie();
+            const current = this.selectedTargetFaceIndex ?? 0;
+            this.selectedTargetFaceIndex = (current - 1 + die.faceCount) % die.faceCount;
+            this.render();
+        });
+
+        const nextFaceButton = this.root.querySelector<HTMLButtonElement>('.die-mod-face-nav-next');
+        nextFaceButton?.addEventListener('click', () => {
+            if (!canAdjustTargetFace) {
+                return;
+            }
+
+            const die = this.getSelectedDie();
+            const current = this.selectedTargetFaceIndex ?? 0;
+            this.selectedTargetFaceIndex = (current + 1) % die.faceCount;
             this.render();
         });
 

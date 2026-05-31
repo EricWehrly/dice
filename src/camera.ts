@@ -12,6 +12,7 @@ import { CameraAnimator } from './camera/CameraAnimator';
 import { calculateCameraForBounds } from './camera/FramingCalculator';
 import { DieClickHandler } from './camera/DieClickHandler';
 import { FocusedCameraDrift } from './camera/FocusedCameraDrift';
+import { readCssTimeMs } from './utils/css';
 
 export interface Roll3DFocusUiState {
     focusedDieId: string | null;
@@ -241,7 +242,7 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag, roll3dScreen: H
         lookDownPitchDegrees: 38,
     };
     const focusAnimationDurationMs = 400;
-    const panelTransitionDurationMs = 2000;
+    const panelTransitionDurationMs = readCssTimeMs(roll3dScreen, '--roll3d-transition-ms', 700);
     const focusSettleRefitDelayMs = panelTransitionDurationMs + 160;
 
     const applyFocusedDrift = (stateTarget: THREE.Vector3): void => {

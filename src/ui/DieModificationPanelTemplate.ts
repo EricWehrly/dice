@@ -44,24 +44,13 @@ export interface DieModPanelData {
 }
 
 export function renderDieModPanel(data: DieModPanelData): string {
+    const modSelected = data.selectedCoreMod !== null && data.selectedCoreMod !== 'none';
     const canInstall = data.canInstall;
 
     return `
         <div class="die-mod-shell">
             <!-- TODO: align die labels along bottoms of die in scene view -->
             ${renderDieList(data)}
-
-            <!-- Viewport: face canvas only (isometric view moved to Roll 3D easter egg path) -->
-            <div class="die-mod-viewport">
-                <div class="die-mod-viewport-layer die-mod-viewport-layer--faces is-fading-in">
-                    <div class="die-mod-face-carousel" data-carousel-mode="auto">
-                        <!-- TODO: give buttons to carousel and replace dropdown for face select -->
-                        <div class="die-mod-canvas-wrap">
-                            <canvas id="die-mod-canvas"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Core mod selector -->
             <label class="die-mod-setting-field">
@@ -75,17 +64,18 @@ export function renderDieModPanel(data: DieModPanelData): string {
                 </select>
             </label>
 
-            <!-- Sub-properties container: fixed height, overflow hidden, slides child in -->
-            <div class="die-mod-sub-props">
-                <label class="die-mod-setting-field die-mod-sub-field${data.showTargetFaceSelector ? ' is-visible' : ''}${data.targetFaceAnimation === 'enter' ? ' is-entering' : ''}${data.targetFaceAnimation === 'leave' ? ' is-leaving' : ''}">
-                    <span class="die-mod-setting-label">target face</span>
-                    <select class="die-mod-setting-select die-mod-target-face-selector" ${data.selectedCoreMod && data.selectedCoreMod !== 'none' ? '' : 'disabled'}>
-                        <option value="">-- select face --</option>
-                        ${Array.from({ length: data.faceCount }, (_, i) =>
-                            `<option value="${i}" ${i === data.selectedTargetFaceIndex ? 'selected' : ''}>Face ${i + 1}</option>`
-                        ).join('')}
-                    </select>
-                </label>
+            <!-- Sub-properties container: zero height when empty, slides in when mod selected -->
+            <div class="die-mod-sub-props${data.showTargetFaceSelector ? ' is-visible' : ''}${data.targetFaceAnimation === 'leave' ? ' is-leaving' : ''}">
+                <div class="die-mod-sub-field die-mod-face-selector-row${data.showTargetFaceSelector ? ' is-visible' : ''}${data.targetFaceAnimation === 'enter' ? ' is-entering' : ''}${data.targetFaceAnimation === 'leave' ? ' is-leaving' : ''}">
+                    <span class="die-mod-setting-label die-mod-setting-label--sub">target face</span>
+                    <div class="die-mod-face-carousel-stage" data-carousel-mode="auto">
+                        <button class="die-mod-face-nav die-mod-face-nav-prev" type="button" aria-label="Previous target face">&lt;</button>
+                        <div class="die-mod-canvas-wrap die-mod-canvas-wrap--selector">
+                            <canvas id="die-mod-canvas"></canvas>
+                        </div>
+                        <button class="die-mod-face-nav die-mod-face-nav-next" type="button" aria-label="Next target face">&gt;</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Style selector -->

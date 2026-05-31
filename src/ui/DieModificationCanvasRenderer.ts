@@ -67,8 +67,10 @@ export class DieModificationCanvasRenderer {
         const dpr = window.devicePixelRatio || 1;
         const tileSize = 56;
         const tileGap = 8;
-        const padding = 6;
-        const textTopOffset = 10;
+        const paddingX = 2;
+        const paddingTop = 2;
+        const paddingBottom = 2;
+        const textTopOffset = 7;
         const probabilityLineHeight = 14;
         const deltaLineHeight = 13;
         const textHeight = textTopOffset + probabilityLineHeight + deltaLineHeight;
@@ -81,9 +83,9 @@ export class DieModificationCanvasRenderer {
             console.warn('[DieModCanvas] Could not determine carousel width — panel may not be laid out yet. Showing all tiles.');
         }
         const minTiles = 3; // Always show at least 3 (carousel)
-        const maxTiles = faceCount; // Max is all face tiles
+        const maxTiles = Math.min(faceCount, 6); // Allow up to 6 visible tiles when space allows
         const tileWidth = tileSize + tileGap;
-        const availableWidth = wrapperWidth - padding * 2;
+        const availableWidth = wrapperWidth - paddingX * 2;
         // When wrapperWidth is unknown (<=0), fall back to showing all tiles
         const tilesCanFit = wrapperWidth > 0
             ? Math.max(minTiles, Math.min(maxTiles, Math.floor((availableWidth + tileGap) / tileWidth)))
@@ -101,8 +103,8 @@ export class DieModificationCanvasRenderer {
             carousel.dataset.carouselMode = needsWrapping ? 'auto' : 'full';
         }
 
-        const width = padding * 2 + tilesCanFit * tileSize + (tilesCanFit - 1) * tileGap;
-        const height = padding * 2 + tileSize + textHeight;
+        const width = paddingX * 2 + tilesCanFit * tileSize + (tilesCanFit - 1) * tileGap;
+        const height = paddingTop + tileSize + textHeight + paddingBottom;
 
         canvas.width = Math.floor(width * dpr);
         canvas.height = Math.floor(height * dpr);
@@ -180,7 +182,7 @@ export class DieModificationCanvasRenderer {
         }
 
         itemIndices.forEach((itemIndex, position) => {
-            const x = padding + position * (tileSize + tileGap);
+            const x = paddingX + position * (tileSize + tileGap);
             const isSelected = needsWrapping
                 ? position === Math.floor(tilesCanFit / 2)
                 : itemIndex === selectedFaceIndex;
@@ -205,7 +207,7 @@ export class DieModificationCanvasRenderer {
             // Draw face tile
             drawDieFaceTile(context, {
                 x,
-                y: padding,
+                y: paddingTop,
                 size: tileSize,
                 die: { faceUp: itemIndex + 1, active: true, locked: false },
                 colors: {
@@ -225,7 +227,7 @@ export class DieModificationCanvasRenderer {
                 context.shadowColor = coreGlow;
                 context.shadowBlur = 8;
                 context.lineWidth = 2;
-                context.strokeRect(x - 2, padding - 2, tileSize + 4, tileSize + 4);
+                context.strokeRect(x - 2, paddingTop - 2, tileSize + 4, tileSize + 4);
                 context.restore();
             }
 
@@ -239,7 +241,7 @@ export class DieModificationCanvasRenderer {
 
                 const previewValue = preview[itemIndex];
                 const deltaValue = deltas[itemIndex];
-                const textY = padding + tileSize + textTopOffset;
+                const textY = paddingTop + tileSize + textTopOffset;
 
                 // Show preview probability
                 const previewText = previewValue.toFixed(1) + '%';

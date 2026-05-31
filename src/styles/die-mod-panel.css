@@ -31,11 +31,14 @@
 
 .die-mod-panel {
   margin: 0;
-  padding: 12px;
+  padding: 8px;
   border-radius: 8px;
   border: 1px solid var(--color-counter-border);
   background: var(--color-counter-bg);
-  min-height: min(520px, calc(100vh - 96px));
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -44,8 +47,9 @@
 .die-mod-shell {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  flex: 1;
+  gap: 7px;
+  flex: 1 0 auto;
+  min-height: min-content;
 }
 
 .die-mod-list {
@@ -111,21 +115,72 @@
   pointer-events: none;
 }
 
-.die-mod-face-carousel {
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-  padding: 0;
+.die-mod-face-selector-row {
+  display: grid;
+  gap: 4px;
   width: 100%;
-  height: 100%;
+}
+
+.die-mod-setting-label--sub {
+  padding-left: 12px;
+}
+
+.die-mod-face-carousel-stage {
+  position: relative;
+  width: min(100%, 520px);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 22px;
+}
+
+.die-mod-face-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-counter-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-panel-bg) 85%, black 15%);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.die-mod-face-nav-prev {
+  left: 8px;
+}
+
+.die-mod-face-nav-next {
+  right: 8px;
+}
+
+.die-mod-face-nav:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .die-mod-canvas-wrap {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 96px;
-  overflow: hidden;
+  min-height: 98px;
+  overflow: visible;
+}
+
+.die-mod-canvas-wrap--selector {
+  min-height: 98px;
+  width: 100%;
+}
+
+.die-mod-canvas-wrap--selector canvas {
+  width: 100%;
+  height: auto;
+  max-width: none;
 }
 
 .die-mod-canvas-wrap canvas {
@@ -237,25 +292,31 @@
 }
 
 /**
- * .die-mod-sub-props: Fixed-height container for target face and other sub-controls.
- * Always occupies the same vertical space so revealing/hiding its content
- * causes zero layout jump. The child slides in via CSS animation on insertion.
+ * .die-mod-sub-props: Collapses to zero height when empty.
+ * Child slides in via CSS animation when mod is selected.
  */
 .die-mod-sub-props {
-  height: 44px;
+  max-height: 0;
+  transition: max-height 0.2s ease;
   overflow: hidden;
   position: relative;
+  display: grid;
+}
+
+.die-mod-sub-props.is-visible,
+.die-mod-sub-props.is-leaving {
+  max-height: 134px;
 }
 
 /**
- * .die-mod-sub-field: Target face label indented to read as a sub-property of core mod
+ * .die-mod-sub-field: Slides in as a sub-property row
  */
 .die-mod-sub-field {
-  padding-left: 16px;
   transform: translateY(-100%);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  padding: 4px 0 2px;
 }
 
 .die-mod-sub-field.is-visible {
@@ -298,7 +359,7 @@
 
 /**
  * .die-mod-panel--expanded: Installing state
- * Shows header + exploded carousel + target selector + action buttons
+ * Shows header + target selector row + action buttons
  */
 .die-mod-panel--expanded {
   display: grid;
@@ -329,10 +390,11 @@
 
 /**
  * .die-mod-actions: Container for Install button
- * Sticky at bottom via margin-top: auto in flex column parent
+ * Spaced from settings for reliable visibility while scrolling
  */
 .die-mod-actions {
-  margin-top: auto;
+  margin-top: 4px;
+  padding-bottom: 8px;
 }
 
 /**
