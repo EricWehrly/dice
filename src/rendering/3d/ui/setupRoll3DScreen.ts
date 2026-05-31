@@ -1,6 +1,7 @@
-import { initializeRoll3DCamera, type Roll3DFocusUiState } from '../camera';
-import { type Bag } from '../game/Bag';
-import { DieModificationPanel } from '../ui';
+import { initializeRoll3DCamera, type Roll3DFocusUiState } from '../../../camera';
+import { type Bag } from '../../../game/Bag';
+import { DieModificationPanel } from '../../../ui';
+import { setupRoll3DScoreFeedbackOverlay } from './Roll3DScoreFeedbackOverlay';
 
 export interface SetupRoll3DScreenOptions {
     bag: Bag;
@@ -36,5 +37,10 @@ export function setupRoll3DScreen(options: SetupRoll3DScreenOptions): void {
     initializeRoll3DCamera(roll3dScreen, bag, {
         onFocusUiStateChange: onRoll3dFocusUiStateChange,
         canvasParentElement: roll3dCanvasHost,
+    });
+
+    setupRoll3DScoreFeedbackOverlay({
+        roll3dScreen,
+        roll3dCanvasHost,
     });
 }

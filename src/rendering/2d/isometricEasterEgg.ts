@@ -1,7 +1,7 @@
-import Events from '../../engine/js/events';
-import { type Bag } from '../game/Bag';
-import { TrickEvents } from '../game/contracts/TrickContracts';
-import { DieIsometricRenderer } from '../rendering/2d/DieIsometricRenderer';
+import Events from '../../../engine/js/events';
+import { type Bag } from '../../game/Bag';
+import { TrickEvents } from '../../game/contracts/TrickContracts';
+import { DieIsometricRenderer } from './DieIsometricRenderer';
 
 export interface SetupIsometricEasterEggOptions {
     bag: Bag;
@@ -34,7 +34,6 @@ export function setupIsometricEasterEgg(options: SetupIsometricEasterEggOptions)
         });
     };
 
-    // TODO: Move this out of the management panel into a game menu and gate unlock through an in-game trick/achievement path.
     easterEggToggle.addEventListener('change', () => {
         roll3dScreen.classList.toggle('is-easter-egg-active', easterEggToggle.checked);
         if (easterEggToggle.checked) {

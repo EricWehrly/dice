@@ -108,6 +108,66 @@ p {
   clip-path: inset(0 0 0 0);
 }
 
+.roll3d-score-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.roll3d-score-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-gold-trim) 60%, black 40%);
+  background: color-mix(in srgb, var(--color-panel-bg) 80%, black 20%);
+  color: color-mix(in srgb, var(--color-gold-trim) 72%, white 28%);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.24);
+  opacity: 0;
+  transform: translate(-50%, -105%) translateY(4px) scale(0.96);
+  transition: opacity 220ms ease, transform 220ms ease;
+  white-space: nowrap;
+}
+
+.roll3d-score-label.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -105%) translateY(0) scale(1);
+}
+
+.roll3d-score-token {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-gold-trim) 76%, black 24%);
+  background: radial-gradient(circle at 30% 28%, #fff0bf 0%, #f0c76f 38%, #8e6326 100%);
+  color: #2f1d04;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  transform: translate(-50%, -90%) scale(0.84);
+  transition: opacity 140ms ease, transform 140ms ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.22);
+  white-space: nowrap;
+}
+
+.roll3d-score-token.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -90%) scale(1);
+}
+
 .roll-3d-easter-egg {
   position: absolute;
   inset: 0;
