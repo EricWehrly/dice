@@ -1,0 +1,177 @@
+# F18 - Shared Material Capability System Plan
+
+Status: Proposed
+
+## Objective
+
+Create a shared capability layer that material generators can reuse, so material work scales by composing common building blocks instead of duplicating texture logic per material.
+
+This feature exists to:
+
+1. Order capability work by material coverage and immediate visual payoff
+2. Define reusable capability modules for multiple material families
+3. Enable parallel streams across capabilities (F18), material authoring (F14), and lighting/calibration support (F17)
+4. Make cross-stream touchpoints explicit and schedulable
+
+## Scope and Non-Goals
+
+In scope:
+
+- Capability definitions, ownership, and implementation order
+- Capability APIs shared by material generators
+- Cross-feature touchpoint planning with F14 and F17
+
+Out of scope:
+
+- Full material variant content expansion itself (tracked in F14)
+- Full lighting/IBL implementation details (tracked in F17)
+
+## Capability Architecture Direction
+
+Planned common layer location:
+
+- `src/rendering/textures/capabilities/`
+
+Planned usage model:
+
+1. Capability modules generate deterministic masks/maps/overlays from options
+2. Family generators compose capabilities in ordered passes
+3. Presets select capability parameter sets instead of bespoke inline logic
+
+Initial capability module targets:
+
+- `RoughnessAuthorityCapability` (C1)
+- `MicroGrainCapability` (C3)
+- `GlazeLayerCapability` (C5)
+- `DepthAttenuationCapability` (C6)
+- `MacroBreakupCapability` (C2)
+- `EdgeBehaviorCapability` (C4)
+- `VeinMaskCapability` (C7)
+- `InclusionParticleCapability` (C8)
+
+## Capability Priority Model
+
+Priority is based on:
+
+- Material coverage: how many families/materials immediately benefit
+- Distinctiveness lift: how much it reduces material look-alike risk
+- Dependency weight: whether later capabilities depend on it
+- F17 coupling: whether calibration support must exist first
+
+Priority formula guidance:
+
+- Prioritize high coverage + high distinctiveness + low coupling first
+- Defer capabilities requiring F17 milestones unless they unblock major families
+
+## Ordered Capability Backlog
+
+| Order | Capability | ID | Primary Beneficiaries | Why This Order | Stream Owner |
+|---|---|---|---|---|---|
+| 1 | Roughness authority map | C1 | All families | Foundation for finish separation and stable comparisons | F18 |
+| 2 | Material profile contract tests | C9 | All families | Prevents regressions while capabilities roll out | F18 + F14 |
+| 3 | Micro-grain anisotropy | C3 | Metal, Plastic, Wood | Fast separation gains for current look-alike dielectrics | F18 |
+| 4 | Glaze/clearcoat layering | C5 | Ceramic, Plastic, Resin | Distinguishes ceramic from polymer families | F18 |
+| 5 | Internal depth/attenuation (lite) | C6-lite | Resin | Removes flat-gloss resin look early | F18 |
+| 6 | Macro normal/bump breakup | C2 | Metal, Stone, Wood, Ceramic | Improves gameplay-distance structure reads | F18 |
+| 7 | Edge behavior control | C4 | Metal, Ceramic, Stone | Adds family-specific silhouette/edge realism | F18 |
+| 8 | Vein/cellular fracture masks | C7 | Stone/Mineral, Jade/Obsidian | Unlocks mineral family identity | F18 |
+| 9 | Inclusion/flake particles | C8 | Resin, Plastic, Stone | Premium variation after baseline separation is stable | F18 |
+| 10 | Lighting diagnostic integration | C10 | All families | Cross-cutting validation layer tied to F17 harness | F17 + F18 |
+
+## Capability-to-Material Adoption Plan
+
+| Material Family | First Required Capabilities | Second-Pass Capabilities | Deferred Capabilities |
+|---|---|---|---|
+| Synthetic/Polymer | C1, C3, C5 | C6-lite, C8 | C4 |
+| Ceramic/Porcelain | C1, C5, C2 | C4 | C8 |
+| Metal | C1, C3, C2 | C4, C5 | C8 |
+| Stone/Mineral | C1, C7, C2 | C4, C8 | C3 |
+| Wood/Organic | C1, C3, C2 | C4 | C8 |
+| Transparent Gem/Glass | C1, C6, C5 | C7, C4 | C8 |
+
+## Parallel Stream Model
+
+### Stream A: Capability Platform (F18)
+
+- Implements shared capability modules and API contracts
+- Delivers capability tests and reference fixtures
+
+### Stream B: Material Authoring (F14)
+
+- Consumes capability modules in family generators
+- Tunes family parameters and variant presets
+
+### Stream C: Lighting and Calibration Support (F17)
+
+- Provides diagnostic controls and normalized lighting baselines
+- Validates capability behavior under stable lighting conditions
+
+## Touchpoints Between Streams
+
+| Touchpoint | Trigger | Required Participants | Output |
+|---|---|---|---|
+| T1 Capability API freeze | Before each capability implementation starts | F18 + F14 | Stable options interface and default profile |
+| T2 Visual baseline capture | After capability integration into first family | F14 + F17 | Before/after screenshot matrix under pinned profile |
+| T3 Regression gate | Before merging capability-consuming family updates | F18 + F14 | Contract tests updated and passing |
+| T4 Lighting sanity gate | Before enabling capabilities relying on env/exposure sensitivity | F17 + F14 | Verified behavior in gameplay and debug-flat |
+
+## F17 Dependency Map (Support Only)
+
+| Capability | F17 Dependency | Dependency Type |
+|---|---|---|
+| C1, C3, C5 | M1 diagnostics | Recommended |
+| C6, C10 | M1 + M2 | Required |
+| C2, C4, C7 | M4 lighting profile normalization | Recommended |
+| C8 | M2 + M4 | Recommended |
+
+Rule: if a capability has a required dependency, F17 milestone completion is needed before merge; otherwise merge is allowed with explicit risk note.
+
+## Milestones
+
+### Milestone 1: Core Dielectric Capability Kit
+
+Deliver:
+
+- C1, C3, C5, C6-lite, C9
+- Adopt in synthetic/polymer and ceramic
+
+Expected outcome:
+
+- Plastic, resin, ceramic become visibly non-overlapping at gameplay distance
+
+### Milestone 2: Structural Surface Kit
+
+Deliver:
+
+- C2, C4, C7
+- Adopt in stone/mineral and wood, refine ceramic and metal usage
+
+Expected outcome:
+
+- Mineral and wood families gain unique structure beyond color
+
+### Milestone 3: Premium Variation and Global Validation
+
+Deliver:
+
+- C8, C10
+- Enable premium variants with diagnostics-backed validation
+
+Expected outcome:
+
+- Premium looks are additive without destabilizing baseline families
+
+## Acceptance Criteria
+
+1. Capability modules are reusable by at least two families each (except C6-lite, which starts resin-only)
+2. F14 family generators consume capabilities instead of duplicating core logic
+3. Capability-specific tests guard regressions in profile behavior
+4. F17 dependencies are tracked with explicit required/recommended status
+5. Parallel stream touchpoints are used at each milestone gate
+
+## Cross-References
+
+- Material rollout and family priorities: `docs/features/F14-material-authoring-plan.md`
+- Lighting/calibration support milestones: `docs/features/F17-physical-material-calibration-and-ibl.md`
+
+Signature: A1

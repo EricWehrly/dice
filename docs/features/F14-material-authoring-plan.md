@@ -97,6 +97,24 @@ Higher `BangForBuck` should generally be prioritized.
 | Transparent Gem/Glass | 4 | 3 | 5 | 4 | 0.78 | 3.0-5.0 days | High difficulty in current non-raytraced context; defer |
 | Novelty/Advanced Later | 5 | 2 | 5 | 5 | 0.58 | 4.0-6.0 days | Great polish track, weak near-term ROI |
 
+## F17 Lighting Utility Rank (Least -> Most Useful)
+
+This ranking is specifically for F17 calibration work (exposure, environment response, clearcoat, roughness-map authority), not only for content ROI.
+
+1. Novelty/Advanced Later
+2. Transparent Gem/Glass
+3. Wood/Organic
+4. Stone/Mineral
+5. Ceramic/Porcelain
+6. Synthetic/Polymer
+7. Metal
+
+Why this ordering for F17:
+
+- Metal remains the strongest stress test for highlight stability and IBL coherence.
+- Synthetic/Polymer is the next most useful dielectric comparator because it isolates roughness and clearcoat behavior without metalness-driven extremes.
+- Ceramic/Porcelain remains high utility for diffuse-to-gloss transitions, but has fewer currently mapped runtime materials.
+
 ### Recommended Priority by Value
 
 1. Ceramic/Porcelain family (fast win, low risk)
@@ -106,6 +124,122 @@ Higher `BangForBuck` should generally be prioritized.
 5. Wood/Organic family (good impact, medium tuning cost)
 6. Transparent Gem/Glass family (after baseline pipeline is stable)
 7. Novelty/Advanced effects (post-MVP polish)
+
+### Implementation Note (Current Pass)
+
+- Implemented first F17-adjacent non-metal family slice: Synthetic/Polymer.
+- Added family generator support for `plastic` and `resin` with finish-aware overlays and roughness maps.
+- Updated preset surface overrides for `plastic`, `resin`, and `ceramic` to improve dielectric comparison quality during F17 tuning.
+
+## Capability Library and Material Usage Map
+
+The next planning dimension is capability-first delivery. Instead of asking "which material next," ask "which reusable capability unlocks the most materials with physically convincing separation."
+
+Canonical capability planning now lives in `docs/features/F18-material-capability-system.md`.
+This section remains as an at-a-glance material-side reference.
+
+### Capability Definitions
+
+| Capability ID | Capability | What It Enables | Primary Material Families |
+|---|---|---|---|
+| C1 | Roughness authority map | Stable finish separation (plain/etched/polished/hammered) | All |
+| C2 | Macro normal/bump breakup | Surface depth at gameplay distance | Metal, Stone, Wood, Ceramic |
+| C3 | Micro-grain anisotropy | Distinguishes brushed/sanded/manufactured surfaces | Metal, Plastic, Wood |
+| C4 | Edge wear / edge brightening control | Readable silhouette + believable wear or glaze edge behavior | Metal, Ceramic, Stone |
+| C5 | Glaze/clearcoat layering | Fired ceramic and glossy polymer separation | Ceramic, Plastic, Resin |
+| C6 | Internal depth / attenuation field | Resin, glass, crystal depth instead of flat gloss | Resin, Transparent Gem/Glass |
+| C7 | Vein/cellular fracture masks | Mineral and stone identity beyond color shifts | Stone/Mineral, Jade/Obsidian |
+| C8 | Inclusion/flake particles | Glitter resin, metallic flake plastics, mineral spark | Resin, Plastic, Stone |
+| C9 | Material profile contract tests | Prevent drift and collapse between materials | All |
+| C10 | Lighting diagnostic harness integration | Repeatable tuning under F17 controls (exposure/env/light ratios) | All |
+
+### Capability-to-Family Matrix (New Planning Dimension)
+
+Legend: `P0` required for first convincing version, `P1` strong differentiator, `P2` optional premium.
+
+| Family | C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | C10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Metal | P0 | P0 | P0 | P1 | P1 | - | - | P2 | P0 | P0 |
+| Synthetic/Polymer | P0 | P1 | P0 | P2 | P0 | P1 | - | P1 | P0 | P0 |
+| Ceramic/Porcelain | P0 | P1 | - | P1 | P0 | - | - | P2 | P0 | P0 |
+| Stone/Mineral | P0 | P0 | - | P1 | - | - | P0 | P1 | P0 | P0 |
+| Wood/Organic | P0 | P0 | P0 | P1 | - | - | - | P2 | P0 | P0 |
+| Transparent Gem/Glass | P0 | P1 | - | P1 | P1 | P0 | P1 | P1 | P0 | P0 |
+| Novelty/Advanced Later | P1 | P1 | P1 | P1 | P1 | P1 | P1 | P0 | P0 | P0 |
+
+### Current Capability Status (May 2026)
+
+| Capability ID | Status | Notes |
+|---|---|---|
+| C1 | 🔄 Partial | Present for metal + synthetic + ceramic, still uneven by family |
+| C2 | 🔄 Partial | Metal strongest; ceramic/synthetic currently light-touch |
+| C3 | 🔄 Partial | Metal has strongest anisotropy; plastic/resin need clearer divergence |
+| C4 | 🔄 Partial | Basic edge shaping exists; family-specific behavior is limited |
+| C5 | 🔄 Partial | Surface clearcoat profiles exist; ceramic glaze needs dedicated depth model |
+| C6 | ❌ Not Started | Needed for resin/glass/crystal to avoid flat look |
+| C7 | ❌ Not Started | Needed for convincing stone/mineral identity |
+| C8 | ❌ Not Started | Needed for glitter/premium looks |
+| C9 | 🔄 Partial | Contract tests exist but should expand to capability checks |
+| C10 | ❌ Not Started | F17 diagnostic harness not yet available in runtime |
+
+## Capability-First Roadmap (F14 Primary, F17 Support)
+
+This roadmap keeps F14 as the driver and uses F17 as a support lane for calibration and validation.
+
+Detailed capability ordering, stream ownership, and touchpoint gating are tracked in `docs/features/F18-material-capability-system.md`.
+
+### Wave A: Dielectric Separation Baseline (Immediate)
+
+Goal: make plastic, resin, and ceramic visually non-overlapping at gameplay distance.
+
+- F14 scope:
+	- C1 polish for dielectric families
+	- C3 for plastic (anisotropic micro-grain)
+	- C5 for ceramic (glaze behavior beyond flat highlight)
+	- C6-lite for resin (simple depth/attenuation field)
+	- C9 tests: dielectric separation assertions
+- F17 support items to schedule/mark:
+	- M1 diagnostic toggles for roughness/bump/env isolation
+	- M4 baseline lighting profile pinning for gameplay/debug-flat
+
+### Wave B: Mineral/Wood Identity Pass
+
+Goal: move stone and wood from color fallback toward true texture identity.
+
+- F14 scope:
+	- C7 for stone/mineral masks
+	- C2 + C3 for wood grain/ring structure
+	- C4 for edge behavior differences (stone vs wood)
+	- C9 tests: family identity checks at gameplay distance
+- F17 support items:
+	- M2 controlled IBL baseline for consistency across camera angles
+
+### Wave C: Transparent and Premium Materials
+
+Goal: unlock crystal/glass/resin premium looks after baseline stability.
+
+- F14 scope:
+	- C6 full depth/attenuation
+	- C5 layered clearcoat/refraction-adjacent constraints
+	- C8 inclusion particles for selected premium variants
+	- C9 tests for clipping/washout regressions
+- F17 support items:
+	- M2 and M4 finalized defaults before enabling premium looks
+	- M5 specialty track can consume C6/C8 directly once stable
+
+## F17 Cross-Feature Tracking (Support Lane)
+
+Use this as a lightweight checkoff list when F14 work needs calibration support.
+
+- [ ] F17-M1: Runtime diagnostic harness available for A/B (roughness/bump/env/clearcoat)
+- [ ] F17-M2: PMREM/HDR IBL baseline enabled with fallback intact
+- [ ] F17-M3: Polished response rebalance complete for metal sanity baseline
+- [ ] F17-M4: Lighting profile normalization pinned for gameplay + debug-flat
+- [ ] F17-M5: Specialty track gated until Waves A-B are stable
+
+Planning rule: F14 can proceed without all F17 items complete, but any capability marked `P0` for current wave should have the relevant F17 support item either completed or explicitly risk-accepted.
+
+For required-vs-recommended dependency classification per capability, see `docs/features/F18-material-capability-system.md`.
 
 ## Ready-to-Implement Wave Plan
 
@@ -177,3 +311,5 @@ No code changes are requested in this planning turn. The next implementation tur
 - Comparative procedural estimates are documented for prioritization
 - A practical implementation and preview workflow is documented
 - Document is ready for a code implementation pass next
+
+Signature: A1
