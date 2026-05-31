@@ -10,8 +10,8 @@ import { createPhysicalD6Material } from './materials/PhysicalD6Material';
 import { createStandardDieMaterial } from './materials/StandardDieMaterial';
 import { resolveDieMaterialPreset } from './textures/DieMaterialPreset';
 import { MaterialTextureRegistry } from './textures/MaterialTextureRegistry';
-import { PlasticMaterialGenerator } from './textures/generators/PlasticMaterialGenerator';
 import { MetalMaterialGenerators } from './textures/generators/MetalMaterialGenerator';
+import { SyntheticPolymerMaterialGenerators } from './textures/generators/SyntheticPolymerMaterialGenerator';
 import { normalizeRenderPipStyle } from '../game/PipStyle';
 
 /**
@@ -30,7 +30,7 @@ export class DiceGraphic extends EntityGraphicThree {
     static {
         registerEntity3DRenderer(Die, DiceGraphic);
         // Initialize material texture generators
-        MaterialTextureRegistry.register(PlasticMaterialGenerator);
+        SyntheticPolymerMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
         MetalMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
     }
     

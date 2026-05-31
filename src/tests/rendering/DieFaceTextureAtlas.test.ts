@@ -4,6 +4,7 @@ import { createD6FaceAtlasMaterialTexture, createD6FaceSurfaceDetailTexture } fr
 import { resolveDieMaterialPreset } from '../../rendering/textures/DieMaterialPreset';
 import { MaterialTextureRegistry } from '../../rendering/textures/MaterialTextureRegistry';
 import { MetalMaterialGenerators } from '../../rendering/textures/generators/MetalMaterialGenerator';
+import { SyntheticPolymerMaterialGenerators } from '../../rendering/textures/generators/SyntheticPolymerMaterialGenerator';
 
 const mockCanvasContext = {
     clearRect: () => {},
@@ -198,6 +199,31 @@ describe('DieFaceTextureAtlas UV mapping', () => {
             backgroundColor: preset.backgroundColor,
             pipColor: preset.pipColor,
             bodyMaterial: 'titanium',
+            surfaceFinish: 'polished',
+            faceSize: 64,
+        });
+
+        expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+
+        texture.dispose();
+        geometry.dispose();
+        MaterialTextureRegistry.clear();
+    });
+
+    it('uses a registered synthetic generator for resin atlas textures', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const preset = resolveDieMaterialPreset({
+            bodyMaterial: 'resin',
+            surfaceFinish: 'polished',
+        });
+
+        SyntheticPolymerMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: preset.backgroundColor,
+            pipColor: preset.pipColor,
+            bodyMaterial: 'resin',
             surfaceFinish: 'polished',
             faceSize: 64,
         });

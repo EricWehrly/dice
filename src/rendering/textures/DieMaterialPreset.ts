@@ -75,6 +75,15 @@ const METAL_MATERIALS = new Set<DieBodyMaterial>([
     'titanium',
 ]);
 
+const SYNTHETIC_MATERIALS = new Set<DieBodyMaterial>([
+    'plastic',
+    'resin',
+]);
+
+const CERAMIC_FAMILY_MATERIALS = new Set<DieBodyMaterial>([
+    'ceramic',
+]);
+
 type MetalMaterial = Extract<DieBodyMaterial, 'brass' | 'steel' | 'gold' | 'silver' | 'bronze' | 'copper' | 'iron' | 'titanium'>;
 
 const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Partial<DieMaterialPreset['surface']>>> = {
@@ -288,6 +297,90 @@ const METAL_SURFACE_OVERRIDES: Record<MetalMaterial, Record<DieSurfaceFinish, Pa
     },
 };
 
+const SYNTHETIC_SURFACE_OVERRIDES: Record<Extract<DieBodyMaterial, 'plastic' | 'resin'>, Record<DieSurfaceFinish, Partial<DieMaterialPreset['surface']>>> = {
+    plastic: {
+        plain: {
+            roughness: 0.58,
+            metalness: 0.02,
+            clearcoat: 0.1,
+            clearcoatRoughness: 0.52,
+        },
+        etched: {
+            roughness: 0.7,
+            metalness: 0.01,
+            clearcoat: 0.06,
+            clearcoatRoughness: 0.62,
+        },
+        polished: {
+            roughness: 0.46,
+            metalness: 0.03,
+            clearcoat: 0.17,
+            clearcoatRoughness: 0.4,
+        },
+        hammered: {
+            roughness: 0.74,
+            metalness: 0.02,
+            clearcoat: 0.05,
+            clearcoatRoughness: 0.68,
+        },
+    },
+    resin: {
+        plain: {
+            roughness: 0.47,
+            metalness: 0.02,
+            clearcoat: 0.2,
+            clearcoatRoughness: 0.4,
+        },
+        etched: {
+            roughness: 0.56,
+            metalness: 0.01,
+            clearcoat: 0.13,
+            clearcoatRoughness: 0.5,
+        },
+        polished: {
+            roughness: 0.33,
+            metalness: 0.02,
+            clearcoat: 0.28,
+            clearcoatRoughness: 0.28,
+        },
+        hammered: {
+            roughness: 0.63,
+            metalness: 0.01,
+            clearcoat: 0.1,
+            clearcoatRoughness: 0.58,
+        },
+    },
+};
+
+const CERAMIC_SURFACE_OVERRIDES: Record<Extract<DieBodyMaterial, 'ceramic'>, Record<DieSurfaceFinish, Partial<DieMaterialPreset['surface']>>> = {
+    ceramic: {
+        plain: {
+            roughness: 0.52,
+            metalness: 0,
+            clearcoat: 0.24,
+            clearcoatRoughness: 0.42,
+        },
+        etched: {
+            roughness: 0.66,
+            metalness: 0,
+            clearcoat: 0.1,
+            clearcoatRoughness: 0.56,
+        },
+        polished: {
+            roughness: 0.4,
+            metalness: 0,
+            clearcoat: 0.3,
+            clearcoatRoughness: 0.32,
+        },
+        hammered: {
+            roughness: 0.72,
+            metalness: 0,
+            clearcoat: 0.08,
+            clearcoatRoughness: 0.64,
+        },
+    },
+};
+
 function isBodyMaterial(value: string | undefined): value is DieBodyMaterial {
     if (!value) {
         return false;
@@ -329,12 +422,26 @@ export function resolveDieMaterialPreset(input: ResolveDieMaterialPresetInput): 
 function resolveSurfaceProfile(bodyMaterial: DieBodyMaterial, surfaceFinish: DieSurfaceFinish): DieMaterialPreset['surface'] {
     const baseProfile = FINISH_PROFILES[surfaceFinish];
 
-    if (!METAL_MATERIALS.has(bodyMaterial)) {
-        return baseProfile;
+    if (METAL_MATERIALS.has(bodyMaterial)) {
+        return {
+            ...baseProfile,
+            ...METAL_SURFACE_OVERRIDES[bodyMaterial as MetalMaterial][surfaceFinish],
+        };
     }
 
-    return {
-        ...baseProfile,
-        ...METAL_SURFACE_OVERRIDES[bodyMaterial as MetalMaterial][surfaceFinish],
-    };
+    if (SYNTHETIC_MATERIALS.has(bodyMaterial)) {
+        return {
+            ...baseProfile,
+            ...SYNTHETIC_SURFACE_OVERRIDES[bodyMaterial as Extract<DieBodyMaterial, 'plastic' | 'resin'>][surfaceFinish],
+        };
+    }
+
+    if (CERAMIC_FAMILY_MATERIALS.has(bodyMaterial)) {
+        return {
+            ...baseProfile,
+            ...CERAMIC_SURFACE_OVERRIDES[bodyMaterial as Extract<DieBodyMaterial, 'ceramic'>][surfaceFinish],
+        };
+    }
+
+    return baseProfile;
 }

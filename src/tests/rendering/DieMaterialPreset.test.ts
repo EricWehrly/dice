@@ -40,4 +40,36 @@ describe('DieMaterialPreset metal overrides', () => {
         expect(goldPreset.backgroundColor).toBe('#d6b34d');
         expect(goldPreset.surface.metalness).toBeGreaterThan(0.95);
     });
+
+    it('keeps polished resin glossier than polished plastic for dielectric comparison', () => {
+        const plasticPreset = resolveDieMaterialPreset({
+            bodyMaterial: 'plastic',
+            surfaceFinish: 'polished',
+        });
+        const resinPreset = resolveDieMaterialPreset({
+            bodyMaterial: 'resin',
+            surfaceFinish: 'polished',
+        });
+
+        expect(resinPreset.surface.metalness).toBeLessThanOrEqual(0.03);
+        expect(plasticPreset.surface.metalness).toBeLessThanOrEqual(0.03);
+        expect(resinPreset.surface.clearcoat).toBeGreaterThan(plasticPreset.surface.clearcoat);
+        expect(resinPreset.surface.roughness).toBeLessThan(plasticPreset.surface.roughness);
+    });
+
+    it('keeps ceramic fully dielectric while preserving polished-vs-hammered contrast', () => {
+        const polishedCeramic = resolveDieMaterialPreset({
+            bodyMaterial: 'ceramic',
+            surfaceFinish: 'polished',
+        });
+        const hammeredCeramic = resolveDieMaterialPreset({
+            bodyMaterial: 'ceramic',
+            surfaceFinish: 'hammered',
+        });
+
+        expect(polishedCeramic.surface.metalness).toBe(0);
+        expect(hammeredCeramic.surface.metalness).toBe(0);
+        expect(polishedCeramic.surface.clearcoat).toBeGreaterThan(hammeredCeramic.surface.clearcoat);
+        expect(polishedCeramic.surface.roughness).toBeLessThan(hammeredCeramic.surface.roughness);
+    });
 });

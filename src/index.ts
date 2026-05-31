@@ -57,6 +57,14 @@ dieC.pipSize = 2.8;
 dieC.pipStyle = 'clover';
 dieC.surfaceFinish = 'polished';
 bag.addDie(dieC);
+const dieD = MakeDieCharacter([DieEquippedMixin]);
+dieD.bodyMaterial = 'plastic';
+dieD.surfaceFinish = 'plain';
+bag.addDie(dieD);
+const dieE = MakeDieCharacter([DieEquippedMixin]);
+dieE.bodyMaterial = 'resin';
+dieE.surfaceFinish = 'polished';
+bag.addDie(dieE);
 
 wireRollButtons(bag);
 new DiceCanvasRenderer(bag);
