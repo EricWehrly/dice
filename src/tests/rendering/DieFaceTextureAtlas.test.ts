@@ -5,6 +5,7 @@ import { resolveDieMaterialPreset } from '../../rendering/textures/DieMaterialPr
 import { MaterialTextureRegistry } from '../../rendering/textures/MaterialTextureRegistry';
 import { MetalMaterialGenerators } from '../../rendering/textures/generators/MetalMaterialGenerator';
 import { SyntheticPolymerMaterialGenerators } from '../../rendering/textures/generators/SyntheticPolymerMaterialGenerator';
+import { CeramicMaterialGenerators } from '../../rendering/textures/generators/CeramicMaterialGenerator';
 
 const mockCanvasContext = {
     clearRect: () => {},
@@ -23,6 +24,12 @@ const mockCanvasContext = {
     strokeStyle: '#000000',
     lineWidth: 0,
     lineCap: 'round' as CanvasLineCap,
+    createLinearGradient: (_x0: number, _y0: number, _x1: number, _y1: number) => ({
+        addColorStop: () => {},
+    }),
+    createRadialGradient: (_x0: number, _y0: number, _r0: number, _x1: number, _y1: number, _r1: number) => ({
+        addColorStop: () => {},
+    }),
 };
 
 const arcSpy = vi.spyOn(mockCanvasContext, 'arc');
@@ -224,6 +231,31 @@ describe('DieFaceTextureAtlas UV mapping', () => {
             backgroundColor: preset.backgroundColor,
             pipColor: preset.pipColor,
             bodyMaterial: 'resin',
+            surfaceFinish: 'polished',
+            faceSize: 64,
+        });
+
+        expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+
+        texture.dispose();
+        geometry.dispose();
+        MaterialTextureRegistry.clear();
+    });
+
+    it('uses a registered ceramic generator for ceramic atlas textures', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const preset = resolveDieMaterialPreset({
+            bodyMaterial: 'ceramic',
+            surfaceFinish: 'polished',
+        });
+
+        CeramicMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: preset.backgroundColor,
+            pipColor: preset.pipColor,
+            bodyMaterial: 'ceramic',
             surfaceFinish: 'polished',
             faceSize: 64,
         });
