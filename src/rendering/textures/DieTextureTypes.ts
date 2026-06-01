@@ -14,6 +14,8 @@ export const DIE_BODY_MATERIALS = [
     'titanium',
     'obsidian',
     'jade',
+    'marble',
+    'granite',
     'glass',
     'crystal',
 ] as const;

@@ -10,7 +10,7 @@ import {
     createRoughnessAuthorityMap,
 } from '../capabilities';
 
-type StoneMaterial = 'stone' | 'obsidian' | 'jade';
+type StoneMaterial = 'stone' | 'obsidian' | 'jade' | 'marble' | 'granite';
 
 interface StoneFinishTuning {
     readonly breakupAlpha: number;
@@ -30,6 +30,8 @@ const MATERIAL_LABELS: Record<StoneMaterial, string> = {
     stone: 'Stone',
     obsidian: 'Obsidian',
     jade: 'Jade',
+    marble: 'Marble',
+    granite: 'Granite',
 };
 
 const APPEARANCE: Record<StoneMaterial, StoneAppearance> = {
@@ -50,6 +52,18 @@ const APPEARANCE: Record<StoneMaterial, StoneAppearance> = {
         darkColor: '39, 83, 53',
         veinColor: '141, 204, 164',
         inclusionColor: '191, 230, 199',
+    },
+    marble: {
+        brightColor: '246, 242, 238',
+        darkColor: '192, 188, 184',
+        veinColor: '148, 144, 140',
+        inclusionColor: '218, 214, 210',
+    },
+    granite: {
+        brightColor: '196, 180, 168',
+        darkColor: '82, 72, 66',
+        veinColor: '140, 106, 94',
+        inclusionColor: '224, 216, 208',
     },
 };
 
@@ -99,12 +113,26 @@ const ROUGHNESS_VALUES: Record<StoneMaterial, Record<DieSurfaceFinish, number>> 
         polished: 0.35,
         hammered: 0.63,
     },
+    marble: {
+        plain: 0.44,
+        etched: 0.58,
+        polished: 0.28,
+        hammered: 0.66,
+    },
+    granite: {
+        plain: 0.68,
+        etched: 0.78,
+        polished: 0.48,
+        hammered: 0.84,
+    },
 };
 
 export const StoneMineralMaterialGenerators: readonly MaterialTextureGenerator[] = ([
     'stone',
     'obsidian',
     'jade',
+    'marble',
+    'granite',
 ] as const).map((material) => createStoneGenerator(material));
 
 function createStoneGenerator(material: StoneMaterial): MaterialTextureGenerator {
