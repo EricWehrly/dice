@@ -2,6 +2,13 @@ import * as THREE from 'three';
 import { createD6FaceAtlasTexture } from '../DieFaceTextureAtlas';
 import { type MaterialTextureGenerator, type MaterialTextureGeneratorOptions } from '../MaterialTextureGenerator';
 import { type DieSurfaceFinish } from '../DieTextureTypes';
+import {
+    applyEdgeBehavior,
+    applyInclusionParticles,
+    applyMacroBreakup,
+    applyMicroGrain,
+    createRoughnessAuthorityMap,
+} from '../capabilities';
 
 type MetalMaterial = 'brass' | 'steel' | 'gold' | 'silver' | 'bronze' | 'copper' | 'iron' | 'titanium';
 
@@ -148,37 +155,18 @@ function createMetalMaterialGenerator(material: MetalMaterial): MaterialTextureG
             return texture;
         },
         generateRoughnessMap(options: MaterialTextureGeneratorOptions): THREE.CanvasTexture {
-            const faceSize = options.faceSize ?? 256;
-            const canvas = document.createElement('canvas');
-            const gap = Math.max(4, Math.round(faceSize * 0.05));
-            canvas.width = (3 * faceSize) + (4 * gap);
-            canvas.height = (2 * faceSize) + (3 * gap);
-
-            const context = canvas.getContext('2d');
-            if (!context) {
-                throw new Error('Failed to create 2D canvas context for metal roughness texture');
-            }
-
-            // Metal is polished/smooth by default: near-black (0.05-0.15 range)
-            // Darker values = smoother surface, which preserves specular highlights
             const roughness = resolveMetalRoughness(material, options.surfaceFinish);
-            context.fillStyle = roughness;
-            context.fillRect(0, 0, canvas.width, canvas.height);
-
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.colorSpace = THREE.NoColorSpace;
-            texture.wrapS = THREE.ClampToEdgeWrapping;
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            texture.generateMipmaps = false;
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.needsUpdate = true;
-            return texture;
+            return createRoughnessAuthorityMap({
+                roughness,
+                faceSize: options.faceSize ?? 256,
+                grainAlpha: 0.01,
+                grainStep: 8,
+            });
         },
     };
 }
 
-function resolveMetalRoughness(material: MetalMaterial, finish: DieSurfaceFinish): string {
+function resolveMetalRoughness(_material: MetalMaterial, finish: DieSurfaceFinish): number {
     // Near-black grayscale values preserve shine on metal
     // Lower values = smoother/shinier, higher = rougher
     const finishAdjustment: Record<DieSurfaceFinish, number> = {
@@ -188,9 +176,7 @@ function resolveMetalRoughness(material: MetalMaterial, finish: DieSurfaceFinish
         hammered: 0.2,
     };
 
-    const roughnessValue = finishAdjustment[finish];
-    const grayscale = Math.round(roughnessValue * 255);
-    return `rgb(${grayscale}, ${grayscale}, ${grayscale})`;
+    return finishAdjustment[finish];
 }
 
 function applyMetalFinish(texture: THREE.CanvasTexture, material: MetalMaterial, finish: DieSurfaceFinish): void {
@@ -211,48 +197,45 @@ function applyMetalFinish(texture: THREE.CanvasTexture, material: MetalMaterial,
 
     const isPolished = finish === 'polished';
 
-    if (appearance.brushDirection === 'horizontal') {
-        for (let y = 0; y < height; y += tuning.brushStep) {
-            const wave = Math.sin(y * 0.11) + Math.cos(y * 0.037);
-            const alpha = clampAlpha((0.5 + wave * 0.25) * tuning.brushAlpha * (isPolished ? 0.35 : 1));
-            context.fillStyle = `rgba(${appearance.brightColor}, ${alpha.toFixed(3)})`;
-            context.fillRect(0, y, width, 1);
-        }
-    } else {
-        for (let y = 0; y < height; y += 1) {
-            const diagonalOffset = Math.round((Math.sin(y * 0.045) + 1) * width * 0.08);
-            const alpha = clampAlpha((0.45 + Math.cos(y * 0.028) * 0.2) * tuning.brushAlpha * (isPolished ? 0.35 : 1));
-            context.fillStyle = `rgba(${appearance.brightColor}, ${alpha.toFixed(3)})`;
-            for (let x = -diagonalOffset; x < width; x += tuning.brushStep * 4) {
-                context.fillRect(x + diagonalOffset, y, tuning.brushStep * 2, 1);
-            }
-        }
-    }
+    const capabilityContext = { canvas, context, width, height };
 
-    for (let x = 0; x < width; x += tuning.brushStep * 2) {
-        const wave = Math.cos(x * 0.09) + Math.sin(x * 0.031);
-        const alpha = clampAlpha((0.45 + wave * 0.18) * tuning.crossAlpha * (isPolished ? 0.35 : 1));
-        context.fillStyle = `rgba(${appearance.darkColor}, ${alpha.toFixed(3)})`;
-        context.fillRect(x, 0, 1, height);
-    }
+    applyMicroGrain(capabilityContext, {
+        color: `rgb(${appearance.brightColor})`,
+        alpha: clampAlpha(tuning.brushAlpha * (isPolished ? 0.35 : 1)),
+        step: tuning.brushStep,
+        direction: appearance.brushDirection === 'horizontal' ? 'horizontal' : 'diagonal',
+    });
+
+    applyMacroBreakup(capabilityContext, {
+        brightColor: `rgb(${appearance.brightColor})`,
+        darkColor: `rgb(${appearance.darkColor})`,
+        alpha: clampAlpha(tuning.crossAlpha * (isPolished ? 0.35 : 1)),
+        bandStep: tuning.brushStep * 2,
+        direction: 'vertical',
+    });
 
     if (!isPolished) {
-        const sweepWidth = Math.max(8, Math.round(width * tuning.sweepWidth));
-        const primarySweepX = Math.round(width * 0.24);
-        const secondarySweepX = Math.round(width * 0.67);
-        context.fillStyle = `rgba(${appearance.sweepColor}, ${tuning.sweepAlpha.toFixed(3)})`;
-        context.fillRect(primarySweepX, 0, sweepWidth, height);
-        context.fillRect(secondarySweepX, 0, Math.max(4, Math.round(sweepWidth * 0.55)), height);
+        applyMacroBreakup(capabilityContext, {
+            brightColor: `rgb(${appearance.sweepColor})`,
+            alpha: clampAlpha(tuning.sweepAlpha),
+            bandStep: Math.max(4, Math.round(width * tuning.sweepWidth * 0.2)),
+            direction: 'vertical',
+        });
     }
 
-    const edgeSize = Math.max(2, Math.round(Math.min(width, height) * 0.012));
-    context.fillStyle = `rgba(${appearance.brightColor}, ${(tuning.edgeAlpha * (isPolished ? 0.35 : 1)).toFixed(3)})`;
-    context.fillRect(0, 0, width, edgeSize);
-    context.fillRect(0, 0, edgeSize, height);
+    applyEdgeBehavior(capabilityContext, {
+        brightColor: `rgb(${appearance.brightColor})`,
+        darkColor: `rgb(${appearance.darkColor})`,
+        alpha: clampAlpha(tuning.edgeAlpha * (isPolished ? 0.35 : 1)),
+    });
 
-    context.fillStyle = `rgba(${appearance.darkColor}, ${((tuning.edgeAlpha * 0.85) * (isPolished ? 0.35 : 1)).toFixed(3)})`;
-    context.fillRect(0, height - edgeSize, width, edgeSize);
-    context.fillRect(width - edgeSize, 0, edgeSize, height);
+    applyInclusionParticles(capabilityContext, {
+        color: `rgb(${appearance.sweepColor})`,
+        alpha: clampAlpha(0.01 * (isPolished ? 0.5 : 1)),
+        densityScale: isPolished ? 0.25 : 0.5,
+        minSize: 1,
+        maxSize: 1,
+    });
 
     texture.needsUpdate = true;
 }

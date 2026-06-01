@@ -13,6 +13,7 @@ import { MaterialTextureRegistry } from './textures/MaterialTextureRegistry';
 import { MetalMaterialGenerators } from './textures/generators/MetalMaterialGenerator';
 import { SyntheticPolymerMaterialGenerators } from './textures/generators/SyntheticPolymerMaterialGenerator';
 import { CeramicMaterialGenerators } from './textures/generators/CeramicMaterialGenerator';
+import { StoneMineralMaterialGenerators } from './textures/generators/StoneMineralMaterialGenerator';
 import { normalizeRenderPipStyle } from '../game/PipStyle';
 
 /**
@@ -33,6 +34,7 @@ export class DiceGraphic extends EntityGraphicThree {
         // Initialize material texture generators
         SyntheticPolymerMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
         CeramicMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
+        StoneMineralMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
         MetalMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
     }
     

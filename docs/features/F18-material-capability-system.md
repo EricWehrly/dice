@@ -78,6 +78,42 @@ Priority formula guidance:
 | 9 | Inclusion/flake particles | C8 | Resin, Plastic, Stone | Premium variation after baseline separation is stable | F18 |
 | 10 | Lighting diagnostic integration | C10 | All families | Cross-cutting validation layer tied to F17 harness | F17 + F18 |
 
+## Capability Phase Tracker
+
+Each capability is tracked in three states:
+
+- `Implementation`: core reusable module exists and is wired in at least one generator
+- `Tuning`: family/material-specific parameter ranges are calibrated and documented
+- `Validation`: tests and visual checks cover expected behavior and regressions
+
+Status markers:
+
+- `✅ Complete`
+- `🔄 In Progress`
+- `⏳ Not Started`
+- `🚧 Blocked`
+
+| Capability | ID | Implementation | Tuning | Validation | Notes |
+|---|---|---|---|---|---|
+| Roughness authority map | C1 | ✅ Complete | 🔄 In Progress | 🔄 In Progress | Shared module implemented and used by metal/synthetic/ceramic/stone-mineral; tuning matrix still needed |
+| Material profile contract tests | C9 | 🔄 In Progress | 🔄 In Progress | 🔄 In Progress | Existing preset tests present; capability-specific assertions should be expanded |
+| Micro-grain anisotropy | C3 | ✅ Complete | 🔄 In Progress | 🔄 In Progress | Shared module implemented and used by metal + synthetic |
+| Glaze/clearcoat layering | C5 | ✅ Complete | 🔄 In Progress | 🔄 In Progress | Shared glaze module implemented and used by ceramic + synthetic |
+| Internal depth/attenuation (lite) | C6-lite | ✅ Complete | 🔄 In Progress | 🔄 In Progress | Shared depth module implemented and used by resin path in synthetic family |
+| Macro normal/bump breakup | C2 | ✅ Complete | 🔄 In Progress | 🔄 In Progress | Shared breakup module implemented and used by metal/ceramic/stone-mineral |
+| Edge behavior control | C4 | ✅ Complete | 🔄 In Progress | 🔄 In Progress | Shared edge module implemented and used by metal/ceramic/synthetic/stone-mineral |
+| Vein/cellular fracture masks | C7 | ✅ Complete | 🔄 In Progress | 🔄 In Progress | Shared vein module implemented and used by stone/mineral first pass |
+| Inclusion/flake particles | C8 | ✅ Complete | 🔄 In Progress | 🔄 In Progress | Shared inclusion module implemented and used by synthetic/metal/stone-mineral |
+| Lighting diagnostic integration | C10 | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | Depends on F17 M1 harness delivery |
+
+## Current Execution Snapshot (May 2026)
+
+- Capability modules C1-C8 now exist in `src/rendering/textures/capabilities/`.
+- First-pass consumption is wired into metal, synthetic/polymer, ceramic, and stone/mineral generators.
+- Stone/mineral generator first pass is now implemented for `stone`, `obsidian`, and `jade`.
+- Build passes and focused rendering tests pass.
+- Tuning and capability-level validation remain active work items.
+
 ## Capability-to-Material Adoption Plan
 
 | Material Family | First Required Capabilities | Second-Pass Capabilities | Deferred Capabilities |
@@ -139,6 +175,12 @@ Expected outcome:
 
 - Plastic, resin, ceramic become visibly non-overlapping at gameplay distance
 
+Current status:
+
+- Implementation: ✅ complete (first pass)
+- Tuning: 🔄 in progress
+- Validation: 🔄 in progress
+
 ### Milestone 2: Structural Surface Kit
 
 Deliver:
@@ -150,6 +192,12 @@ Expected outcome:
 
 - Mineral and wood families gain unique structure beyond color
 
+Current status:
+
+- Implementation: 🔄 in progress (stone/mineral first pass complete; wood not started)
+- Tuning: ⏳ not started
+- Validation: ⏳ not started
+
 ### Milestone 3: Premium Variation and Global Validation
 
 Deliver:
@@ -160,6 +208,12 @@ Deliver:
 Expected outcome:
 
 - Premium looks are additive without destabilizing baseline families
+
+Current status:
+
+- Implementation: ⏳ not started (except C8 first-pass primitive)
+- Tuning: ⏳ not started
+- Validation: ⏳ not started
 
 ## Acceptance Criteria
 

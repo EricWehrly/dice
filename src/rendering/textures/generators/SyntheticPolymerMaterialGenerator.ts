@@ -2,6 +2,14 @@ import * as THREE from 'three';
 import { createD6FaceAtlasTexture } from '../DieFaceTextureAtlas';
 import { type MaterialTextureGenerator, type MaterialTextureGeneratorOptions } from '../MaterialTextureGenerator';
 import { type DieSurfaceFinish } from '../DieTextureTypes';
+import {
+    applyDepthAttenuation,
+    applyEdgeBehavior,
+    applyGlazeLayer,
+    applyInclusionParticles,
+    applyMicroGrain,
+    createRoughnessAuthorityMap,
+} from '../capabilities';
 
 type SyntheticMaterial = 'plastic' | 'resin';
 
@@ -102,31 +110,13 @@ function createSyntheticMaterialGenerator(material: SyntheticMaterial): Material
             return texture;
         },
         generateRoughnessMap(options: MaterialTextureGeneratorOptions): THREE.CanvasTexture {
-            const faceSize = options.faceSize ?? 256;
-            const canvas = document.createElement('canvas');
-            const gap = Math.max(4, Math.round(faceSize * 0.05));
-            canvas.width = (3 * faceSize) + (4 * gap);
-            canvas.height = (2 * faceSize) + (3 * gap);
-
-            const context = canvas.getContext('2d');
-            if (!context) {
-                throw new Error('Failed to create 2D canvas context for synthetic roughness texture');
-            }
-
             const roughness = ROUGHNESS_VALUES[material][options.surfaceFinish];
-            const grayscale = Math.round(clamp(roughness, 0, 1) * 255);
-            context.fillStyle = `rgb(${grayscale}, ${grayscale}, ${grayscale})`;
-            context.fillRect(0, 0, canvas.width, canvas.height);
-
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.colorSpace = THREE.NoColorSpace;
-            texture.wrapS = THREE.ClampToEdgeWrapping;
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            texture.generateMipmaps = false;
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.needsUpdate = true;
-            return texture;
+            return createRoughnessAuthorityMap({
+                roughness,
+                faceSize: options.faceSize ?? 256,
+                grainAlpha: material === 'resin' ? 0.008 : 0.014,
+                grainStep: material === 'resin' ? 9 : 7,
+            });
         },
     };
 }
@@ -147,34 +137,41 @@ function applySyntheticFinish(texture: THREE.CanvasTexture, material: SyntheticM
     const width = canvas.width;
     const height = canvas.height;
 
-    const speckleCount = Math.round(((width * height) / 1800) * tuning.speckleCountScale);
-    context.fillStyle = `rgba(${appearance.speckleColor}, ${tuning.speckleAlpha.toFixed(3)})`;
-    for (let index = 0; index < speckleCount; index += 1) {
-        const x = Math.floor((Math.sin(index * 17.11) * 0.5 + 0.5) * width);
-        const y = Math.floor((Math.cos(index * 11.73) * 0.5 + 0.5) * height);
-        const radius = 1 + (index % 2);
-        context.fillRect(x, y, radius, radius);
+    const capabilityContext = { canvas, context, width, height };
+
+    applyMicroGrain(capabilityContext, {
+        color: `rgb(${appearance.streakColor})`,
+        alpha: tuning.streakAlpha,
+        step: 6,
+        direction: material === 'resin' ? 'horizontal' : 'diagonal',
+    });
+
+    applyGlazeLayer(capabilityContext, {
+        alpha: material === 'resin' ? 0.06 : 0.03,
+        poolingAlpha: material === 'resin' ? 0.025 : 0.01,
+    });
+
+    if (material === 'resin') {
+        applyDepthAttenuation(capabilityContext, {
+            centerColor: 'rgb(255, 255, 255)',
+            edgeColor: 'rgb(172, 126, 98)',
+            alpha: 0.08,
+            radiusScale: 0.9,
+        });
     }
 
-    context.strokeStyle = `rgba(${appearance.streakColor}, ${tuning.streakAlpha.toFixed(3)})`;
-    context.lineWidth = 1;
-    for (let y = 0; y < height; y += 6) {
-        const wave = Math.sin(y * 0.032 + (material === 'resin' ? 0.8 : 0.25));
-        const offset = wave * 5;
-        context.beginPath();
-        context.moveTo(0, y + offset);
-        context.lineTo(width, y - (offset * 0.4));
-        context.stroke();
-    }
+    applyInclusionParticles(capabilityContext, {
+        color: `rgb(${appearance.speckleColor})`,
+        alpha: tuning.speckleAlpha,
+        densityScale: tuning.speckleCountScale,
+        minSize: 1,
+        maxSize: 2,
+    });
 
-    const edgeSize = Math.max(2, Math.round(Math.min(width, height) * 0.01));
-    context.fillStyle = `rgba(${appearance.edgeColor}, ${tuning.edgeAlpha.toFixed(3)})`;
-    context.fillRect(0, 0, width, edgeSize);
-    context.fillRect(0, 0, edgeSize, height);
+    applyEdgeBehavior(capabilityContext, {
+        brightColor: `rgb(${appearance.edgeColor})`,
+        alpha: tuning.edgeAlpha,
+    });
 
     texture.needsUpdate = true;
-}
-
-function clamp(value: number, min: number, max: number): number {
-    return Math.max(min, Math.min(max, value));
 }

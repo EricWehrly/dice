@@ -2,6 +2,13 @@ import * as THREE from 'three';
 import { createD6FaceAtlasTexture } from '../DieFaceTextureAtlas';
 import { type MaterialTextureGenerator, type MaterialTextureGeneratorOptions } from '../MaterialTextureGenerator';
 import { type DieSurfaceFinish } from '../DieTextureTypes';
+import {
+    applyEdgeBehavior,
+    applyGlazeLayer,
+    applyInclusionParticles,
+    applyMacroBreakup,
+    createRoughnessAuthorityMap,
+} from '../capabilities';
 
 type CeramicMaterial = 'ceramic';
 
@@ -76,31 +83,13 @@ function createCeramicMaterialGenerator(material: CeramicMaterial): MaterialText
             return texture;
         },
         generateRoughnessMap(options: MaterialTextureGeneratorOptions): THREE.CanvasTexture {
-            const faceSize = options.faceSize ?? 256;
-            const canvas = document.createElement('canvas');
-            const gap = Math.max(4, Math.round(faceSize * 0.05));
-            canvas.width = (3 * faceSize) + (4 * gap);
-            canvas.height = (2 * faceSize) + (3 * gap);
-
-            const context = canvas.getContext('2d');
-            if (!context) {
-                throw new Error('Failed to create 2D canvas context for ceramic roughness texture');
-            }
-
             const roughness = ROUGHNESS_VALUES[material][options.surfaceFinish];
-            const grayscale = Math.round(clamp(roughness, 0, 1) * 255);
-            context.fillStyle = `rgb(${grayscale}, ${grayscale}, ${grayscale})`;
-            context.fillRect(0, 0, canvas.width, canvas.height);
-
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.colorSpace = THREE.NoColorSpace;
-            texture.wrapS = THREE.ClampToEdgeWrapping;
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            texture.generateMipmaps = false;
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.needsUpdate = true;
-            return texture;
+            return createRoughnessAuthorityMap({
+                roughness,
+                faceSize: options.faceSize ?? 256,
+                grainAlpha: 0.012,
+                grainStep: 7,
+            });
         },
     };
 }
@@ -125,43 +114,33 @@ function applyCeramicFinish(
     const width = canvas.width;
     const height = canvas.height;
 
-    const speckleCount = Math.round(((width * height) / 2200) * tuning.speckleCountScale);
-    context.fillStyle = `rgba(255, 255, 255, ${tuning.speckleAlpha.toFixed(3)})`;
-    for (let index = 0; index < speckleCount; index += 1) {
-        const x = Math.floor((Math.sin(index * 23.17) * 0.5 + 0.5) * width);
-        const y = Math.floor((Math.cos(index * 13.91) * 0.5 + 0.5) * height);
-        context.fillRect(x, y, 1, 1);
-    }
+    const capabilityContext = { canvas, context, width, height };
 
-    const darkSpeckleCount = Math.round(speckleCount * 0.35);
-    context.fillStyle = `rgba(0, 0, 0, ${(tuning.speckleAlpha * 0.6).toFixed(3)})`;
-    for (let index = 0; index < darkSpeckleCount; index += 1) {
-        const x = Math.floor((Math.cos(index * 19.43) * 0.5 + 0.5) * width);
-        const y = Math.floor((Math.sin(index * 7.29) * 0.5 + 0.5) * height);
-        context.fillRect(x, y, 1, 2);
-    }
+    applyMacroBreakup(capabilityContext, {
+        brightColor: 'rgb(255, 255, 255)',
+        darkColor: 'rgb(0, 0, 0)',
+        alpha: tuning.speckleAlpha * 0.75,
+        bandStep: 11,
+        direction: 'horizontal',
+    });
 
-    // Glaze sheen: vertical gradient to simulate top-lit fired surface
-    const glazeGradient = context.createLinearGradient(0, 0, 0, height);
-    glazeGradient.addColorStop(0, `rgba(255, 255, 255, ${tuning.glazeAlpha.toFixed(3)})`);
-    glazeGradient.addColorStop(0.45, `rgba(255, 255, 255, ${(tuning.glazeAlpha * 0.15).toFixed(3)})`);
-    glazeGradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
-    context.fillStyle = glazeGradient as unknown as string;
-    context.fillRect(0, 0, width, height);
+    applyInclusionParticles(capabilityContext, {
+        color: 'rgb(255, 255, 255)',
+        alpha: tuning.speckleAlpha,
+        densityScale: tuning.speckleCountScale,
+        minSize: 1,
+        maxSize: 2,
+    });
 
-    // Pooling: subtle darker concentration at lower corners, mimics glaze pooling behavior
-    context.fillStyle = `rgba(0, 0, 0, ${tuning.poolingAlpha.toFixed(3)})`;
-    context.fillRect(0, Math.round(height * 0.82), width, Math.round(height * 0.18));
+    applyGlazeLayer(capabilityContext, {
+        alpha: tuning.glazeAlpha,
+        poolingAlpha: tuning.poolingAlpha,
+    });
 
-    // Highlight edge
-    const edgeSize = Math.max(2, Math.round(Math.min(width, height) * 0.012));
-    context.fillStyle = `rgba(255, 255, 255, ${tuning.edgeAlpha.toFixed(3)})`;
-    context.fillRect(0, 0, width, edgeSize);
-    context.fillRect(0, 0, edgeSize, height);
+    applyEdgeBehavior(capabilityContext, {
+        brightColor: 'rgb(255, 255, 255)',
+        alpha: tuning.edgeAlpha,
+    });
 
     texture.needsUpdate = true;
-}
-
-function clamp(value: number, min: number, max: number): number {
-    return Math.max(min, Math.min(max, value));
 }

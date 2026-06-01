@@ -6,6 +6,7 @@ import { MaterialTextureRegistry } from '../../rendering/textures/MaterialTextur
 import { MetalMaterialGenerators } from '../../rendering/textures/generators/MetalMaterialGenerator';
 import { SyntheticPolymerMaterialGenerators } from '../../rendering/textures/generators/SyntheticPolymerMaterialGenerator';
 import { CeramicMaterialGenerators } from '../../rendering/textures/generators/CeramicMaterialGenerator';
+import { StoneMineralMaterialGenerators } from '../../rendering/textures/generators/StoneMineralMaterialGenerator';
 
 const mockCanvasContext = {
     clearRect: () => {},
@@ -256,6 +257,31 @@ describe('DieFaceTextureAtlas UV mapping', () => {
             backgroundColor: preset.backgroundColor,
             pipColor: preset.pipColor,
             bodyMaterial: 'ceramic',
+            surfaceFinish: 'polished',
+            faceSize: 64,
+        });
+
+        expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+
+        texture.dispose();
+        geometry.dispose();
+        MaterialTextureRegistry.clear();
+    });
+
+    it('uses a registered stone/mineral generator for obsidian atlas textures', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const preset = resolveDieMaterialPreset({
+            bodyMaterial: 'obsidian',
+            surfaceFinish: 'polished',
+        });
+
+        StoneMineralMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: preset.backgroundColor,
+            pipColor: preset.pipColor,
+            bodyMaterial: 'obsidian',
             surfaceFinish: 'polished',
             faceSize: 64,
         });

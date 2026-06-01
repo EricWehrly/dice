@@ -127,9 +127,10 @@ Why this ordering for F17:
 
 ### Implementation Note (Current Pass)
 
-- Implemented first F17-adjacent non-metal family slice: Synthetic/Polymer.
-- Added family generator support for `plastic` and `resin` with finish-aware overlays and roughness maps.
+- Implemented first-pass shared capability modules (C1-C8) and wired them into active generator families.
+- Added/updated family generator support for `plastic`, `resin`, `ceramic`, `stone`, `obsidian`, and `jade` using shared capability composition.
 - Updated preset surface overrides for `plastic`, `resin`, and `ceramic` to improve dielectric comparison quality during F17 tuning.
+- Capability implementation/tuning/validation status now tracked in `docs/features/F18-material-capability-system.md`.
 
 ## Capability Library and Material Usage Map
 
