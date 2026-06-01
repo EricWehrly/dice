@@ -1,16 +1,18 @@
 import { initializeRoll3DCamera, type Roll3DFocusUiState } from '../../../camera';
 import { type Bag } from '../../../game/Bag';
 import { DieModificationPanel } from '../../../ui';
+import { type TrickCounterPanel } from '../../../ui/TrickCounterPanel';
 import { setupRoll3DScoreFeedbackOverlay } from './Roll3DScoreFeedbackOverlay';
 
 export interface SetupRoll3DScreenOptions {
     bag: Bag;
     roll3dScreen: HTMLElement;
     dieModificationPanel: DieModificationPanel;
+    trickCounterPanel: TrickCounterPanel;
 }
 
 export function setupRoll3DScreen(options: SetupRoll3DScreenOptions): void {
-    const { bag, roll3dScreen, dieModificationPanel } = options;
+    const { bag, roll3dScreen, dieModificationPanel, trickCounterPanel } = options;
     const roll3dCanvasHost = roll3dScreen.querySelector<HTMLElement>('.roll-3d-canvas-host');
     const roll3dDock = roll3dScreen.querySelector<HTMLElement>('.roll-3d-dock');
     const roll3dDockPanel = document.getElementById('roll-3d-die-mod-panel');
@@ -42,5 +44,6 @@ export function setupRoll3DScreen(options: SetupRoll3DScreenOptions): void {
     setupRoll3DScoreFeedbackOverlay({
         roll3dScreen,
         roll3dCanvasHost,
+        getHighScoreCounterElement: () => trickCounterPanel.getHighScoreCounterElement(),
     });
 }

@@ -59,6 +59,10 @@ export class TrickCounterPanel {
         return counterElements;
     }
 
+    getHighScoreCounterElement(): HTMLDivElement | null {
+        return this.counterElements.get(ResourceNames.highScore) ?? null;
+    }
+
     private getRequiredElement<TElement extends HTMLElement>(id: string): TElement {
         const element = document.getElementById(id);
         if (!element) {

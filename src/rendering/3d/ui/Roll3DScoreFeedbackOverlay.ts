@@ -5,17 +5,19 @@ import ThreeJSRenderContext from '../../../../engine/js/rendering/contexts/Three
 import { GetEntity3DGraphic } from '../../../../engine/js/rendering/entities/entity-3d-graphics';
 import { type BagRolledEvent } from '../../../game/Bag';
 import { TrickEvents } from '../../../game/contracts/TrickContracts';
-import { type ScoreUpdatedEvent } from '../../../game/score/ScoreProgressionTracker';
 import { ResourceNames, resourceIcons } from '../../../game/resources/GameResources';
 
 interface Roll3DScoreFeedbackOverlayOptions {
     roll3dScreen: HTMLElement;
     roll3dCanvasHost: HTMLElement;
+    getHighScoreCounterElement: () => HTMLElement | null;
 }
 
 interface LabelEntry {
     dieId: string;
     element: HTMLDivElement;
+    targetValue: number;
+    currentValue: number;
     fadeInAtMs: number;
     fadeOutAtMs: number;
     removeAtMs: number;
@@ -34,19 +36,20 @@ interface TokenEntry {
     element: HTMLDivElement;
     spawnedAtMs: number;
     removeAtMs: number;
-    offsetX: number;
+    startScreenX: number;
+    startScreenY: number;
+    bumpTriggered: boolean;
 }
 
 const ROLL_RESOLVE_DELAY_MS = 120;
-const NO_GAIN_VISIBLE_MS = 700;
 const SCORE_WINDOW_MS = 2000;
 const FADE_DURATION_MS = 220;
 const LABEL_Y_OFFSET = 2.0;
 const TOKEN_Y_OFFSET = 1.45;
-const TOKEN_RISE_WORLD_UNITS = 1.15;
-const TOKEN_VISIBLE_MS = 650;
+const TOKEN_VISIBLE_MS = 800;
+const BUMP_TRIGGER_PROGRESS = 0.85;
 const LABEL_TEXT = `${resourceIcons[ResourceNames.highScore]} 0`;
-const TOKEN_TEXT = `${resourceIcons[ResourceNames.highScore]}`;
+const TOKEN_TEXT = resourceIcons[ResourceNames.highScore];
 
 let initialized = false;
 
@@ -63,6 +66,7 @@ export function setupRoll3DScoreFeedbackOverlay(options: Roll3DScoreFeedbackOver
 class Roll3DScoreFeedbackOverlay {
     private readonly roll3dScreen: HTMLElement;
     private readonly overlayRoot: HTMLDivElement;
+    private readonly getHighScoreCounterElement: () => HTMLElement | null;
     private readonly labels = new Map<string, LabelEntry>();
     private readonly activeTokens = new Map<string, TokenEntry>();
     private readonly pendingTokenSchedule: TokenScheduleEntry[] = [];
@@ -72,6 +76,7 @@ class Roll3DScoreFeedbackOverlay {
 
     constructor(options: Roll3DScoreFeedbackOverlayOptions) {
         this.roll3dScreen = options.roll3dScreen;
+        this.getHighScoreCounterElement = options.getHighScoreCounterElement;
         this.overlayRoot = document.createElement('div');
         this.overlayRoot.className = 'roll3d-score-overlay';
         options.roll3dCanvasHost.appendChild(this.overlayRoot);
@@ -79,80 +84,58 @@ class Roll3DScoreFeedbackOverlay {
 
     initialize(): void {
         Events.Subscribe<BagRolledEvent>(TrickEvents.BAG_ROLLED, this.onBagRolled.bind(this));
-        Events.Subscribe<ScoreUpdatedEvent>(TrickEvents.SCORE_UPDATED, this.onScoreUpdated.bind(this));
         ThreeJSRenderContext.RegisterRenderMethod(110, () => this.update());
     }
 
     private onBagRolled(event: BagRolledEvent): void {
+        console.log('[Score] onBagRolled - clearing, dice:', event.diceIds.length);
         this.clearLabels();
         this.clearTokens();
 
         const nowMs = performance.now();
         this.currentRollResolveAtMs = nowMs + ROLL_RESOLVE_DELAY_MS;
-        const fadeOutAtMs = this.currentRollResolveAtMs + NO_GAIN_VISIBLE_MS;
 
-        for (const dieId of event.diceIds) {
+        const scoreWindowFadeOutAtMs = this.currentRollResolveAtMs + SCORE_WINDOW_MS + TOKEN_VISIBLE_MS;
+
+        event.diceIds.forEach((dieId, index) => {
             const element = document.createElement('div');
             element.className = 'roll3d-score-label';
-            element.textContent = LABEL_TEXT;
+            const faceValue = event.faceResults[index]?.computed_value ?? 0;
+            element.textContent = `${resourceIcons[ResourceNames.highScore]} 0`;
             this.overlayRoot.appendChild(element);
 
             this.labels.set(dieId, {
                 dieId,
                 element,
+                targetValue: faceValue,
+                currentValue: 0,
                 fadeInAtMs: this.currentRollResolveAtMs,
-                fadeOutAtMs,
-                removeAtMs: fadeOutAtMs + FADE_DURATION_MS,
+                fadeOutAtMs: scoreWindowFadeOutAtMs,
+                removeAtMs: scoreWindowFadeOutAtMs + FADE_DURATION_MS,
             });
-        }
+
+            this.scheduleTokensForDie(dieId, faceValue);
+        });
+        console.log('[Score] onBagRolled - created', this.labels.size, 'labels');
     }
 
-    private onScoreUpdated(event: ScoreUpdatedEvent): void {
-        const scoreDelta = event.highScore - event.previousHighScore;
-        if (scoreDelta <= 0 || this.labels.size === 0) {
+    private scheduleTokensForDie(dieId: string, count: number): void {
+        if (count === 0) {
             return;
         }
 
-        const fadeOutAtMs = this.currentRollResolveAtMs + SCORE_WINDOW_MS;
-        for (const label of this.labels.values()) {
-            label.fadeOutAtMs = Math.max(label.fadeOutAtMs, fadeOutAtMs);
-            label.removeAtMs = label.fadeOutAtMs + FADE_DURATION_MS;
-        }
+        const spawnIntervalMs = count > 1 ? SCORE_WINDOW_MS / (count - 1) : 0;
 
-        this.scheduleTokens(scoreDelta);
-    }
-
-    private scheduleTokens(tokenCount: number): void {
-        const dieIds = Array.from(this.labels.keys());
-        if (dieIds.length === 0) {
-            return;
-        }
-
-        const scheduleWindowStartMs = this.currentRollResolveAtMs;
-        const spawnIntervalMs = tokenCount > 1 ? SCORE_WINDOW_MS / (tokenCount - 1) : 0;
-
-        for (let index = 0; index < tokenCount; index += 1) {
+        for (let index = 0; index < count; index += 1) {
             this.tokenSequence += 1;
             const id = `score-token-${this.tokenSequence}`;
-            const dieId = dieIds[index % dieIds.length];
-            const spawnAtMs = scheduleWindowStartMs + index * spawnIntervalMs;
-            const offsetX = this.createTokenOffset(index, dieIds.length);
+            const spawnAtMs = this.currentRollResolveAtMs + index * spawnIntervalMs;
+            const offsetX = (index % 2 === 0 ? 1 : -1) * Math.floor(index / 2) * 0.18;
 
-            this.pendingTokenSchedule.push({
-                id,
-                dieId,
-                spawnAtMs,
-                offsetX,
-            });
+            this.pendingTokenSchedule.push({ id, dieId, spawnAtMs, offsetX });
         }
 
         this.pendingTokenSchedule.sort((first, second) => first.spawnAtMs - second.spawnAtMs);
-    }
-
-    private createTokenOffset(index: number, dieCount: number): number {
-        const spread = 0.24;
-        const slot = (index % Math.max(dieCount, 2)) - 0.5;
-        return slot * spread;
     }
 
     private update(): void {
@@ -171,10 +154,31 @@ class Roll3DScoreFeedbackOverlay {
     }
 
     private spawnDueTokens(nowMs: number): void {
+        const renderContext = ThreeJSRenderContext.Instance;
+        const camera = renderContext.camera as THREE.PerspectiveCamera;
+        const canvas = renderContext.canvas;
+
+        if (this.pendingTokenSchedule.length > 0 && this.pendingTokenSchedule[0].spawnAtMs <= nowMs) {
+            console.log('[Score] spawnDueTokens - spawning token, pending:', this.pendingTokenSchedule.length);
+        }
+
         while (this.pendingTokenSchedule.length > 0 && this.pendingTokenSchedule[0].spawnAtMs <= nowMs) {
             const schedule = this.pendingTokenSchedule.shift();
             if (!schedule) {
                 return;
+            }
+
+            const object3d = this.getDieGraphic(schedule.dieId);
+            let startScreenX = canvas.clientWidth / 2;
+            let startScreenY = canvas.clientHeight / 2;
+
+            if (object3d) {
+                object3d.getWorldPosition(this.worldPosition);
+                this.worldPosition.x += schedule.offsetX;
+                this.worldPosition.y += TOKEN_Y_OFFSET;
+                this.worldPosition.project(camera);
+                startScreenX = (this.worldPosition.x * 0.5 + 0.5) * canvas.clientWidth;
+                startScreenY = (-this.worldPosition.y * 0.5 + 0.5) * canvas.clientHeight;
             }
 
             const element = document.createElement('div');
@@ -191,7 +195,9 @@ class Roll3DScoreFeedbackOverlay {
                 element,
                 spawnedAtMs: nowMs,
                 removeAtMs: nowMs + TOKEN_VISIBLE_MS,
-                offsetX: schedule.offsetX,
+                startScreenX,
+                startScreenY,
+                bumpTriggered: false,
             });
         }
     }
@@ -244,33 +250,38 @@ class Roll3DScoreFeedbackOverlay {
     }
 
     private updateTokens(nowMs: number): void {
-        const renderContext = ThreeJSRenderContext.Instance;
-        const camera = renderContext.camera as THREE.PerspectiveCamera;
-        const canvas = renderContext.canvas;
+        const overlayRect = this.overlayRoot.getBoundingClientRect();
 
         for (const [tokenId, token] of this.activeTokens) {
-            const object3d = this.getDieGraphic(token.dieId);
+            const lifeProgress = Math.min(Math.max((nowMs - token.spawnedAtMs) / TOKEN_VISIBLE_MS, 0), 1);
 
-            if (!object3d) {
-                token.element.remove();
-                this.activeTokens.delete(tokenId);
-                continue;
+            let screenX = token.startScreenX;
+            let screenY = token.startScreenY;
+
+            const label = this.labels.get(token.dieId);
+            const labelRect = label?.element.getBoundingClientRect() ?? null;
+
+            if (labelRect) {
+                const targetX = labelRect.left + labelRect.width / 2 - overlayRect.left;
+                const targetY = labelRect.top + labelRect.height / 2 - overlayRect.top;
+                const eased = lifeProgress * lifeProgress * (3 - 2 * lifeProgress);
+                screenX = token.startScreenX + (targetX - token.startScreenX) * eased;
+                screenY = token.startScreenY + (targetY - token.startScreenY) * eased;
             }
 
-            const lifeProgress = Math.min(Math.max((nowMs - token.spawnedAtMs) / TOKEN_VISIBLE_MS, 0), 1);
-            object3d.getWorldPosition(this.worldPosition);
-            this.worldPosition.x += token.offsetX;
-            this.worldPosition.y += TOKEN_Y_OFFSET + lifeProgress * TOKEN_RISE_WORLD_UNITS;
-            this.worldPosition.project(camera);
+            token.element.style.left = `${screenX}px`;
+            token.element.style.top = `${screenY}px`;
 
-            if (!this.isProjectedPointVisible(this.worldPosition)) {
-                token.element.style.display = 'none';
-            } else {
-                const screenX = (this.worldPosition.x * 0.5 + 0.5) * canvas.clientWidth;
-                const screenY = (-this.worldPosition.y * 0.5 + 0.5) * canvas.clientHeight;
-                token.element.style.display = '';
-                token.element.style.left = `${screenX}px`;
-                token.element.style.top = `${screenY}px`;
+            if (!token.bumpTriggered && lifeProgress >= BUMP_TRIGGER_PROGRESS) {
+                token.bumpTriggered = true;
+
+                if (label) {
+                    label.currentValue += 1;
+                    label.element.textContent = `${resourceIcons[ResourceNames.highScore]} ${label.currentValue}`;
+                    label.element.classList.remove('is-bumping');
+                    void label.element.offsetWidth;
+                    label.element.classList.add('is-bumping');
+                }
             }
 
             if (nowMs >= token.removeAtMs) {

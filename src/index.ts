@@ -35,11 +35,6 @@ function wireRollButtons(bag: Bag) {
     });
 }
 
-function calculateBagMaxRoll(bag: Bag): number {
-    const activeDice = bag.getActiveDice();
-    return activeDice.reduce((sum, die) => sum + die.faceCount, 0);
-}
-
 const bag = new Bag();
 const dieA = MakeDieCharacter([DieEquippedMixin]);
 dieA.pipStyle = 'x';
@@ -69,13 +64,16 @@ const dieF = MakeDieCharacter([DieEquippedMixin]);
 dieF.bodyMaterial = 'ceramic';
 dieF.surfaceFinish = 'plain';
 bag.addDie(dieF);
+const dieG = MakeDieCharacter([DieEquippedMixin]);
+dieG.bodyMaterial = 'obsidian';
+dieG.surfaceFinish = 'polished';
+bag.addDie(dieG);
 
 wireRollButtons(bag);
 new DiceCanvasRenderer(bag);
 
 // Initialize all game resources once before creating systems that depend on them
-const initialHighScore = calculateBagMaxRoll(bag);
-initializeGameResources(initialHighScore);
+initializeGameResources(0);
 
 new ScoreProgressionTracker(bag);
 new TrickEvaluator();
@@ -95,6 +93,9 @@ screenManager.register('mod',
 );
 
 const roll3dScreen = document.getElementById('roll-3d-screen')!;
+const trickCounterPanel = new TrickCounterPanel();
+trickCounterPanel.render();
+
 setupIsometricEasterEgg({
     bag,
     roll3dScreen,
@@ -104,6 +105,7 @@ setupRoll3DScreen({
     bag,
     roll3dScreen,
     dieModificationPanel,
+    trickCounterPanel,
 });
 
 setupRenderPresetPanel();
@@ -116,9 +118,6 @@ screenManager.register('roll-3d',
 );
 
 screenManager.switchTo('roll-3d');
-
-const trickCounterPanel = new TrickCounterPanel();
-trickCounterPanel.render();
 
 const trickPanel = new TrickPanel();
 trickPanel.render();
