@@ -57,3 +57,4 @@ This is the only active roadmap.
 6. After effect presets are legible in the first two categories, start F17 support lane in order: diagnostics -> IBL baseline -> lighting normalization.
 7. Start F16 once current material chunk is stable.
 8. Start F05/F10 when TB core loop is stable enough for screen-shell work.
+9. Track camera ownership debt in [docs/development/camera-migration-tech-debt.md](../development/camera-migration-tech-debt.md) until the roll camera is moved into the engine layer.
