@@ -37,7 +37,10 @@ export interface FaceStyleEquipment extends Equippable<DieSlotType.FACE_STYLE> {
     faceStyleId: FaceStyleId;
 }
 
+export type DieModEquipment = Equippable<DieSlotType.MOD>;
+export type DieBodyStyleEquipment = Equippable<DieSlotType.BODY_STYLE>;
+
 export type DieEquipment =
-    | Equippable<DieSlotType.MOD>
+    | DieModEquipment
     | FaceStyleEquipment
-    | Equippable<DieSlotType.BODY_STYLE>;
+    | DieBodyStyleEquipment;

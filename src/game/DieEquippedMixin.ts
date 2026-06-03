@@ -41,7 +41,7 @@ export interface DieEquipmentInstallOptions {
 
 export interface DieEquipped {
     getEquipped(slotType: DieSlotType): DieEquipment | null;
-    install(item: DieEquipment, options: DieEquipmentInstallOptions): boolean;
+    install(item: DieEquipment, options?: DieEquipmentInstallOptions): boolean;
     uninstall(slotType: DieSlotType): boolean;
     hasEquipped(slotType: DieSlotType): boolean;
 }

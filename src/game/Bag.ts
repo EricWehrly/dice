@@ -111,7 +111,7 @@ export class Bag {
         this.raiseBagChanged();
     }
 
-    private raiseBagChanged(): void {
+    protected raiseBagChanged(): void {
         // TODO: deep freeze inside the RaiseEvent layer
         const frozenBag = Object.freeze({
             ...this,
@@ -122,7 +122,7 @@ export class Bag {
         });
     }
 
-    private applyLaneOrdering(): void {
+    protected applyLaneOrdering(): void {
         const activeDice = this.getActiveDice();
         const lockedActiveDice = activeDice.filter((die) => die.locked);
         const unlockedActiveDice = activeDice.filter((die) => !die.locked);

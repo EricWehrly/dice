@@ -2,7 +2,7 @@
 // Migrate to engine Equippable<DieSlotType> once engine generalization lands.
 // See engine/docs/EQUIPMENT_GENERALIZATION_ROADMAP.md
 
-import { DieSlotType, type DieEquipment } from '../DieEquipmentTypes';
+import { DieSlotType, type DieModEquipment } from '../DieEquipmentTypes';
 
 /** Plain data shape for weight calculations — used by DiceProbability without needing the full class. */
 export interface DieWeightModData {
@@ -11,7 +11,7 @@ export interface DieWeightModData {
     grams: number;
 }
 
-export class DieWeightMod implements DieEquipment {
+export class DieWeightMod implements DieModEquipment {
     readonly type = DieSlotType.MOD as const;
     readonly id: string;
     readonly name: string;
