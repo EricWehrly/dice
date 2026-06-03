@@ -1,6 +1,6 @@
 # F18 - Shared Material Capability System Plan
 
-Status: Proposed
+Status: 🔄 In Progress
 
 ## Objective
 
@@ -106,13 +106,13 @@ Status markers:
 | Inclusion/flake particles | C8 | ✅ Complete | 🔄 In Progress | 🔄 In Progress | Shared inclusion module implemented and used by synthetic/metal/stone-mineral |
 | Lighting diagnostic integration | C10 | ⏳ Not Started | ⏳ Not Started | ⏳ Not Started | Depends on F17 M1 harness delivery |
 
-## Current Execution Snapshot (May 2026)
+## Current Execution Snapshot (June 2026)
 
 - Capability modules C1-C8 now exist in `src/rendering/textures/capabilities/`.
 - First-pass consumption is wired into metal, synthetic/polymer, ceramic, and stone/mineral generators.
-- Stone/mineral generator first pass is now implemented for `stone`, `obsidian`, and `jade`.
-- Build passes and focused rendering tests pass.
-- Tuning and capability-level validation remain active work items.
+- Stone/mineral generator coverage includes `stone`, `obsidian`, `jade`, `marble`, and `granite`.
+- Runtime generator coverage now spans all currently selectable body materials (19/19).
+- Build passes; tuning and capability-level validation remain active work items.
 
 ## Capability-to-Material Adoption Plan
 
@@ -194,9 +194,9 @@ Expected outcome:
 
 Current status:
 
-- Implementation: 🔄 in progress (stone/mineral first pass complete; wood not started)
-- Tuning: ⏳ not started
-- Validation: ⏳ not started
+- Implementation: ✅ complete (first pass for stone/mineral + wood)
+- Tuning: 🔄 in progress
+- Validation: 🔄 in progress
 
 ### Milestone 3: Premium Variation and Global Validation
 
@@ -211,7 +211,7 @@ Expected outcome:
 
 Current status:
 
-- Implementation: ⏳ not started (except C8 first-pass primitive)
+- Implementation: 🔄 in progress (C8 primitives active; glass/crystal baseline now wired; C10 not started)
 - Tuning: ⏳ not started
 - Validation: ⏳ not started
 

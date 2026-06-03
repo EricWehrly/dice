@@ -1,24 +1,26 @@
 # F14 - Material Family Authoring and Texture Implementation Plan
 
-Status: 🔄 Planning Update (Documentation Only)
+Status: 🔄 In Progress (Execution + Tuning)
 
 ## Objective
 
-Prepare an implementation-ready plan for procedural material textures by:
+Drive material authoring from implemented capabilities toward visually distinct, production-ready families by:
 
 1. Grouping materials by reusable material type families
 2. Defining family-first generator strategy so one base algorithm can produce multiple variants
 3. Estimating effort versus visual payoff to prioritize "best bang for buck"
-4. Defining preview and acceptance workflow before writing any new texture code
+4. Defining preview and acceptance workflow while tuning and expanding texture coverage
 
 ## Current State (Already in Place)
 
 - Runtime supports independent body and pip materials
-- 11 materials are wired in presets: plastic, wood, stone, ceramic, resin, brass, steel, obsidian, jade, glass, crystal
+- 19 materials are wired in presets: plastic, wood, stone, ceramic, resin, brass, steel, gold, silver, bronze, copper, iron, titanium, obsidian, jade, marble, granite, glass, crystal
 - Texture generator registry exists with fallback to color-only rendering
-- `PlasticMaterialGenerator` is the baseline generator implementation
+- Generators are registered for 16 materials (all metals, synthetic/polymer, ceramic, and stone/mineral)
+- Three materials still rely on fallback texture rendering: wood, glass, crystal
+- Shared capabilities C1-C8 are implemented and consumed by active generator families
 
-This document focuses on what to build next, not on changing runtime architecture.
+This document now tracks execution status and next implementation chunks, not only planning intent.
 
 ## Family-First Material Strategy
 
@@ -58,8 +60,10 @@ Example intent for metal family (documentation only):
 
 Current implementation note:
 
-- Brass and steel are the only actively implemented metal selections right now.
-- Future metals such as gold, silver, bronze, copper, iron, and titanium stay on the roadmap, but should not become selectable until each has a distinct texture treatment that reads as real metal rather than a flat recolor.
+- All metal selections currently in runtime (`brass`, `steel`, `gold`, `silver`, `bronze`, `copper`, `iron`, `titanium`) have generator support.
+- Stone/mineral selections (`stone`, `obsidian`, `jade`, `marble`, `granite`) have generator support and vein/macro breakup capabilities.
+- Wood/organic and transparent gem/glass now have first-pass generator coverage.
+- Remaining implementation focus is quality tuning and visual identity separation (especially marble/granite/jade/wood/crystal).
 
 ## Brainstorm: Additional Materials by Family
 
@@ -128,7 +132,7 @@ Why this ordering for F17:
 ### Implementation Note (Current Pass)
 
 - Implemented first-pass shared capability modules (C1-C8) and wired them into active generator families.
-- Added/updated family generator support for `plastic`, `resin`, `ceramic`, `stone`, `obsidian`, and `jade` using shared capability composition.
+- Added/updated family generator support for `plastic`, `resin`, `ceramic`, `stone`, `obsidian`, `jade`, `marble`, `granite`, `wood`, `glass`, and `crystal` using shared capability composition.
 - Updated preset surface overrides for `plastic`, `resin`, and `ceramic` to improve dielectric comparison quality during F17 tuning.
 - Capability implementation/tuning/validation status now tracked in `docs/features/F18-material-capability-system.md`.
 
@@ -168,18 +172,18 @@ Legend: `P0` required for first convincing version, `P1` strong differentiator, 
 | Transparent Gem/Glass | P0 | P1 | - | P1 | P1 | P0 | P1 | P1 | P0 | P0 |
 | Novelty/Advanced Later | P1 | P1 | P1 | P1 | P1 | P1 | P1 | P0 | P0 | P0 |
 
-### Current Capability Status (May 2026)
+### Current Capability Status (June 2026)
 
 | Capability ID | Status | Notes |
 |---|---|---|
-| C1 | 🔄 Partial | Present for metal + synthetic + ceramic, still uneven by family |
-| C2 | 🔄 Partial | Metal strongest; ceramic/synthetic currently light-touch |
-| C3 | 🔄 Partial | Metal has strongest anisotropy; plastic/resin need clearer divergence |
-| C4 | 🔄 Partial | Basic edge shaping exists; family-specific behavior is limited |
-| C5 | 🔄 Partial | Surface clearcoat profiles exist; ceramic glaze needs dedicated depth model |
-| C6 | ❌ Not Started | Needed for resin/glass/crystal to avoid flat look |
-| C7 | ❌ Not Started | Needed for convincing stone/mineral identity |
-| C8 | ❌ Not Started | Needed for glitter/premium looks |
+| C1 | 🔄 Partial | Implemented across active generator families; still needs tuning matrix by family/finish |
+| C2 | 🔄 Partial | Implemented and active in metal/ceramic/stone-mineral; tuning still uneven |
+| C3 | 🔄 Partial | Implemented and active in metal + synthetic; needs stronger wood-ready profile later |
+| C4 | 🔄 Partial | Implemented and active in metal/ceramic/synthetic/stone-mineral; needs tighter per-family shaping |
+| C5 | 🔄 Partial | Implemented and active in ceramic + synthetic; ceramic glaze depth still shallow |
+| C6 | 🔄 Partial | Implemented as resin-first depth attenuation; not yet expanded to glass/crystal |
+| C7 | 🔄 Partial | Implemented and active in stone/mineral; realism tuning remains |
+| C8 | 🔄 Partial | Implemented in active families; still light-touch and not yet premium-grade |
 | C9 | 🔄 Partial | Contract tests exist but should expand to capability checks |
 | C10 | ❌ Not Started | F17 diagnostic harness not yet available in runtime |
 
@@ -242,32 +246,32 @@ Planning rule: F14 can proceed without all F17 items complete, but any capabilit
 
 For required-vs-recommended dependency classification per capability, see `docs/features/F18-material-capability-system.md`.
 
-## Ready-to-Implement Wave Plan
+## Execution Wave Plan (Updated)
 
-### Wave 1 (Fast, High Certainty)
+### Wave 1 (Fast, High Certainty) - ✅ Completed
 
 - Ceramic/Porcelain base generator
 - Synthetic/Polymer base generator
-- Metal generator refinement for brass and steel as the first fully convincing metal looks
+- Metal generator family pass (including expanded metal set)
 
 Estimated wave duration: 4-6 implementation days including preview/test passes.
 
-### Wave 2 (Content Expansion)
+### Wave 2 (Content Expansion) - ✅ Completed (First Pass)
 
-- Stone/Mineral base generator with stone, granite, slate, obsidian variants
-- Wood/Organic base generator with wood, oak, walnut variants
-- Additional metal variants only after they have individually convincing visual identity: gold, silver, bronze, copper, iron, titanium
+- Stone/Mineral base generator with `stone`, `obsidian`, `jade`, `marble`, `granite` implemented
+- Wood/Organic generator first pass implemented (`wood`)
+- Expanded metals are implemented but still need visual contract tightening for stronger identity separation
 
 Estimated wave duration: 3-5 implementation days including tuning.
 
-### Wave 3 (Advanced Look Development)
+### Wave 3 (Advanced Look Development) - 🔄 Started (Baseline)
 
-- Transparent Gem/Glass base generator
+- Transparent Gem/Glass base generator (`glass`, `crystal`) first pass implemented
 - Optional novelty materials (opal-like, carbon fiber, pearl)
 
 Estimated wave duration: 4-7 implementation days with iteration risk.
 
-## Texture Preview and Validation Workflow (No Code Yet)
+## Texture Preview and Validation Workflow
 
 The implementation pass should be guided by a strict preview loop.
 
@@ -295,22 +299,27 @@ The implementation pass should be guided by a strict preview loop.
 - Maintain fallback to color-only rendering when no generator exists
 - Keep `DieMaterialPreset.ts` as source of truth for fallback palette values
 
-## Deliverables for First Implementation Pass
+## Current Deliverables Remaining
 
-No code changes are requested in this planning turn. The next implementation turn should produce:
+1. Strengthen stone/mineral identity tuning (marble veining contrast, granite breakup scale, jade depth/readability)
+2. Tune wood grain readability at gameplay distance and avoid over-uniform streaking
+3. Tune glass/crystal separation and depth response before enabling F17 lighting calibration
+4. Expand focused capability-level test coverage (especially C6/C7/C8 behavior deltas)
+5. Capture/update screenshot matrix for all active families and finishes under a pinned lighting profile
 
-1. Family generator implementations for Wave 1
-2. Variant presets for at least 2-4 named materials per completed family
-3. Preview screenshot set per family and finish profile
-4. Focused tests around generator output stability
-5. F14 doc updates marking completed families and adding tuning notes
+### Stone/Material Assumptions To Validate During Tuning
 
-## Exit Criteria for This Planning Update
+1. Stone/mineral currently shares one structural pass recipe with mostly color-driven divergence; material-specific structure parameters are still light-touch.
+2. Marble currently uses the same vein-mask family primitive as other minerals, which can under-read as classic marbling at gameplay distance.
+3. Surface profile tables and generator roughness-map values are maintained in separate places, so drift checks are needed when tuning finishes.
+4. Physical-material response currently treats all non-metal families similarly for bump/env defaults, so stone/ceramic/wood/glass distinction is primarily map-driven until F17 diagnostics are enabled.
 
-- Material families are defined and mapped to current materials
-- Additional material brainstorm is captured in family groups
-- Comparative procedural estimates are documented for prioritization
-- A practical implementation and preview workflow is documented
-- Document is ready for a code implementation pass next
+## Exit Criteria for F14 Completion
+
+- All currently selectable body materials have generator-backed identity (no fallback-only materials left)
+- Family differences are distinguishable at gameplay distance across `plain/etched/polished/hammered`
+- Capability-level regressions are covered by automated tests for active families
+- Visual baseline captures exist for each implemented family under a pinned gameplay profile
+- Remaining premium-only looks are explicitly marked as optional/post-F14
 
 Signature: A1

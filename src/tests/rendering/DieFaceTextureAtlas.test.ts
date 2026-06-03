@@ -7,6 +7,8 @@ import { MetalMaterialGenerators } from '../../rendering/textures/generators/Met
 import { SyntheticPolymerMaterialGenerators } from '../../rendering/textures/generators/SyntheticPolymerMaterialGenerator';
 import { CeramicMaterialGenerators } from '../../rendering/textures/generators/CeramicMaterialGenerator';
 import { StoneMineralMaterialGenerators } from '../../rendering/textures/generators/StoneMineralMaterialGenerator';
+import { WoodMaterialGenerators } from '../../rendering/textures/generators/WoodMaterialGenerator';
+import { GemGlassMaterialGenerators } from '../../rendering/textures/generators/GemGlassMaterialGenerator';
 
 const mockCanvasContext = {
     clearRect: () => {},
@@ -282,6 +284,56 @@ describe('DieFaceTextureAtlas UV mapping', () => {
             backgroundColor: preset.backgroundColor,
             pipColor: preset.pipColor,
             bodyMaterial: 'obsidian',
+            surfaceFinish: 'polished',
+            faceSize: 64,
+        });
+
+        expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+
+        texture.dispose();
+        geometry.dispose();
+        MaterialTextureRegistry.clear();
+    });
+
+    it('uses a registered wood generator for wood atlas textures', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const preset = resolveDieMaterialPreset({
+            bodyMaterial: 'wood',
+            surfaceFinish: 'etched',
+        });
+
+        WoodMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: preset.backgroundColor,
+            pipColor: preset.pipColor,
+            bodyMaterial: 'wood',
+            surfaceFinish: 'etched',
+            faceSize: 64,
+        });
+
+        expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+
+        texture.dispose();
+        geometry.dispose();
+        MaterialTextureRegistry.clear();
+    });
+
+    it('uses a registered gem/glass generator for crystal atlas textures', () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const preset = resolveDieMaterialPreset({
+            bodyMaterial: 'crystal',
+            surfaceFinish: 'polished',
+        });
+
+        GemGlassMaterialGenerators.forEach((generator) => MaterialTextureRegistry.register(generator));
+
+        const texture = createD6FaceAtlasMaterialTexture({
+            geometry,
+            backgroundColor: preset.backgroundColor,
+            pipColor: preset.pipColor,
+            bodyMaterial: 'crystal',
             surfaceFinish: 'polished',
             faceSize: 64,
         });

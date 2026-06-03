@@ -1,6 +1,6 @@
 # F17 - Physical Material Calibration and IBL Upgrade Plan
 
-Status: Proposed
+Status: 🔄 Planned Support Lane (Partial groundwork in place)
 
 ## Objective
 Realign the dice rendering effort around a stable, incremental path to physically-based materials that look good in the rolling scene without swinging between dark crushed metal and washed-out highlights.
@@ -25,6 +25,22 @@ Recent tuning improved polished streak artifacts, but broad color washout is sti
 
 Important current note:
 - The physical material path currently forces environment contribution off via envMapIntensity override in [src/rendering/materials/PhysicalD6Material.ts](src/rendering/materials/PhysicalD6Material.ts). This is useful as a temporary isolation switch, but it blocks meaningful IBL validation.
+
+## Current Reality Snapshot (June 2026)
+
+- A procedural canvas environment is present in [src/rendering/lighting.ts](src/rendering/lighting.ts), but PMREM/HDR IBL is not yet implemented.
+- Material generators and roughness maps are active across metal, synthetic/polymer, ceramic, and stone/mineral families.
+- `envMapIntensity` is currently clamped to `0` in [src/rendering/materials/PhysicalD6Material.ts](src/rendering/materials/PhysicalD6Material.ts), so environment-response tuning remains blocked by design.
+- No runtime diagnostic harness exists yet for roughness/bump/env/clearcoat toggles.
+- Polished-response adjustments have been started in generator and preset tuning, but no formal F17 tuning gate has been completed.
+
+## Milestone Progress Snapshot
+
+- F17-M1 Diagnostic harness: ⏳ Not Started
+- F17-M2 PMREM/HDR IBL baseline: ⏳ Not Started
+- F17-M3 Polished response rebalance: 🔄 In Progress
+- F17-M4 Lighting profile normalization: 🔄 In Progress (ad hoc tuning only)
+- F17-M5 Specialty track: ⏳ Not Started
 
 ## Reference Direction from Three.js Examples
 The linked examples consistently show three common ingredients for good physical materials:

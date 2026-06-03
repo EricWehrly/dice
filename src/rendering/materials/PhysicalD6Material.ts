@@ -104,7 +104,6 @@ export function createPhysicalD6Material(config: PhysicalD6MaterialConfig): THRE
                 : surfaceFinish === 'etched'
                     ? 0.65
                     : 0.8;
-    envMapIntensity = 0;
 
     return new THREE.MeshPhysicalMaterial({
         color: '#ffffff',
