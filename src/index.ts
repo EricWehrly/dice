@@ -36,37 +36,42 @@ function wireRollButtons(bag: Bag) {
 }
 
 const bag = new Bag();
-const dieA = MakeDieCharacter([DieEquippedMixin]);
-dieA.pipStyle = 'x';
-dieA.bodyMaterial = 'brass';
-// dieA.pipMaterial = 'brass';
+const dieA = MakeDieCharacter([DieEquippedMixin], {
+    pipStyle: 'x',
+    bodyMaterial: 'brass',
+});
 bag.addDie(dieA);
-const dieB = MakeDieCharacter([DieEquippedMixin]);
-dieB.bodyMaterial = 'silver';
-dieB.surfaceFinish = 'hammered';
-// dieB.pipMaterial = 'brass';
+const dieB = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'silver',
+    surfaceFinish: 'hammered',
+});
 bag.addDie(dieB);
-const dieC = MakeDieCharacter([DieEquippedMixin]);
-dieC.bodyMaterial = 'gold';
-dieC.pipSize = 2.8;
-dieC.pipStyle = 'clover';
-dieC.surfaceFinish = 'polished';
+const dieC = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'gold',
+    pipSize: 2.8,
+    pipStyle: 'clover',
+    surfaceFinish: 'polished',
+});
 bag.addDie(dieC);
-const dieD = MakeDieCharacter([DieEquippedMixin]);
-dieD.bodyMaterial = 'plastic';
-dieD.surfaceFinish = 'plain';
+const dieD = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'plastic',
+    surfaceFinish: 'plain',
+});
 bag.addDie(dieD);
-const dieE = MakeDieCharacter([DieEquippedMixin]);
-dieE.bodyMaterial = 'resin';
-dieE.surfaceFinish = 'polished';
+const dieE = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'resin',
+    surfaceFinish: 'polished',
+});
 bag.addDie(dieE);
-const dieF = MakeDieCharacter([DieEquippedMixin]);
-dieF.bodyMaterial = 'ceramic';
-dieF.surfaceFinish = 'plain';
+const dieF = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'ceramic',
+    surfaceFinish: 'plain',
+});
 bag.addDie(dieF);
-const dieG = MakeDieCharacter([DieEquippedMixin]);
-dieG.bodyMaterial = 'obsidian';
-dieG.surfaceFinish = 'polished';
+const dieG = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'obsidian',
+    surfaceFinish: 'polished',
+});
 bag.addDie(dieG);
 
 wireRollButtons(bag);

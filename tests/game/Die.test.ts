@@ -26,4 +26,10 @@ describe('Die', () => {
         expect(die.faceCount).toBe(8);
         expect(die.name).toBe('custom-d8');
     });
+
+    it('applies material-prefixed name during constructor initialization', () => {
+        const die = new Die({ faceCount: 6, bodyMaterial: 'gold' });
+
+        expect(die.name).toBe('gold d6');
+    });
 });

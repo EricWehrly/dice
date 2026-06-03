@@ -217,4 +217,27 @@ describe('DieModificationPanel integration', () => {
         expect(refreshedPipSizeInput.value).toBe('0');
     });
 
+    it('updates die selector label when body material changes', () => {
+        const bag = new Bag();
+        const die = MakeDieCharacter([DieEquippedMixin], { id: 'die-6', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
+        bag.addDie(die);
+        const panel = new DieModificationPanel(bag.getActiveDice() as Array<ReturnType<typeof MakeDieCharacter> & DieEquipped>);
+
+        panel.render();
+
+        const chipBefore = getRequired<HTMLButtonElement>('.die-mod-chip');
+        expect(chipBefore.textContent?.trim()).toBe('d6');
+
+        const bodyMaterialFamilySelector = getRequired<HTMLSelectElement>('.die-mod-body-material-family-selector');
+        bodyMaterialFamilySelector.value = 'metal';
+        bodyMaterialFamilySelector.dispatchEvent(new Event('change', { bubbles: true }));
+
+        const bodyMaterialSelector = getRequired<HTMLSelectElement>('.die-mod-body-material-selector');
+        bodyMaterialSelector.value = 'gold';
+        bodyMaterialSelector.dispatchEvent(new Event('change', { bubbles: true }));
+
+        const chipAfter = getRequired<HTMLButtonElement>('.die-mod-chip');
+        expect(chipAfter.textContent?.trim()).toBe('gold d6');
+    });
+
 });

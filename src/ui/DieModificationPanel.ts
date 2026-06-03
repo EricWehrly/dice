@@ -26,15 +26,20 @@ import { Die } from '../game/Die';
 import { DieWeightMod } from '../game/mods/DieWeightMod';
 import { DieSlotType } from '../game/DieEquipmentTypes';
 import Events from '../../engine/js/events';
-import { TrickEvents } from '../game/contracts/TrickContracts';
+import { TrickEvents, type DiePropertyChangeRequestedEvent } from '../game/contracts/TrickContracts';
 import { type DieEquipped } from '../game/DieEquippedMixin';
 
 type PendingModAction = 'install' | 'uninstall' | 'none';
+
+const MATERIAL_LABEL_VALUES = new Set(
+    MATERIAL_FAMILIES.flatMap((family) => family.materials.map((material) => material.value.toLowerCase()))
+);
 
 export class DieModificationPanel {
     private root: HTMLElement | null;
     private readonly canvasRenderer = new DieModificationCanvasRenderer();
     private readonly dice: Array<Die & DieEquipped>;
+    private readonly baseDieNamesById: Record<string, string>;
     
     // Die/face selection (persistent across modes)
     private selectedDieId: string;
@@ -61,6 +66,7 @@ export class DieModificationPanel {
     constructor(dice: Array<Die & DieEquipped>) {
         this.root = document.getElementById('die-mod-panel');
         this.dice = dice;
+        this.baseDieNamesById = this.createBaseNameMap(dice);
         this.selectedDieId = this.dice[0].id;
         this.resetDraftForSelectedDie();
     }
@@ -490,11 +496,14 @@ export class DieModificationPanel {
 
     private applyPipVisualsToSelectedDie(): void {
         const die = this.getSelectedDie();
-        die.pipStyle = (this.draftFaceStyle === 'none' || this.draftFaceStyle === 'circle')
+        const nextPipStyle = (this.draftFaceStyle === 'none' || this.draftFaceStyle === 'circle')
             ? ''
             : this.draftFaceStyle as import('../game/PipStyle').RenderPipStyle;
-        die.pipSize = this.draftPipSize;
-        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+
+        this.requestDiePropertyChange(die.id, {
+            pipStyle: nextPipStyle,
+            pipSize: this.draftPipSize,
+        });
     }
 
     private parsePipSizeInputValue(rawValue: string): number {
@@ -508,10 +517,47 @@ export class DieModificationPanel {
 
     private applyCosmeticsToSelectedDie(): void {
         const die = this.getSelectedDie();
-        die.bodyMaterial = this.draftCoreMaterial;
-        die.pipMaterial = this.draftPipMaterial;
-        die.surfaceFinish = this.draftFaceStyles[0] ?? 'plain';
-        Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
+
+        this.requestDiePropertyChange(die.id, {
+            bodyMaterial: this.draftCoreMaterial,
+            pipMaterial: this.draftPipMaterial,
+            surfaceFinish: this.draftFaceStyles[0] ?? 'plain',
+            name: this.buildDieNameFromMaterial(die.id, this.draftCoreMaterial),
+        });
+    }
+
+    private createBaseNameMap(dice: Array<Die & DieEquipped>): Record<string, string> {
+        return dice.reduce<Record<string, string>>((accumulator, die) => {
+            accumulator[die.id] = this.stripKnownMaterialPrefix(die.name);
+            return accumulator;
+        }, {});
+    }
+
+    private buildDieNameFromMaterial(dieId: string, material: AvailableMaterialValue): string {
+        const baseName = this.baseDieNamesById[dieId] ?? this.stripKnownMaterialPrefix(this.getSelectedDie().name);
+        // TODO: Add surface finish into generated die names when chip layout has enough width.
+        return `${material} ${baseName}`;
+    }
+
+    private stripKnownMaterialPrefix(name: string): string {
+        const trimmedName = name.trim();
+        const [firstWord, ...rest] = trimmedName.split(/\s+/);
+        if (rest.length === 0) {
+            return trimmedName;
+        }
+
+        if (!MATERIAL_LABEL_VALUES.has(firstWord.toLowerCase())) {
+            return trimmedName;
+        }
+
+        return rest.join(' ');
+    }
+
+    private requestDiePropertyChange(dieId: string, changes: DiePropertyChangeRequestedEvent['changes']): void {
+        Events.RaiseEvent<DiePropertyChangeRequestedEvent>(TrickEvents.DIE_PROPERTY_CHANGE_REQUESTED, {
+            dieId,
+            changes,
+        });
     }
 
     private getDraftFaceModsFromDie(die: Die & DieEquipped): AvailableModValue[] {
