@@ -11,7 +11,11 @@ import { DIE_BODY_MATERIALS, DIE_SURFACE_FINISHES } from '../rendering/textures/
 export interface DieOptions extends EntityOptions {
     faceCount?: number;
     id?: string;
+    name?: string;
     randomizer?: () => number;
+    faceUp?: number;
+    active?: boolean;
+    locked?: boolean;
     edgeRoundness?: number;
     bodyMaterial?: string;
     pipMaterial?: string;
@@ -42,16 +46,20 @@ export class Die extends Entity {
     private readonly randomizer: () => number;
     private readonly diePropertyChangeSubscriptionId: string | null;
     private readonly baseName: string;
+    private autoMaterialNameEnabled: boolean;
+    private _faceUp: number;
+    private _active: boolean;
+    private _locked: boolean;
+    private _edgeRoundness: number;
     private _bodyMaterial: string;
     private _pipMaterial: string;
     private _surfaceFinish: string;
     private _pipStyle: PipStyleSetting;
     private _pipSize: number;
-    faceUp: number;
-    active: boolean;
-    locked: boolean;
-    edgeRoundness: number;
-    // TODO: Move faceUp/active/locked/edgeRoundness to readonly external access with event-requested mutation boundary like cosmetics.
+    get faceUp(): number { return this._faceUp; }
+    get active(): boolean { return this._active; }
+    get locked(): boolean { return this._locked; }
+    get edgeRoundness(): number { return this._edgeRoundness; }
     get bodyMaterial(): string { return this._bodyMaterial; }
     get pipMaterial(): string { return this._pipMaterial; }
     get surfaceFinish(): string { return this._surfaceFinish; }
@@ -62,6 +70,9 @@ export class Die extends Entity {
         faceCount = 6,
         id = generateId(),
         randomizer = Math.random,
+        faceUp,
+        active,
+        locked,
         edgeRoundness = DEFAULT_DICE_CONFIG.edgeRoundness ?? 0.16,
         bodyMaterial,
         pipMaterial,
@@ -74,6 +85,7 @@ export class Die extends Entity {
             throw new Error('faceCount must be an integer >= 2');
         }
 
+        const hasExplicitName = typeof entityOptions.name === 'string' && entityOptions.name.trim().length > 0;
         const resolvedName = entityOptions.name ?? `d${faceCount}`;
 
         super({
@@ -85,24 +97,33 @@ export class Die extends Entity {
 
         this.faceCount = faceCount;
         this.randomizer = randomizer;
-        this.faceUp = 1;
-        this.active = true;
-        this.locked = false;
+        this._faceUp = 1;
+        this._active = true;
+        this._locked = false;
         this.baseName = stripKnownMaterialPrefix(this.name);
+        this.autoMaterialNameEnabled = !hasExplicitName;
         this._bodyMaterial = DEFAULT_DICE_CONFIG.bodyMaterial ?? 'plastic';
         this._pipMaterial = DEFAULT_DICE_CONFIG.pipMaterial ?? 'plastic';
         this._surfaceFinish = DEFAULT_DICE_CONFIG.surfaceFinish ?? 'plain';
         this._pipStyle = DEFAULT_DICE_CONFIG.pipStyle ?? '';
-        this.edgeRoundness = edgeRoundness;
+        this._edgeRoundness = edgeRoundness;
         this._pipSize = DEFAULT_DICE_CONFIG.pipSize ?? 1;
 
         this.applyRequestedPropertyChanges({
+            faceUp,
+            active,
+            locked,
+            edgeRoundness,
             bodyMaterial,
             pipMaterial,
             surfaceFinish,
             pipStyle,
             pipSize,
         });
+
+        if (this.autoMaterialNameEnabled) {
+            this.name = `${this._bodyMaterial} ${this.baseName}`;
+        }
 
         this.diePropertyChangeSubscriptionId = Events.Subscribe<DiePropertyChangeRequestedEvent>(
             TrickEvents.DIE_PROPERTY_CHANGE_REQUESTED,
@@ -111,10 +132,7 @@ export class Die extends Entity {
                     return;
                 }
 
-                const didChange = this.applyRequestedPropertyChanges(event.changes);
-                if (didChange) {
-                    Events.RaiseEvent(TrickEvents.BAG_CHANGED, null);
-                }
+                this.applyRequestedPropertyChanges(event.changes);
             }
         );
     }
@@ -122,10 +140,41 @@ export class Die extends Entity {
     private applyRequestedPropertyChanges(changes: DiePropertyChangeRequest): boolean {
         let didChange = false;
 
+        if (typeof changes.faceUp === 'number' && Number.isInteger(changes.faceUp) && changes.faceUp >= 1 && changes.faceUp <= this.faceCount) {
+            if (this._faceUp !== changes.faceUp) {
+                this._faceUp = changes.faceUp;
+                didChange = true;
+            }
+        }
+
+        if (typeof changes.active === 'boolean') {
+            if (this._active !== changes.active) {
+                this._active = changes.active;
+                didChange = true;
+            }
+        }
+
+        if (typeof changes.locked === 'boolean') {
+            if (this._locked !== changes.locked) {
+                this._locked = changes.locked;
+                didChange = true;
+            }
+        }
+
+        if (typeof changes.edgeRoundness === 'number' && Number.isFinite(changes.edgeRoundness)) {
+            const nextEdgeRoundness = Math.max(0, Math.min(0.5, changes.edgeRoundness));
+            if (this._edgeRoundness !== nextEdgeRoundness) {
+                this._edgeRoundness = nextEdgeRoundness;
+                didChange = true;
+            }
+        }
+
         if (typeof changes.bodyMaterial === 'string' && VALID_BODY_MATERIALS.has(changes.bodyMaterial)) {
             if (this._bodyMaterial !== changes.bodyMaterial) {
                 this._bodyMaterial = changes.bodyMaterial;
-                this.name = `${changes.bodyMaterial} ${this.baseName}`;
+                if (this.autoMaterialNameEnabled) {
+                    this.name = `${changes.bodyMaterial} ${this.baseName}`;
+                }
                 didChange = true;
             }
         }
@@ -164,6 +213,7 @@ export class Die extends Entity {
             const nextName = changes.name.trim();
             if (nextName && this.name !== nextName) {
                 this.name = nextName;
+                this.autoMaterialNameEnabled = false;
                 didChange = true;
             }
         }
@@ -179,8 +229,8 @@ export class Die extends Entity {
     }
 
     roll(): number {
-        this.faceUp = Math.floor(this.randomizer() * this.faceCount) + 1;
-        return this.faceUp;
+        this._faceUp = Math.floor(this.randomizer() * this.faceCount) + 1;
+        return this._faceUp;
     }
 
 }

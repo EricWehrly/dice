@@ -1,6 +1,10 @@
 import type { GameEvent } from '../../../engine/js/events';
 
 export interface DiePropertyChangeRequest {
+    faceUp?: number;
+    active?: boolean;
+    locked?: boolean;
+    edgeRoundness?: number;
     bodyMaterial?: string;
     pipMaterial?: string;
     surfaceFinish?: string;

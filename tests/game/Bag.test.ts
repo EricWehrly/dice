@@ -31,8 +31,7 @@ describe('Bag', () => {
 
     it('does not roll inactive dice', () => {
         const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.2 });
-        const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.2 });
-        d2.active = false;
+        const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.2, active: false });
         const bag = makeBag(d1, d2);
 
         const results = bag.rollAll();
@@ -43,10 +42,8 @@ describe('Bag', () => {
     });
 
     it('does not reroll locked dice and still returns all active faces', () => {
-        const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.8 });
+        const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.8, faceUp: 2, locked: true });
         const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.8 });
-        d1.faceUp = 2;
-        d1.locked = true;
         const bag = makeBag(d1, d2);
 
         const results = bag.rollAll();
@@ -84,10 +81,8 @@ describe('Bag', () => {
     });
 
     it('stores roll history entries with face result fields needed by tricks', () => {
-        const lockedDie = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.8 });
+        const lockedDie = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.8, faceUp: 2, locked: true });
         const rolledDie = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.8 });
-        lockedDie.faceUp = 2;
-        lockedDie.locked = true;
         const bag = makeBag(lockedDie, rolledDie);
 
         bag.rollAll();
@@ -149,8 +144,7 @@ describe('Bag', () => {
     it('assigns locked dice to earlier lane indexes than unlocked dice', () => {
         const d1 = makeDie({ faceCount: 6, id: 'd1', randomizer: () => 0.2, position: { x: 99, y: 3, z: 7 } });
         const d2 = makeDie({ faceCount: 6, id: 'd2', randomizer: () => 0.2, position: { x: 99, y: 4, z: 8 } });
-        const d3 = makeDie({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 } });
-        d3.locked = true;
+        const d3 = makeDie({ faceCount: 6, id: 'd3', randomizer: () => 0.2, position: { x: 99, y: 5, z: 9 }, locked: true });
         const bag = makeBag(d1, d2, d3);
 
         bag.rollAll();

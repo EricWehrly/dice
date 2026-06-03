@@ -226,7 +226,7 @@ describe('DieModificationPanel integration', () => {
         panel.render();
 
         const chipBefore = getRequired<HTMLButtonElement>('.die-mod-chip');
-        expect(chipBefore.textContent?.trim()).toBe('d6');
+        expect(chipBefore.textContent?.trim()).toBe('plastic d6');
 
         const bodyMaterialFamilySelector = getRequired<HTMLSelectElement>('.die-mod-body-material-family-selector');
         bodyMaterialFamilySelector.value = 'metal';

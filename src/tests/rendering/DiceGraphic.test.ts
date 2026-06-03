@@ -120,8 +120,7 @@ describe('DiceGraphic', () => {
         const { DiceGraphic } = (await import('../../rendering/DiceGraphic')) as any;
         const { Die } = (await import('../../game/Die')) as any;
 
-        const entity = new Die({ faceCount: 6 });
-        entity.faceUp = 2;
+        const entity = new Die({ faceCount: 6, faceUp: 2 });
 
         const graphic = new DiceGraphic(entity);
         graphic.update(16);

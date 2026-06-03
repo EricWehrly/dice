@@ -1,5 +1,5 @@
 import Events, { type GameEvent } from '../../engine/js/events';
-import { TrickEvents } from './contracts/TrickContracts';
+import { TrickEvents, type DiePropertyChangeRequestedEvent } from './contracts/TrickContracts';
 import { Die } from './Die';
 import { DieFaceResult } from './DieFaceResult';
 import { RecordHistory } from './RecordHistory';
@@ -84,7 +84,12 @@ export class Bag {
             return;
         }
 
-        die.active = !die.active;
+        Events.RaiseEvent<DiePropertyChangeRequestedEvent>(TrickEvents.DIE_PROPERTY_CHANGE_REQUESTED, {
+            dieId: die.id,
+            changes: {
+                active: !die.active,
+            },
+        });
         this.rollHistory.clear();
         this.applyLaneOrdering();
         this.raiseBagChanged();
@@ -96,7 +101,12 @@ export class Bag {
             return;
         }
 
-        die.locked = !die.locked;
+        Events.RaiseEvent<DiePropertyChangeRequestedEvent>(TrickEvents.DIE_PROPERTY_CHANGE_REQUESTED, {
+            dieId: die.id,
+            changes: {
+                locked: !die.locked,
+            },
+        });
         this.applyLaneOrdering();
         this.raiseBagChanged();
     }
