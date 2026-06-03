@@ -79,8 +79,13 @@ export const MATERIAL_FAMILIES = [
 export type AvailableMaterialValue = typeof MATERIAL_FAMILIES[number]['materials'][number]['value'];
 export type MaterialFamilyValue = typeof MATERIAL_FAMILIES[number]['family'];
 
-export const AVAILABLE_MATERIALS: ReadonlyArray<{ readonly value: AvailableMaterialValue; readonly label: string }> =
-    MATERIAL_FAMILIES.flatMap((g) => g.materials);
+type AvailableMaterialOption = {
+    readonly value: AvailableMaterialValue;
+    readonly label: string;
+};
+
+export const AVAILABLE_MATERIALS: ReadonlyArray<AvailableMaterialOption> =
+    MATERIAL_FAMILIES.flatMap((group) => group.materials as readonly AvailableMaterialOption[]);
 
 export const AVAILABLE_STYLES = [
     { value: 'plain', label: 'Plain finish' },

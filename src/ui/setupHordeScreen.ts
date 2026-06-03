@@ -6,9 +6,7 @@ import ThreeJSRenderContext from '../../engine/js/rendering/contexts/ThreeJS.Ren
 import Events from '../../engine/js/events';
 import {
     TrickEvents,
-    HORDE_SCREEN_STATE_EVENT,
     type DieSelectedEvent,
-    type HordeScreenStateEvent,
 } from '../game/contracts/TrickContracts';
 
 interface SetupHordeScreenParams {
@@ -58,7 +56,6 @@ export function setupHordeScreen({
         // TECH DEBT: Horde currently borrows the roll renderer instead of owning a dedicated scene.
         moveSharedCanvas(hordeScreenElement);
         ensureHordeScene().enter();
-        Events.RaiseEvent<HordeScreenStateEvent>(HORDE_SCREEN_STATE_EVENT, { active: true });
     });
 
     roll3dTabButton.addEventListener('click', () => {
@@ -70,7 +67,6 @@ export function setupHordeScreen({
         // TECH DEBT: exiting Horde needs to restore the shared canvas to the roll host for now.
         hordeScene?.exit();
         moveSharedCanvas(roll3dCanvasHost);
-        Events.RaiseEvent<HordeScreenStateEvent>(HORDE_SCREEN_STATE_EVENT, { active: false });
     });
 
     // Listen for die selection from the horde scene (click or Enter key)

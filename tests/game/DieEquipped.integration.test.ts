@@ -9,27 +9,27 @@ import { createEntityFrom } from '../../engine/js/entities/character/EntityBuild
 import { Die } from '../../src/game/Die';
 import { DieEquippedMixin } from '../../src/game/DieEquippedMixin';
 import type { DieEquipped } from '../../src/game/DieEquippedMixin';
-import { DieSlotType, type DieEquipment } from '../../src/game/DieEquipmentTypes';
+import { DieSlotType, normalizeFaceStyleId, type DieEquipment } from '../../src/game/DieEquipmentTypes';
 
-// Simple test implementation of DieEquipment interface (from game-layer approximation)
-class TestDieEquippable implements DieEquipment {
-    readonly id: string;
-    readonly name: string;
-    readonly type: DieSlotType;
-
-    constructor(id: string, name: string, type: DieSlotType) {
-        this.id = id;
-        this.name = name;
-        this.type = type;
+function makeEquipment(id: string, name: string, type: DieSlotType): DieEquipment {
+    if (type === DieSlotType.FACE_STYLE) {
+        return {
+            id,
+            name,
+            type,
+            faceStyleId: normalizeFaceStyleId(name),
+        };
     }
+
+    return { id, name, type };
 }
 
 type EquippedDie = Die & DieEquipped;
 
 describe('DieEquipped mixin integration (game layer)', () => {
     it('applies to Die via createEntityFrom(Die) and supports initial slot population', () => {
-        const modA = new TestDieEquippable('mod-5g', 'weight-5g', DieSlotType.MOD);
-        const face = new TestDieEquippable('face-etched', 'etched', DieSlotType.FACE_STYLE);
+        const modA = makeEquipment('mod-5g', 'weight-5g', DieSlotType.MOD);
+        const face = makeEquipment('face-etched', 'etched', DieSlotType.FACE_STYLE);
 
         const die = createEntityFrom(Die)
             .withMixin(DieEquippedMixin)
@@ -42,8 +42,8 @@ describe('DieEquipped mixin integration (game layer)', () => {
     });
 
     it('supports install replacement and uninstall', () => {
-        const modA = new TestDieEquippable('mod-5g', 'weight-5g', DieSlotType.MOD);
-        const modB = new TestDieEquippable('mod-10g', 'weight-10g', DieSlotType.MOD);
+        const modA = makeEquipment('mod-5g', 'weight-5g', DieSlotType.MOD);
+        const modB = makeEquipment('mod-10g', 'weight-10g', DieSlotType.MOD);
 
         const die = createEntityFrom(Die)
             .withMixin(DieEquippedMixin)

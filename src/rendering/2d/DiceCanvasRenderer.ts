@@ -1,7 +1,16 @@
 import Events from '../../../engine/js/events';
 import { TrickEvents } from '../../game/contracts/TrickContracts';
-import { Bag } from '../../game/Bag';
+import { Bag, type BagRolledEvent } from '../../game/Bag';
+import { Die } from '../../game/Die';
 import { drawDieFaceTile } from './DieFaceTileRenderer';
+
+interface EquippedDiceProvider {
+    getEquippedDice(): Die[];
+}
+
+function isEquippedDiceProvider(bag: Bag): bag is Bag & EquippedDiceProvider {
+    return typeof (bag as Bag & Partial<EquippedDiceProvider>).getEquippedDice === 'function';
+}
 
 export class DiceCanvasRenderer {
     private static readonly TILE_SIZE = 80;
@@ -45,8 +54,8 @@ export class DiceCanvasRenderer {
         window.addEventListener('resize', this.onResize);
         this.canvas.addEventListener('click', this.onCanvasClick);
 
-        Events.Subscribe(TrickEvents.BAG_ROLLED, (event: any) => {
-            this.lastRollDiceIds = event.diceIds || [];
+        Events.Subscribe<BagRolledEvent>(TrickEvents.BAG_ROLLED, (event) => {
+            this.lastRollDiceIds = event.diceIds;
             this.render();
         });
         Events.Subscribe(TrickEvents.BAG_CHANGED, () => this.render());
@@ -103,7 +112,9 @@ export class DiceCanvasRenderer {
         const rowStride = tileSize + gap;
         const perRow = this.getTilesPerRow();
 
-        this.bag.dice.forEach((die, index) => {
+        const diceToRender = this.getDisplayDice();
+
+        diceToRender.forEach((die, index) => {
             const col = index % perRow;
             const row = Math.floor(index / perRow);
             const x = gap + col * (tileSize + gap);
@@ -166,7 +177,7 @@ export class DiceCanvasRenderer {
         const rowStride = tileSize + gap;
         const perRow = this.getTilesPerRow();
 
-        this.bag.dice.forEach((die, index) => {
+        this.getDisplayDice().forEach((die, index) => {
             if (!this.glowingDiceIds.has(die.id)) {
                 return;
             }
@@ -214,7 +225,7 @@ export class DiceCanvasRenderer {
         const rowStride = tileSize + gap;
         const perRow = this.getTilesPerRow();
 
-        for (const [index, die] of this.bag.dice.entries()) {
+        for (const [index, die] of this.getDisplayDice().entries()) {
             const col = index % perRow;
             const row = Math.floor(index / perRow);
             const tileX = gap + col * (tileSize + gap);
@@ -226,6 +237,10 @@ export class DiceCanvasRenderer {
         }
 
         return null;
+    }
+
+    private getDisplayDice(): Die[] {
+        return isEquippedDiceProvider(this.bag) ? this.bag.getEquippedDice() : this.bag.dice;
     }
 
     private resize(): void {

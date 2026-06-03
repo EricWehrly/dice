@@ -1,4 +1,4 @@
-import { Bag } from './game/Bag';
+import { DiceEquipmentBag } from './game/DiceEquipmentBag';
 import { ScoreProgressionTracker } from './game/score/ScoreProgressionTracker';
 import { TrickEvaluator } from './game/tricks/TrickEvaluator';
 import { DiceCanvasRenderer } from './rendering/2d/DiceCanvasRenderer';
@@ -9,6 +9,7 @@ import { TrickCounterPanel } from './ui/TrickCounterPanel';
 import { TrickPanel } from './ui/TrickPanel';
 import { setupIsometricEasterEgg } from './rendering/2d/isometricEasterEgg';
 import { setupRoll3DScreen } from './rendering/3d/ui/setupRoll3DScreen';
+import { setupHordeScreen } from './ui/setupHordeScreen';
 import { ScreenManager } from './utils/ScreenManager';
 import { init as initThrower } from './thrower/index';
 import { initializeGameResources } from './game/resources/GameResources';
@@ -18,7 +19,7 @@ import { MakeDieCharacter } from './game/DieCharacterFactory';
 import { DieEquippedMixin } from './game/DieEquippedMixin';
 
 // TODO: handle in managed UI instead
-function wireRollButtons(bag: Bag) {
+function wireRollButtons(bag: DiceEquipmentBag) {
     const rollButtons = [
         document.getElementById('roll-btn') as HTMLButtonElement | null,
         document.getElementById('roll-3d-btn') as HTMLButtonElement | null,
@@ -35,7 +36,7 @@ function wireRollButtons(bag: Bag) {
     });
 }
 
-const bag = new Bag();
+const bag = new DiceEquipmentBag();
 const dieA = MakeDieCharacter([DieEquippedMixin], {
     pipStyle: 'x',
     bodyMaterial: 'brass',
@@ -73,6 +74,41 @@ const dieG = MakeDieCharacter([DieEquippedMixin], {
     surfaceFinish: 'polished',
 });
 bag.addDie(dieG);
+
+// Additional dice for horde screen variety
+const dieH = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'brass',
+    surfaceFinish: 'hammered',
+    pipStyle: 'circle',
+});
+bag.addDie(dieH);
+const dieI = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'silver',
+    surfaceFinish: 'polished',
+    pipSize: 2.6,
+});
+bag.addDie(dieI);
+const dieJ = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'gold',
+    surfaceFinish: 'hammered',
+});
+bag.addDie(dieJ);
+const dieK = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'ceramic',
+    surfaceFinish: 'polished',
+    pipStyle: 'clover',
+});
+bag.addDie(dieK);
+const dieL = MakeDieCharacter([DieEquippedMixin], {
+    bodyMaterial: 'resin',
+    surfaceFinish: 'hammered',
+});
+bag.addDie(dieL);
+
+// Auto-equip first 6 dice for gameplay
+[dieA, dieB, dieC, dieD, dieE, dieF].forEach((die) => {
+    bag.equip(die.id);
+});
 
 wireRollButtons(bag);
 new DiceCanvasRenderer(bag);
@@ -114,6 +150,16 @@ setupRoll3DScreen({
 });
 
 setupRenderPresetPanel();
+
+setupHordeScreen({
+    bag,
+    hordeScreenElement: document.getElementById('horde-screen')!,
+    roll3dScreenElement: roll3dScreen,
+    screenManager,
+    dieModificationPanel,
+    hordeTabButton: document.getElementById('horde-mode-btn')!,
+    roll3dTabButton: document.getElementById('roll-3d-mode-btn')!,
+});
 
 initThrower();
 

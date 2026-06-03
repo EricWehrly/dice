@@ -16,6 +16,7 @@ import {
 } from '../../src/game/DieEquippedMixin';
 import Entity from '../../engine/js/entities/character/Entity';
 import Events from '../../engine/js/events';
+import { normalizeFaceStyleId } from '../../src/game/DieEquipmentTypes';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -29,6 +30,15 @@ function makeEntity(): Entity & DieEquipped {
 }
 
 function makeItem(name: string, slotType: DieSlotType): DieEquipment {
+    if (slotType === DieSlotType.FACE_STYLE) {
+        return {
+            id: name,
+            name,
+            type: slotType,
+            faceStyleId: normalizeFaceStyleId(name),
+        };
+    }
+
     return { id: name, name, type: slotType };
 }
 

@@ -14,6 +14,12 @@ import { DieClickHandler } from './camera/DieClickHandler';
 import { FocusedCameraDrift } from './camera/FocusedCameraDrift';
 import { readCssTimeMs } from './utils/css';
 
+/**
+ * TODO: merge down to engine camera.ts
+ * split out roll3d screen specific functionality
+ * handle clicks ... better ...
+ */
+
 export interface Roll3DFocusUiState {
     focusedDieId: string | null;
     panelOpen: boolean;
