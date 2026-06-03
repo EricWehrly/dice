@@ -24,25 +24,63 @@ export const AVAILABLE_CORE_MODS = [
     // See: docs/active/roadmap.md "Planned Mods", docs/features/F-brain-mod.md (future)
 ] as const;
 
-export const AVAILABLE_MATERIALS = [
-    { value: 'plastic', label: 'Plastic' },
-    { value: 'wood', label: 'Wood' },
-    { value: 'stone', label: 'Stone' },
-    { value: 'ceramic', label: 'Ceramic' },
-    { value: 'resin', label: 'Resin' },
-    { value: 'brass', label: 'Brass' },
-    { value: 'steel', label: 'Steel' },
-    { value: 'gold', label: 'Gold' },
-    { value: 'silver', label: 'Silver' },
-    { value: 'bronze', label: 'Bronze' },
-    { value: 'copper', label: 'Copper' },
-    { value: 'iron', label: 'Iron' },
-    { value: 'titanium', label: 'Titanium' },
-    { value: 'obsidian', label: 'Obsidian' },
-    { value: 'jade', label: 'Jade' },
-    { value: 'glass', label: 'Glass' },
-    { value: 'crystal', label: 'Crystal' },
+export const MATERIAL_FAMILIES = [
+    {
+        family: 'metal',
+        label: 'Metal',
+        materials: [
+            { value: 'brass', label: 'Brass' },
+            { value: 'steel', label: 'Steel' },
+            { value: 'gold', label: 'Gold' },
+            { value: 'silver', label: 'Silver' },
+            { value: 'bronze', label: 'Bronze' },
+            { value: 'copper', label: 'Copper' },
+            { value: 'iron', label: 'Iron' },
+            { value: 'titanium', label: 'Titanium' },
+        ],
+    },
+    {
+        family: 'synthetic',
+        label: 'Synthetic',
+        materials: [
+            { value: 'plastic', label: 'Plastic' },
+            { value: 'resin', label: 'Resin' },
+        ],
+    },
+    {
+        family: 'ceramic',
+        label: 'Ceramic',
+        materials: [
+            { value: 'ceramic', label: 'Ceramic' },
+        ],
+    },
+    {
+        family: 'stone',
+        label: 'Stone & Mineral',
+        materials: [
+            { value: 'stone', label: 'Stone' },
+            { value: 'obsidian', label: 'Obsidian' },
+            { value: 'jade', label: 'Jade' },
+            { value: 'marble', label: 'Marble' },
+            { value: 'granite', label: 'Granite' },
+        ],
+    },
+    {
+        family: 'other',
+        label: 'Other',
+        materials: [
+            { value: 'wood', label: 'Wood' },
+            { value: 'glass', label: 'Glass' },
+            { value: 'crystal', label: 'Crystal' },
+        ],
+    },
 ] as const;
+
+export type AvailableMaterialValue = typeof MATERIAL_FAMILIES[number]['materials'][number]['value'];
+export type MaterialFamilyValue = typeof MATERIAL_FAMILIES[number]['family'];
+
+export const AVAILABLE_MATERIALS: ReadonlyArray<{ readonly value: AvailableMaterialValue; readonly label: string }> =
+    MATERIAL_FAMILIES.flatMap((g) => g.materials);
 
 export const AVAILABLE_STYLES = [
     { value: 'plain', label: 'Plain finish' },
@@ -61,6 +99,5 @@ export const AVAILABLE_FACE_STYLES = [
 
 export type AvailableModValue = typeof AVAILABLE_MODS[number]['value'];
 export type AvailableCoreModValue = typeof AVAILABLE_CORE_MODS[number]['value'];
-export type AvailableMaterialValue = typeof AVAILABLE_MATERIALS[number]['value'];
 export type AvailableStyleValue = typeof AVAILABLE_STYLES[number]['value'];
 export type AvailableFaceStyleValue = typeof AVAILABLE_FACE_STYLES[number]['value'];

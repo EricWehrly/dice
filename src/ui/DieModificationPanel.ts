@@ -13,9 +13,11 @@ import { renderDieModPanel, type DieModPanelData } from './DieModificationPanelT
 import { DieModificationCanvasRenderer } from './DieModificationCanvasRenderer';
 import {
     AVAILABLE_MODS,
+    MATERIAL_FAMILIES,
     type AvailableModValue,
     type AvailableCoreModValue,
     type AvailableMaterialValue,
+    type MaterialFamilyValue,
     type AvailableFaceStyleValue,
     type AvailableStyleValue,
 } from './DieModificationTypes';
@@ -41,7 +43,9 @@ export class DieModificationPanel {
     // Legacy draft state (for face mods in future phases)
     private draftFaceMods: AvailableModValue[] = [];
     private draftCoreMod: AvailableCoreModValue = 'none';
+    private draftCoreMaterialFamily: MaterialFamilyValue = 'synthetic';
     private draftCoreMaterial: AvailableMaterialValue = 'plastic';
+    private draftPipMaterialFamily: MaterialFamilyValue = 'synthetic';
     private draftPipMaterial: AvailableMaterialValue = 'plastic';
     private draftFaceStyles: AvailableStyleValue[] = [];
     private draftFaceStyle: AvailableFaceStyleValue = 'none';
@@ -154,7 +158,9 @@ export class DieModificationPanel {
             faceCount: die.faceCount,
             draftFaceMods: this.draftFaceMods,
             draftCoreMod: this.draftCoreMod,
+            draftCoreMaterialFamily: this.draftCoreMaterialFamily,
             draftCoreMaterial: this.draftCoreMaterial,
+            draftPipMaterialFamily: this.draftPipMaterialFamily,
             draftPipMaterial: this.draftPipMaterial,
             draftFaceStyles: this.draftFaceStyles,
             draftFaceStyle: this.draftFaceStyle,
@@ -230,10 +236,29 @@ export class DieModificationPanel {
         });
 
         // Collapsed mode: Style selector
-        const materialSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-material-selector');
-        materialSelector?.addEventListener('change', (event) => {
+        const coreMaterialFamilySelector = this.root.querySelector<HTMLSelectElement>('.die-mod-body-material-family-selector');
+        coreMaterialFamilySelector?.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            this.draftCoreMaterialFamily = (target.value as MaterialFamilyValue) ?? 'synthetic';
+            this.draftCoreMaterial = this.getFirstMaterialInFamily(this.draftCoreMaterialFamily);
+            this.applyCosmeticsToSelectedDie();
+            this.render();
+        });
+
+        const coreMaterialSelector = this.root.querySelector<HTMLSelectElement>('.die-mod-body-material-selector');
+        coreMaterialSelector?.addEventListener('change', (event) => {
             const target = event.target as HTMLSelectElement;
             this.draftCoreMaterial = (target.value as AvailableMaterialValue) ?? 'plastic';
+            this.draftCoreMaterialFamily = this.getMaterialFamily(this.draftCoreMaterial);
+            this.applyCosmeticsToSelectedDie();
+            this.render();
+        });
+
+        const pipMaterialFamilySelector = this.root.querySelector<HTMLSelectElement>('.die-mod-pip-material-family-selector');
+        pipMaterialFamilySelector?.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            this.draftPipMaterialFamily = (target.value as MaterialFamilyValue) ?? 'synthetic';
+            this.draftPipMaterial = this.getFirstMaterialInFamily(this.draftPipMaterialFamily);
             this.applyCosmeticsToSelectedDie();
             this.render();
         });
@@ -242,6 +267,7 @@ export class DieModificationPanel {
         pipMaterialSelector?.addEventListener('change', (event) => {
             const target = event.target as HTMLSelectElement;
             this.draftPipMaterial = (target.value as AvailableMaterialValue) ?? 'plastic';
+            this.draftPipMaterialFamily = this.getMaterialFamily(this.draftPipMaterial);
             this.applyCosmeticsToSelectedDie();
             this.render();
         });
@@ -443,7 +469,23 @@ export class DieModificationPanel {
         this.draftPipSize = this.getDraftPipSizeFromDie(die);
         this.draftCoreMod = 'none';
         this.draftCoreMaterial = (die.bodyMaterial as AvailableMaterialValue | undefined) ?? 'plastic';
+        this.draftCoreMaterialFamily = this.getMaterialFamily(this.draftCoreMaterial);
         this.draftPipMaterial = (die.pipMaterial as AvailableMaterialValue | undefined) ?? 'plastic';
+        this.draftPipMaterialFamily = this.getMaterialFamily(this.draftPipMaterial);
+    }
+
+    private getMaterialFamily(material: AvailableMaterialValue): MaterialFamilyValue {
+        for (const family of MATERIAL_FAMILIES) {
+            if (family.materials.some((m) => m.value === material)) {
+                return family.family;
+            }
+        }
+        return 'synthetic';
+    }
+
+    private getFirstMaterialInFamily(family: MaterialFamilyValue): AvailableMaterialValue {
+        const familyDef = MATERIAL_FAMILIES.find((f) => f.family === family);
+        return familyDef ? (familyDef.materials[0].value as AvailableMaterialValue) : 'plastic';
     }
 
     private applyPipVisualsToSelectedDie(): void {

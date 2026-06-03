@@ -9,14 +9,41 @@ import {
     type AvailableModValue,
     type AvailableCoreModValue,
     type AvailableMaterialValue,
+    type MaterialFamilyValue,
     type AvailableFaceStyleValue,
     type AvailableStyleValue,
     AVAILABLE_MODS,
     AVAILABLE_CORE_MODS,
     AVAILABLE_FACE_STYLES,
-    AVAILABLE_MATERIALS,
+    MATERIAL_FAMILIES,
     AVAILABLE_STYLES,
 } from './DieModificationTypes';
+
+function renderMaterialOptions(selected: AvailableMaterialValue): string {
+    return MATERIAL_FAMILIES.map(
+        (group) => `<optgroup label="${group.label}">${
+            group.materials.map(
+                (m) => `<option value="${m.value}"${m.value === selected ? ' selected' : ''}>${m.label}</option>`
+            ).join('')
+        }</optgroup>`
+    ).join('');
+}
+
+function renderMaterialFamilyOptions(selected: MaterialFamilyValue): string {
+    return MATERIAL_FAMILIES.map(
+        (family) => `<option value="${family.family}"${family.family === selected ? ' selected' : ''}>${family.label}</option>`
+    ).join('');
+}
+
+function renderMaterialOptionsForFamily(family: MaterialFamilyValue, selected: AvailableMaterialValue): string {
+    const familyDef = MATERIAL_FAMILIES.find((f) => f.family === family);
+    if (!familyDef) {
+        return '';
+    }
+    return familyDef.materials.map(
+        (m) => `<option value="${m.value}"${m.value === selected ? ' selected' : ''}>${m.label}</option>`
+    ).join('');
+}
 
 export interface DieModPanelData {
     dice: Array<{ id: string; name: string; faceCount: number }>;
@@ -25,7 +52,9 @@ export interface DieModPanelData {
     faceCount: number;
     draftFaceMods: AvailableModValue[];
     draftCoreMod: AvailableCoreModValue;
+    draftCoreMaterialFamily: MaterialFamilyValue;
     draftCoreMaterial: AvailableMaterialValue;
+    draftPipMaterialFamily: MaterialFamilyValue;
     draftPipMaterial: AvailableMaterialValue;
     draftFaceStyles: AvailableStyleValue[];
     draftFaceStyle: AvailableFaceStyleValue;
@@ -78,24 +107,35 @@ export function renderDieModPanel(data: DieModPanelData): string {
                 </div>
             </div>
 
-            <!-- Style selector -->
+            <!-- Body material family selector -->
             <label class="die-mod-setting-field">
-                <span class="die-mod-setting-label">body material</span>
-                <select class="die-mod-setting-select die-mod-material-selector">
-                    ${AVAILABLE_MATERIALS.map(
-                        (material) =>
-                            `<option value="${material.value}" ${material.value === data.draftCoreMaterial ? 'selected' : ''}>${material.label}</option>`
-                    ).join('')}
+                <span class="die-mod-setting-label">body material family</span>
+                <select class="die-mod-setting-select die-mod-body-material-family-selector">
+                    ${renderMaterialFamilyOptions(data.draftCoreMaterialFamily)}
                 </select>
             </label>
 
+            <!-- Body material selector (for materials within the family) -->
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">body material</span>
+                <select class="die-mod-setting-select die-mod-body-material-selector">
+                    ${renderMaterialOptionsForFamily(data.draftCoreMaterialFamily, data.draftCoreMaterial)}
+                </select>
+            </label>
+
+            <!-- Pip material family selector -->
+            <label class="die-mod-setting-field">
+                <span class="die-mod-setting-label">pip material family</span>
+                <select class="die-mod-setting-select die-mod-pip-material-family-selector">
+                    ${renderMaterialFamilyOptions(data.draftPipMaterialFamily)}
+                </select>
+            </label>
+
+            <!-- Pip material selector (for materials within the family) -->
             <label class="die-mod-setting-field">
                 <span class="die-mod-setting-label">pip material</span>
                 <select class="die-mod-setting-select die-mod-pip-material-selector">
-                    ${AVAILABLE_MATERIALS.map(
-                        (material) =>
-                            `<option value="${material.value}" ${material.value === data.draftPipMaterial ? 'selected' : ''}>${material.label}</option>`
-                    ).join('')}
+                    ${renderMaterialOptionsForFamily(data.draftPipMaterialFamily, data.draftPipMaterial)}
                 </select>
             </label>
 
