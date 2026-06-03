@@ -9,15 +9,12 @@ import {
     applyVeinMask,
     createRoughnessAuthorityMap,
 } from '../capabilities';
-
-type StoneMaterial = 'stone' | 'obsidian' | 'jade' | 'marble' | 'granite';
-
-interface StoneFinishTuning {
-    readonly breakupAlpha: number;
-    readonly veinAlpha: number;
-    readonly edgeAlpha: number;
-    readonly inclusionAlpha: number;
-}
+import {
+    STONE_MINERALS,
+    type StoneMineralMaterial as StoneMaterial,
+    STONE_MINERAL_PRESET_DEFINITIONS,
+    resolveStoneMineralEffectPreset,
+} from '../families/StoneMineralPresets';
 
 interface StoneAppearance {
     readonly brightColor: string;
@@ -67,66 +64,6 @@ const APPEARANCE: Record<StoneMaterial, StoneAppearance> = {
     },
 };
 
-const FINISH_TUNING: Record<DieSurfaceFinish, StoneFinishTuning> = {
-    plain: {
-        breakupAlpha: 0.065,
-        veinAlpha: 0.05,
-        edgeAlpha: 0.045,
-        inclusionAlpha: 0.015,
-    },
-    etched: {
-        breakupAlpha: 0.078,
-        veinAlpha: 0.06,
-        edgeAlpha: 0.035,
-        inclusionAlpha: 0.022,
-    },
-    polished: {
-        breakupAlpha: 0.04,
-        veinAlpha: 0.035,
-        edgeAlpha: 0.06,
-        inclusionAlpha: 0.01,
-    },
-    hammered: {
-        breakupAlpha: 0.085,
-        veinAlpha: 0.07,
-        edgeAlpha: 0.03,
-        inclusionAlpha: 0.028,
-    },
-};
-
-const ROUGHNESS_VALUES: Record<StoneMaterial, Record<DieSurfaceFinish, number>> = {
-    stone: {
-        plain: 0.71,
-        etched: 0.79,
-        polished: 0.52,
-        hammered: 0.82,
-    },
-    obsidian: {
-        plain: 0.55,
-        etched: 0.62,
-        polished: 0.31,
-        hammered: 0.67,
-    },
-    jade: {
-        plain: 0.49,
-        etched: 0.58,
-        polished: 0.35,
-        hammered: 0.63,
-    },
-    marble: {
-        plain: 0.44,
-        etched: 0.58,
-        polished: 0.28,
-        hammered: 0.66,
-    },
-    granite: {
-        plain: 0.68,
-        etched: 0.78,
-        polished: 0.48,
-        hammered: 0.84,
-    },
-};
-
 export const StoneMineralMaterialGenerators: readonly MaterialTextureGenerator[] = ([
     'stone',
     'obsidian',
@@ -154,8 +91,9 @@ function createStoneGenerator(material: StoneMaterial): MaterialTextureGenerator
             return texture;
         },
         generateRoughnessMap(options: MaterialTextureGeneratorOptions): THREE.CanvasTexture {
+            const presetDefinition = STONE_MINERAL_PRESET_DEFINITIONS[resolveStoneMineralEffectPreset(material)];
             return createRoughnessAuthorityMap({
-                roughness: ROUGHNESS_VALUES[material][options.surfaceFinish],
+                roughness: presetDefinition.roughnessByFinish[options.surfaceFinish],
                 faceSize: options.faceSize ?? 256,
                 grainAlpha: 0.014,
                 grainStep: 6,
@@ -175,7 +113,7 @@ function applyStoneFinish(texture: THREE.CanvasTexture, material: StoneMaterial,
         return;
     }
 
-    const tuning = FINISH_TUNING[finish];
+    const presetDefinition = STONE_MINERAL_PRESET_DEFINITIONS[resolveStoneMineralEffectPreset(material)];
     const appearance = APPEARANCE[material];
     const width = canvas.width;
     const height = canvas.height;
@@ -184,30 +122,30 @@ function applyStoneFinish(texture: THREE.CanvasTexture, material: StoneMaterial,
     applyMacroBreakup(capabilityContext, {
         brightColor: `rgb(${appearance.brightColor})`,
         darkColor: `rgb(${appearance.darkColor})`,
-        alpha: tuning.breakupAlpha,
-        bandStep: 10,
-        direction: material === 'stone' ? 'horizontal' : 'diagonal',
+        alpha: presetDefinition.breakupAlpha,
+        bandStep: presetDefinition.breakupBandStep,
+        direction: presetDefinition.breakupDirection,
     });
 
     applyVeinMask(capabilityContext, {
         color: `rgb(${appearance.veinColor})`,
-        alpha: tuning.veinAlpha,
-        veinCount: material === 'stone' ? 6 : 5,
-        amplitude: material === 'jade' ? 14 : 10,
+        alpha: presetDefinition.veinAlpha,
+        veinCount: presetDefinition.veinCount,
+        amplitude: presetDefinition.veinAmplitude,
     });
 
     applyInclusionParticles(capabilityContext, {
         color: `rgb(${appearance.inclusionColor})`,
-        alpha: tuning.inclusionAlpha,
-        densityScale: material === 'stone' ? 0.8 : 0.45,
+        alpha: Math.min(0.03, presetDefinition.inclusionDensityScale * 0.03),
+        densityScale: presetDefinition.inclusionDensityScale,
         minSize: 1,
-        maxSize: 2,
+        maxSize: presetDefinition.inclusionSizeMax,
     });
 
     applyEdgeBehavior(capabilityContext, {
         brightColor: `rgb(${appearance.brightColor})`,
         darkColor: `rgb(${appearance.darkColor})`,
-        alpha: tuning.edgeAlpha,
+        alpha: finish === 'polished' ? 0.06 : finish === 'hammered' ? 0.03 : 0.045,
     });
 
     texture.needsUpdate = true;

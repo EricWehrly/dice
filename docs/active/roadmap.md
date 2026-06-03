@@ -52,6 +52,8 @@ This is the only active roadmap.
 1. Close TB-03/TB-04 gaps with tests and explicit combo scope.
 2. Keep F02/F12 moving as non-blocking 3D improvements.
 3. Define and tune family effect presets in F14/F18 before locking named material mappings.
-4. After effect presets are legible, start F17 support lane in order: diagnostics -> IBL baseline -> lighting normalization.
-5. Start F16 once current material chunk is stable.
-6. Start F05/F10 when TB core loop is stable enough for screen-shell work.
+4. Judge preset work in this order: lighting-independent structure first, current-light-safe finish separation second, lighting-gated highlight/env behavior last.
+5. Treat lighting-independent checks as macro structure and pattern legibility, current-light-safe checks as broad gloss/roughness separation, and defer subtle highlight/env/transmission judgments to F17.
+6. After effect presets are legible in the first two categories, start F17 support lane in order: diagnostics -> IBL baseline -> lighting normalization.
+7. Start F16 once current material chunk is stable.
+8. Start F05/F10 when TB core loop is stable enough for screen-shell work.

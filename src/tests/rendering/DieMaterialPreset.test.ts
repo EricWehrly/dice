@@ -1,4 +1,9 @@
 import { resolveDieMaterialPreset } from '../../rendering/textures/DieMaterialPreset';
+import {
+    STONE_MINERAL_EFFECT_PRESETS,
+    STONE_MINERAL_MATERIAL_TO_PRESET,
+    STONE_MINERAL_PRESET_DEFINITIONS,
+} from '../../rendering/textures/families/StoneMineralPresets';
 
 describe('DieMaterialPreset metal overrides', () => {
     it('gives polished steel a stronger metallic response than polished plastic', () => {
@@ -71,5 +76,32 @@ describe('DieMaterialPreset metal overrides', () => {
         expect(hammeredCeramic.surface.metalness).toBe(0);
         expect(polishedCeramic.surface.clearcoat).toBeGreaterThan(hammeredCeramic.surface.clearcoat);
         expect(polishedCeramic.surface.roughness).toBeLessThan(hammeredCeramic.surface.roughness);
+    });
+
+    it('maps stone materials to a bounded set of six effect presets with negative controls', () => {
+        expect(STONE_MINERAL_EFFECT_PRESETS).toHaveLength(6);
+        expect(STONE_MINERAL_MATERIAL_TO_PRESET.marble).toBe('wide-river-mineral');
+        expect(STONE_MINERAL_MATERIAL_TO_PRESET.obsidian).toBe('glassy-dark-mineral');
+        expect(STONE_MINERAL_PRESET_DEFINITIONS['narrow-river-mineral-negative'].purpose).toBe('negative');
+        expect(STONE_MINERAL_PRESET_DEFINITIONS['sparse-speckle-mineral-negative'].purpose).toBe('negative');
+    });
+
+    it('keeps wide-river marble structurally broader than the narrow-river negative control', () => {
+        const marblePreset = STONE_MINERAL_PRESET_DEFINITIONS['wide-river-mineral'];
+        const negativePreset = STONE_MINERAL_PRESET_DEFINITIONS['narrow-river-mineral-negative'];
+
+        expect(marblePreset.veinAmplitude).toBeGreaterThan(negativePreset.veinAmplitude);
+        expect(marblePreset.veinAlpha).toBeGreaterThan(negativePreset.veinAlpha);
+        expect(marblePreset.veinCount).toBeLessThan(negativePreset.veinCount);
+    });
+
+    it('keeps dense-speckle stone materially more particulate than the sparse negative control', () => {
+        const targetPreset = STONE_MINERAL_PRESET_DEFINITIONS['dense-speckle-mineral'];
+        const negativePreset = STONE_MINERAL_PRESET_DEFINITIONS['sparse-speckle-mineral-negative'];
+
+        expect(targetPreset.inclusionDensityScale).toBeGreaterThan(negativePreset.inclusionDensityScale);
+        expect(targetPreset.surfaceByFinish.polished.clearcoat).toBeGreaterThan(
+            negativePreset.surfaceByFinish.polished.clearcoat,
+        );
     });
 });

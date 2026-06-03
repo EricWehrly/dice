@@ -2,7 +2,8 @@ import type { DieBodyMaterial, DieMaterialPreset, DieSurfaceFinish } from './Die
 import { METALS, resolveMetalProfile } from './families/MetalFamily';
 import { SYNTHETICS, resolveSyntheticProfile } from './families/SyntheticFamily';
 import { CERAMICS, resolveCeramicProfile } from './families/CeramicFamily';
-import { STONE_MINERALS, resolveStoneMineralProfile } from './families/StoneMineralFamily';
+import { STONE_MINERALS } from './families/StoneMineralPresets';
+import { resolveStoneMineralProfile } from './families/StoneMineralFamily';
 
 // Re-export family material lists
 export { METALS, SYNTHETICS, CERAMICS, STONE_MINERALS };

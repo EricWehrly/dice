@@ -16,8 +16,8 @@ Drive material authoring from implemented capabilities toward visually distinct,
 - Runtime supports independent body and pip materials
 - 19 materials are wired in presets: plastic, wood, stone, ceramic, resin, brass, steel, gold, silver, bronze, copper, iron, titanium, obsidian, jade, marble, granite, glass, crystal
 - Texture generator registry exists with fallback to color-only rendering
-- Generators are registered for 16 materials (all metals, synthetic/polymer, ceramic, and stone/mineral)
-- Three materials still rely on fallback texture rendering: wood, glass, crystal
+- Generators are registered for all 19 selectable materials
+- Current material work is no longer about fallback coverage; it is about separating family effect presets strongly enough that named-material mapping is defensible
 - Shared capabilities C1-C8 are implemented and consumed by active generator families
 
 This document now tracks execution status and next implementation chunks, not only planning intent.
@@ -119,11 +119,24 @@ These are working labels for tuning, not final product names.
 
 ### Stone/Mineral Candidate Extremes
 
-- `rivered-stone`: high legibility flowing veins/rivers
-- `dense-speckle-stone`: particulate breakup and grain dominance
-- `glassy-dark-mineral`: low-value reflective volcanic/glass read
-- `waxy-green-mineral`: smoother, denser jade-like read
-- `coarse-fracture-stone`: broken, aggregate, irregular structural read
+- `wide-river-mineral`: target preset for broad, readable marble-style rivers
+- `narrow-river-mineral-negative`: negative control proving when river bands have become too tight or too busy
+- `dense-speckle-mineral`: target preset for particulate breakup and aggregate-heavy reads
+- `sparse-speckle-mineral-negative`: negative control proving when granular structure has collapsed
+- `glassy-dark-mineral`: target preset for low-value reflective volcanic/glass reads
+- `waxy-green-mineral`: target preset for smoother, denser jade-like reads
+
+Stone/mineral is currently constrained to these six presets on purpose so the family can be tuned through a small set of clearly separable effect reads before adding more named-material mappings.
+
+### Preset Evaluation Order
+
+Tune and judge presets in this order:
+
+1. Lighting-independent reads: macro structure, river width, speckle density, breakup direction, inclusion frequency.
+2. Safe under current lighting: broad gloss-vs-matte separation, polished-vs-hammered contrast, clearcoat presence, dark-vs-light body balance.
+3. Requires better lighting support: final highlight shape, environment coherence, transmission quality, subtle clearcoat energy behavior.
+
+F14 should keep moving on categories 1 and 2. Category 3 should be treated as F17-gated final calibration, not as a blocker for preset exploration.
 
 ### Wood/Organic Candidate Extremes
 
