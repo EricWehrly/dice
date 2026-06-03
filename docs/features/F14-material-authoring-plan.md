@@ -1,4 +1,4 @@
-# F14 - Material Family Authoring and Texture Implementation Plan
+# F14 - Material Intent Catalog and Preset Authoring Plan
 
 Status: 🔄 In Progress (Execution + Tuning)
 
@@ -7,8 +7,8 @@ Status: 🔄 In Progress (Execution + Tuning)
 Drive material authoring from implemented capabilities toward visually distinct, production-ready families by:
 
 1. Grouping materials by reusable material type families
-2. Defining family-first generator strategy so one base algorithm can produce multiple variants
-3. Estimating effort versus visual payoff to prioritize "best bang for buck"
+2. Defining effect-first preset extremes before locking named material presets
+3. Mapping each target material to its most important recognizable traits and the capabilities that carry them
 4. Defining preview and acceptance workflow while tuning and expanding texture coverage
 
 ## Current State (Already in Place)
@@ -22,9 +22,10 @@ Drive material authoring from implemented capabilities toward visually distinct,
 
 This document now tracks execution status and next implementation chunks, not only planning intent.
 
-## Family-First Material Strategy
+## Family-First, Effect-First Material Strategy
 
 The next phase should be implemented by material families, not by isolated named materials.
+Within each family, tuning should start from effect extremes, not from lightly differentiated named presets.
 
 ### Why Family-First
 
@@ -32,6 +33,26 @@ The next phase should be implemented by material families, not by isolated named
 - Consistency: finish responses behave similarly within a family
 - Speed: variant creation becomes parameter tuning, not full reimplementation
 - Maintainability: fewer core algorithms to test and optimize
+
+### Why Effect-First Inside A Family
+
+- Named materials like `marble`, `obsidian`, and `granite` are targets, not a good first tuning surface.
+- The first useful question is not "does this look like marble yet," but "does this preset clearly read as rivered stone, dense speckle stone, glassy dark mineral, deep translucency, coarse grain wood, etc.?"
+- Strong family presets should be far apart from one another on purpose. Even the eventual "middle" preset should still be an extreme relative to nearby presets if it helps family separation.
+- Once the effect extremes are legible, named materials can be defined as selections or blends of those tested effects.
+
+### Working Authoring Rule
+
+1. Start with a family.
+2. Define the effect extremes the family needs.
+3. Name presets by intended read/effect, not by market material name.
+4. Tune those presets until they are visually far apart and legible.
+5. Map named materials onto those presets once the effects are proven.
+
+Assumption for upcoming implementation:
+
+- Die naming will become constructor-driven so tuning attempts can be labeled by preset intent directly in runtime UI.
+- This doc assumes that support will exist, but does not own the implementation.
 
 ### Family Model
 
@@ -44,19 +65,20 @@ The next phase should be implemented by material families, not by isolated named
 | Transparent Gem/Glass | glass, crystal | smoky quartz, amethyst-like tint, frosted glass | transmission tint, edge brightening, internal noise |
 | Synthetic/Polymer | plastic, resin | matte ABS, glossy acrylic, translucent resin, glitter resin | flat base, micro-noise, optional inclusions |
 
-## Proposed Generator Architecture Direction
+## Generator Architecture Direction
 
 Keep current registry contracts. Add implementation in this sequence:
 
 1. Build one base generator per family.
-2. Add family parameter presets for named variants.
-3. Route existing named materials to family presets.
-4. Add net-new named materials by reusing family presets.
+2. Add family parameter presets for effect extremes.
+3. Route named materials to the effect preset that best matches their intent.
+4. Add net-new named materials by reusing or combining effect presets.
 
-Example intent for metal family (documentation only):
+Example intent for metal family:
 
 - One metal generator handles spec and brushing patterns
-- Gold versus silver versus brass differ mostly by hue/value/roughness ranges and patina mask settings
+- Presets should first separate effects like brushed-linear, mirror-polished, hammered-spec-breakup, oxidized-darkened
+- Gold versus silver versus brass can then map onto those effects with material-specific color and response tuning
 
 Current implementation note:
 
@@ -64,6 +86,79 @@ Current implementation note:
 - Stone/mineral selections (`stone`, `obsidian`, `jade`, `marble`, `granite`) have generator support and vein/macro breakup capabilities.
 - Wood/organic and transparent gem/glass now have first-pass generator coverage.
 - Remaining implementation focus is quality tuning and visual identity separation (especially marble/granite/jade/wood/crystal).
+
+## Material Intent Profile Format
+
+Each target material should be described as an intent profile, not only a label.
+
+Recommended shape:
+
+- Material target: what we want this to eventually read as
+- Family: which generator family owns it
+- Key traits: the 2-4 traits most responsible for recognizability
+- Primary capabilities: which capabilities do most of the work
+- Secondary capabilities: supporting contributors
+- Recognizability colors: common or expected color cues that help the read without carrying it alone
+- Candidate effect presets: which family extremes this material should start from
+
+Example shorthand:
+
+- Material target: Marble
+- Family: Stone/Mineral
+- Key traits: legible rivers, smooth mineral body, soft polished reflectance
+- Primary capabilities: C7 vein mask, C1 roughness authority
+- Secondary capabilities: C2 macro breakup, C4 edge behavior
+- Recognizability colors: warm white body, gray-brown rivers
+- Candidate effect presets: `rivered-stone`, `soft-polish-mineral`
+
+## Family Effect Preset Strategy
+
+The first pass of preset authoring should create intentionally separated effect presets inside each family.
+
+These are working labels for tuning, not final product names.
+
+### Stone/Mineral Candidate Extremes
+
+- `rivered-stone`: high legibility flowing veins/rivers
+- `dense-speckle-stone`: particulate breakup and grain dominance
+- `glassy-dark-mineral`: low-value reflective volcanic/glass read
+- `waxy-green-mineral`: smoother, denser jade-like read
+- `coarse-fracture-stone`: broken, aggregate, irregular structural read
+
+### Wood/Organic Candidate Extremes
+
+- `straight-grain-wood`: directional readable grain bands
+- `swirl-knot-wood`: knotting and irregular grain interrupts
+- `tight-finished-wood`: sanded/polished fine-grain read
+- `coarse-open-grain-wood`: rough porous timber read
+
+### Transparent Gem/Glass Candidate Extremes
+
+- `soft-frosted-glass`: diffuse, cloudy, muted transmission
+- `clean-clear-glass`: light attenuation with minimal particulate structure
+- `sparkle-crystal`: sharper highlights and small internal scintillation cues
+- `smoky-depth-glass`: darker edge attenuation and depth-heavy center falloff
+
+### Metal Candidate Extremes
+
+- `mirror-polished-metal`
+- `brushed-linear-metal`
+- `hammered-metal`
+- `oxidized-dark-metal`
+
+### Ceramic Candidate Extremes
+
+- `clean-glazed-ceramic`
+- `pooled-glaze-ceramic`
+- `matte-fired-ceramic`
+- `speckled-stoneware`
+
+### Synthetic Candidate Extremes
+
+- `matte-polymer`
+- `gloss-coated-polymer`
+- `depth-resin`
+- `flake-resin`
 
 ## Brainstorm: Additional Materials by Family
 
@@ -138,7 +233,10 @@ Why this ordering for F17:
 
 ## Capability Library and Material Usage Map
 
-The next planning dimension is capability-first delivery. Instead of asking "which material next," ask "which reusable capability unlocks the most materials with physically convincing separation."
+The next planning dimension is capability-first delivery. Instead of asking "which material next," ask two questions in order:
+
+1. which effect preset are we trying to make legible
+2. which reusable capability unlocks that effect most directly
 
 Canonical capability planning now lives in `docs/features/F18-material-capability-system.md`.
 This section remains as an at-a-glance material-side reference.
@@ -301,11 +399,11 @@ The implementation pass should be guided by a strict preview loop.
 
 ## Current Deliverables Remaining
 
-1. Strengthen stone/mineral identity tuning (marble veining contrast, granite breakup scale, jade depth/readability)
-2. Tune wood grain readability at gameplay distance and avoid over-uniform streaking
-3. Tune glass/crystal separation and depth response before enabling F17 lighting calibration
+1. Rewrite active family tuning around effect presets instead of named material presets
+2. Create first explicit effect-preset set for stone/mineral and map `marble`, `obsidian`, `stone`, `granite`, `jade` onto those targets
+3. Tune wood and gem/glass against their preset extremes before doing named-material polish
 4. Expand focused capability-level test coverage (especially C6/C7/C8 behavior deltas)
-5. Capture/update screenshot matrix for all active families and finishes under a pinned lighting profile
+5. Capture/update screenshot matrix for all active effect presets and mapped material targets under a pinned lighting profile
 
 ### Stone/Material Assumptions To Validate During Tuning
 
@@ -313,6 +411,13 @@ The implementation pass should be guided by a strict preview loop.
 2. Marble currently uses the same vein-mask family primitive as other minerals, which can under-read as classic marbling at gameplay distance.
 3. Surface profile tables and generator roughness-map values are maintained in separate places, so drift checks are needed when tuning finishes.
 4. Physical-material response currently treats all non-metal families similarly for bump/env defaults, so stone/ceramic/wood/glass distinction is primarily map-driven until F17 diagnostics are enabled.
+
+## Immediate Authoring Order
+
+1. Define effect presets for each active family.
+2. Drive tuning attempts through effect-oriented die names.
+3. Evaluate which capabilities are insufficient to produce those reads.
+4. Only then promote successful effect presets into named material mappings.
 
 ## Exit Criteria for F14 Completion
 

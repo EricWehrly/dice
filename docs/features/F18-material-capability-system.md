@@ -13,6 +13,10 @@ This feature exists to:
 3. Enable parallel streams across capabilities (F18), material authoring (F14), and lighting/calibration support (F17)
 4. Make cross-stream touchpoints explicit and schedulable
 
+F18 is not the canonical place to define what a material should look like.
+F14 owns material intent, effect presets, and named-material mapping.
+F18 owns the reusable building blocks that make those presets possible.
+
 ## Scope and Non-Goals
 
 In scope:
@@ -36,7 +40,8 @@ Planned usage model:
 
 1. Capability modules generate deterministic masks/maps/overlays from options
 2. Family generators compose capabilities in ordered passes
-3. Presets select capability parameter sets instead of bespoke inline logic
+3. Effect presets select capability parameter sets instead of bespoke inline logic
+4. Named material presets converge onto proven effect presets rather than bypassing them
 
 Initial capability module targets:
 
@@ -62,6 +67,10 @@ Priority formula guidance:
 
 - Prioritize high coverage + high distinctiveness + low coupling first
 - Defer capabilities requiring F17 milestones unless they unblock major families
+
+Additional prioritization rule:
+
+- A capability should usually be justified by an effect preset that F14 is actively trying to make legible.
 
 ## Ordered Capability Backlog
 
@@ -135,7 +144,7 @@ Status markers:
 ### Stream B: Material Authoring (F14)
 
 - Consumes capability modules in family generators
-- Tunes family parameters and variant presets
+- Tunes family effect presets first, then maps named materials onto them
 
 ### Stream C: Lighting and Calibration Support (F17)
 
@@ -147,7 +156,7 @@ Status markers:
 | Touchpoint | Trigger | Required Participants | Output |
 |---|---|---|---|
 | T1 Capability API freeze | Before each capability implementation starts | F18 + F14 | Stable options interface and default profile |
-| T2 Visual baseline capture | After capability integration into first family | F14 + F17 | Before/after screenshot matrix under pinned profile |
+| T2 Visual baseline capture | After capability integration into first family/effect preset | F14 + F17 | Before/after screenshot matrix under pinned profile |
 | T3 Regression gate | Before merging capability-consuming family updates | F18 + F14 | Contract tests updated and passing |
 | T4 Lighting sanity gate | Before enabling capabilities relying on env/exposure sensitivity | F17 + F14 | Verified behavior in gameplay and debug-flat |
 
