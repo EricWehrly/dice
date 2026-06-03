@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import Events from '../../engine/js/events';
 import { Bag } from '../../src/game/Bag';
+import { TrickEvents } from '../../src/game/contracts/TrickContracts';
 import { DieSlotType, type DieEquipped, DieEquippedMixin } from '../../src/game/DieEquippedMixin';
 import { MakeDieCharacter } from '../../src/game/DieCharacterFactory';
 import { DieWeightMod } from '../../src/game/mods/DieWeightMod';
@@ -238,6 +240,35 @@ describe('DieModificationPanel integration', () => {
 
         const chipAfter = getRequired<HTMLButtonElement>('.die-mod-chip');
         expect(chipAfter.textContent?.trim()).toBe('gold d6');
+    });
+
+    it('raises DIE_SELECTED when a die chip is clicked', () => {
+        const bag = new Bag();
+        const dieA = MakeDieCharacter([DieEquippedMixin], { id: 'die-a', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
+        const dieB = MakeDieCharacter([DieEquippedMixin], { id: 'die-b', faceCount: 6 }) as ReturnType<typeof MakeDieCharacter> & DieEquipped;
+        bag.addDie(dieA);
+        bag.addDie(dieB);
+
+        const callback = vi.fn();
+        const subscriptionId = Events.Subscribe(TrickEvents.DIE_SELECTED, callback);
+
+        const panel = new DieModificationPanel(bag.getActiveDice() as Array<ReturnType<typeof MakeDieCharacter> & DieEquipped>);
+        panel.render();
+
+        const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.die-mod-chip'));
+        const secondChip = chips.find((chip) => chip.dataset.dieId === 'die-b');
+        if (!secondChip) {
+            throw new Error('Expected second die chip to exist');
+        }
+
+        secondChip.click();
+
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback.mock.calls[0][0]).toMatchObject({ dieId: 'die-b', source: 'panel' });
+
+        if (subscriptionId) {
+            Events.Unsubscribe(subscriptionId);
+        }
     });
 
 });

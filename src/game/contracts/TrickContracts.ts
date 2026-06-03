@@ -18,6 +18,11 @@ export interface DiePropertyChangeRequestedEvent extends GameEvent {
     changes: DiePropertyChangeRequest;
 }
 
+export interface DieSelectedEvent extends GameEvent {
+    dieId: string | null;
+    source?: 'scene' | 'panel' | 'system';
+}
+
 export const TrickEvents = {
     BAG_ROLLED: 'bag:rolled',
     BAG_CHANGED: 'bag:changed',

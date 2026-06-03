@@ -26,7 +26,7 @@ import { Die } from '../game/Die';
 import { DieWeightMod } from '../game/mods/DieWeightMod';
 import { DieSlotType } from '../game/DieEquipmentTypes';
 import Events from '../../engine/js/events';
-import { TrickEvents, type DiePropertyChangeRequestedEvent } from '../game/contracts/TrickContracts';
+import { TrickEvents, type DiePropertyChangeRequestedEvent, type DieSelectedEvent } from '../game/contracts/TrickContracts';
 import { type DieEquipped } from '../game/DieEquippedMixin';
 
 type PendingModAction = 'install' | 'uninstall' | 'none';
@@ -69,6 +69,14 @@ export class DieModificationPanel {
         this.baseDieNamesById = this.createBaseNameMap(dice);
         this.selectedDieId = this.dice[0].id;
         this.resetDraftForSelectedDie();
+
+        Events.Subscribe<DieSelectedEvent>(TrickEvents.DIE_SELECTED, (event) => {
+            if (!event.dieId) {
+                return;
+            }
+
+            this.selectDieById(event.dieId);
+        });
     }
 
     setRootElement(root: HTMLElement): void {
@@ -211,12 +219,11 @@ export class DieModificationPanel {
                 if (!dieId) {
                     return;
                 }
-                this.selectedDieId = dieId;
-                this.selectedFaceIndex = 0;
-                this.resetDraftForSelectedDie();
-                this.selectedCoreMod = null;
-                this.selectedTargetFaceIndex = null;
-                this.render();
+
+                Events.RaiseEvent<DieSelectedEvent>(TrickEvents.DIE_SELECTED, {
+                    dieId,
+                    source: 'panel',
+                });
             });
         });
 

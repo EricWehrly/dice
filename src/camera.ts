@@ -4,7 +4,7 @@ import ThreeJSRenderContext from '../engine/js/rendering/contexts/ThreeJS.Render
 import { ensureDiceLighting } from './rendering/lighting';
 import Events from '../engine/js/events';
 import { Bag, type BagChangedEvent } from './game/Bag';
-import { TrickEvents } from './game/contracts/TrickContracts';
+import { TrickEvents, type DieSelectedEvent } from './game/contracts/TrickContracts';
 import { Die } from './game/Die';
 import { IsDieEquipped } from './game/DieEquippedMixin';
 import { GetEntity3DGraphic } from '../engine/js/rendering/entities/entity-3d-graphics';
@@ -368,6 +368,65 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag, roll3dScreen: H
         }
     };
 
+    const focusDieById = (dieId: string, animated: boolean): boolean => {
+        const die = bag.getActiveDice().find((item) => item.id === dieId);
+        if (!die) {
+            return false;
+        }
+
+        focusedDie = die;
+        clearPendingDrift();
+        clearFocusSettleRefit();
+        if (animated) {
+            suspendResizeDrivenFraming();
+        }
+        cameraDrift.stop();
+        notifyFocusStateChange({
+            focusedDieId: die.id,
+            panelOpen: true,
+            transition: 'open',
+        });
+        scheduleFrame(animated);
+        focusSettleRefitTimeoutId = window.setTimeout(() => {
+            focusSettleRefitTimeoutId = null;
+            if (!focusedDie || focusedDie.id !== die.id) {
+                return;
+            }
+
+            const settledBounds = getDieBounds(focusedDie);
+            if (!settledBounds) {
+                return;
+            }
+
+            const settledState = calculateCameraForBounds(
+                settledBounds,
+                {
+                    fovDegrees: camera.fov,
+                    aspectRatio: resolveFramingAspectRatio(),
+                },
+                focusConstraints,
+            );
+
+            applyCameraState(cameraRig, settledState);
+            applyFocusedDrift(settledState.target);
+        }, focusSettleRefitDelayMs);
+
+        return true;
+    };
+
+    const applySelectedDieEvent = (dieId: string | null, animated: boolean): boolean => {
+        if (dieId === null) {
+            if (!focusedDie) {
+                return false;
+            }
+
+            clearFocus(animated);
+            return true;
+        }
+
+        return focusDieById(dieId, animated);
+    };
+
     const scheduleFrame = (animated: boolean): void => {
         pendingAnimated = pendingAnimated || animated;
         if (pendingFrame) {
@@ -399,6 +458,10 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag, roll3dScreen: H
         scheduleFrame(true);
     });
 
+    Events.Subscribe<DieSelectedEvent>(TrickEvents.DIE_SELECTED, (event) => {
+        applySelectedDieEvent(event.dieId, true);
+    });
+
     Events.Subscribe('RendererResized', () => {
         if (resizeDrivenFramingSuspended) {
             return;
@@ -420,7 +483,10 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag, roll3dScreen: H
                     return false;
                 }
 
-                clearFocus(true);
+                Events.RaiseEvent<DieSelectedEvent>(TrickEvents.DIE_SELECTED, {
+                    dieId: null,
+                    source: 'scene',
+                });
                 return true;
             }
 
@@ -428,40 +494,10 @@ function initializeDynamicFraming(cameraRig: ThreeCam, bag: Bag, roll3dScreen: H
                 return false;
             }
 
-            focusedDie = die;
-            clearPendingDrift();
-            clearFocusSettleRefit();
-            suspendResizeDrivenFraming();
-            cameraDrift.stop();
-            notifyFocusStateChange({
-                focusedDieId: die.id,
-                panelOpen: true,
-                transition: 'open',
+            Events.RaiseEvent<DieSelectedEvent>(TrickEvents.DIE_SELECTED, {
+                dieId: die.id,
+                source: 'scene',
             });
-            scheduleFrame(true);
-            focusSettleRefitTimeoutId = window.setTimeout(() => {
-                focusSettleRefitTimeoutId = null;
-                if (!focusedDie || focusedDie.id !== die.id) {
-                    return;
-                }
-
-                const settledBounds = getDieBounds(focusedDie);
-                if (!settledBounds) {
-                    return;
-                }
-
-                const settledState = calculateCameraForBounds(
-                    settledBounds,
-                    {
-                        fovDegrees: camera.fov,
-                        aspectRatio: resolveFramingAspectRatio(),
-                    },
-                    focusConstraints,
-                );
-
-                applyCameraState(cameraRig, settledState);
-                applyFocusedDrift(settledState.target);
-            }, focusSettleRefitDelayMs);
             return true;
         },
     });
